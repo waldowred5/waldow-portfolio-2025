@@ -1,7 +1,9 @@
 export const App = () => {
   return (
     <>
-      <h1 className="text-3xl font-bold underline">Portfolio!</h1>
+      <div className={'flex items-center justify-center h-lvh'}>
+        <h1 className={'text-3xl font-kanit font-bold'}>{'New Portfolio!'}</h1>
+      </div>
     </>
   );
 };
