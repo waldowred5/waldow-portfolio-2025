@@ -1,5 +1,6 @@
-import { Mesh, Vector3 } from 'three';
-import { RapierRigidBody } from '@react-three/rapier';
+import type { RapierRigidBody } from '@react-three/rapier';
+import type { Mesh } from 'three';
+import { Vector3 } from 'three';
 
 interface IUseApplyTorque {
   keys: {
