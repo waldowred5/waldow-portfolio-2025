@@ -1,5 +1,5 @@
 import { useFrame } from '@react-three/fiber';
-import { folder, useControls } from 'leva';
+import { button, folder, useControls } from 'leva';
 import { Color,ShaderMaterial, Vector2 } from 'three';
 
 import waterFragmentShader from '../../assets/shaders/water/fragment.glsl?raw';
@@ -34,6 +34,15 @@ export const HeroScene = () => {
     };
   });
 
+  const defaultValues = {
+    waveXPosition: 0.5,
+    waveYPosition: -0.2,
+    waveZPosition: 3.5,
+    waveXRotation: -Math.PI * 0.45,
+    waveYRotation: 0,
+    waveZRotation: Math.PI * 0.55,
+  };
+
   const [{
     waveXPosition,
     waveYPosition,
@@ -41,33 +50,34 @@ export const HeroScene = () => {
     waveXRotation,
     waveYRotation,
     waveZRotation,
-  }] = useControls('Hero Scene', () => ({
+  }, set] = useControls('Hero Scene', () => ({
     wave: folder({
+      'Reset Defaults': button(() => set(defaultValues)),
       position: folder({
         waveXPosition: {
-          value: 0.5,
+          value: defaultValues.waveXPosition,
           step: 0.02
         },
         waveYPosition: {
-          value: -0.2,
+          value: defaultValues.waveYPosition,
           step: 0.02
         },
         waveZPosition: {
-          value: 3.5,
+          value: defaultValues.waveZPosition,
           step: 0.02
         },
       }),
       rotation: folder({
         waveXRotation: {
-          value: -Math.PI * 0.45,
+          value: defaultValues.waveXRotation,
           step: 0.02
         },
         waveYRotation: {
-          value: 0,
+          value: defaultValues.waveYRotation,
           step: 0.02
         },
         waveZRotation: {
-          value: Math.PI * 0.55,
+          value: defaultValues.waveZRotation,
           step: 0.02
         },
       }),
