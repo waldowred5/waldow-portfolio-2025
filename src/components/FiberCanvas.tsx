@@ -8,11 +8,11 @@ import { SceneManager } from './SceneManager.tsx';
 
 export const FiberCanvas = () => {
   const {
-    bloomEnabled,
+    FXEnabled,
     statsDebugPanelEnabled,
   } = useSettings((state) => {
     return {
-      bloomEnabled: state.bloomEnabled,
+      FXEnabled: state.FXEnabled,
       statsDebugPanelEnabled: state.statsDebugPanelEnabled,
     };
   });
@@ -29,7 +29,7 @@ export const FiberCanvas = () => {
             }}
             legacy={true}
           >
-            { bloomEnabled && <FX/> }
+            { FXEnabled && <FX/> }
             { statsDebugPanelEnabled && <Perf position={'bottom-right'}/> }
             <SceneManager/>
           </Canvas>

@@ -11,6 +11,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@radix-ui/react-slot": "^1.2.3",
     "@react-three/drei": "^10.5.1",
     "@react-three/fiber": "^9.2.0",
     "@react-three/postprocessing": "^3.0.4",
@@ -24,6 +25,7 @@
     "eslint-plugin-simple-import-sort": "^12.1.1",
     "leva": "^0.10.0",
     "lucide-react": "^0.525.0",
+    "motion": "^12.23.6",
     "r3f-perf": "^7.2.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

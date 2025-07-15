@@ -1,23 +1,23 @@
 import { createWithEqualityFn } from 'zustand/traditional';
 
 export interface SettingsState {
-  bloomEnabled: boolean;
+  FXEnabled: boolean;
   statsDebugPanelEnabled: boolean;
 
   // Actions
-  updateBloomEnabled: (newScrollPercentage: boolean) => void;
+  updateFXEnabled: (newFXEnabled: boolean) => void;
   updateStatsDebugPanelEnabled: (newStatsDebugPanelEnabled: boolean) => void;
 }
 export const useSettings = createWithEqualityFn<SettingsState>((set) => {
   return {
-    bloomEnabled: true,
+    FXEnabled: true,
     statsDebugPanelEnabled: false,
 
     // Actions
-    updateBloomEnabled: (newBloomEnabled: boolean) => {
+    updateFXEnabled: (newFXEnabled: boolean) => {
       set(() => {
         return {
-          bloomEnabled: newBloomEnabled,
+          FXEnabled: newFXEnabled,
         };
       });
     },

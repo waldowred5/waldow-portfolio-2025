@@ -39,24 +39,24 @@ export const SceneManager = () => {
   });
 
   const {
-    bloomEnabled,
+    FXEnabled,
     statsDebugPanelEnabled,
-    updateBloomEnabled,
+    updateFXEnabled,
     updateStatsDebugPanelEnabled,
   } = useSettings((state) => {
     return {
-      bloomEnabled: state.bloomEnabled,
+      FXEnabled: state.FXEnabled,
       statsDebugPanelEnabled: state.statsDebugPanelEnabled,
-      updateBloomEnabled: state.updateBloomEnabled,
+      updateFXEnabled: state.updateFXEnabled,
       updateStatsDebugPanelEnabled: state.updateStatsDebugPanelEnabled,
     };
   });
 
   useControls('Settings', {
-    bloomEnabled: {
-      value: bloomEnabled,
+    FXEnabled: {
+      value: FXEnabled,
       onChange: (value: boolean) => {
-        updateBloomEnabled(value);
+        updateFXEnabled(value);
       }
     },
     statsEnabled: {

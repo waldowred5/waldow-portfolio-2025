@@ -1,3 +1,5 @@
+import { BackgroundBeams } from '@/components/ui/acerternity/BackgroundBeams.tsx';
+
 import { FiberCanvas } from './components/FiberCanvas.tsx';
 import { EventManager } from './components/helpers/EventManager.tsx';
 import { LevaPanel } from './components/helpers/LevaPanel.tsx';
@@ -18,14 +20,15 @@ export const App = () => {
       <LevaPanel/>
 
       <div className={'flex-col w-full'}>
-        <EventManager/>
+        <EventManager />
+        <BackgroundBeams />
 
-        <FiberCanvas/>
+        <FiberCanvas />
 
-        <ActionBar/>
+        <ActionBar />
 
         <Section>
-          <HeroText/>
+          <HeroText />
         </Section>
       </div>
     </div>

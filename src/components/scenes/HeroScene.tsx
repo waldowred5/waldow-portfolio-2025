@@ -2,12 +2,13 @@ import { useFrame } from '@react-three/fiber';
 import { button, folder, useControls } from 'leva';
 import { Color,ShaderMaterial, Vector2 } from 'three';
 
+import { useScroll } from '@/store/useScroll.ts';
+import type { ITheme } from '@/store/useTheme.ts';
+import { THEME_COLORS, useTheme } from '@/store/useTheme.ts';
+import { useWindowSize } from '@/store/useWindowSize.ts';
+
 import waterFragmentShader from '../../assets/shaders/water/fragment.glsl?raw';
 import waterVertexShader from '../../assets/shaders/water/vertex.glsl?raw';
-import { useScroll } from '../../store/useScroll.ts';
-import type { ITheme } from '../../store/useTheme.ts';
-import { THEME_COLORS, useTheme } from '../../store/useTheme.ts';
-import { useWindowSize } from '../../store/useWindowSize.ts';
 
 export const HeroScene = () => {
   const {
@@ -116,8 +117,7 @@ export const HeroScene = () => {
 
   return (
     <>
-      {
-        scrollPercentage < 0.9 &&
+        {/* Wave */}
         <mesh
           rotation={[waveXRotation + scrollPercentage * 4, waveYRotation, waveZRotation]}
           position={[waveXPosition, waveYPosition + scrollPercentage * 2, waveZPosition]}
@@ -127,16 +127,14 @@ export const HeroScene = () => {
           />
           <primitive object={waterMaterial}/>
         </mesh>
-      }
 
-      {
-        scrollPercentage < 0.5 && <mesh
+        {/* Sun */}
+        <mesh
           position={[0, scrollPercentage * 24, innerWidth < 768 ? -5.5 : -3]}
         >
           <sphereGeometry args={[4, 64, 64]}/>
           <meshBasicMaterial color={THEME_COLORS[theme].tertiary}/>
         </mesh>
-      }
     </>
   );
 };
