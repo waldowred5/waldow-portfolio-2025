@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { FaGithub, FaLinkedin } from 'react-icons/fa';
 import { PiPaintBucketFill } from 'react-icons/pi';
+import { RiFullscreenExitLine,RiFullscreenFill } from 'react-icons/ri';
 
 import { useTheme } from '@/store/useTheme.ts';
+import { useToggleFullscreen } from '@/store/useToggleFullscreen.ts';
 
 import { Icon } from './Icon.tsx';
 
@@ -17,6 +19,8 @@ export const ActionBar = () => {
     };
   });
 
+  const { isFullscreen, toggleFullscreen } = useToggleFullscreen();
+
   return (
     <div className={'flex justify-center'}>
       <div className={'z-10 fixed top-3 md:top-4 md:right-4 flex flex-col gap-y-1'}>
@@ -25,7 +29,16 @@ export const ActionBar = () => {
         >
           <div className={'flex grow-0 px-2'}>
             <div
-              className={'peer/theme'}
+              className={'cursor-pointer'}
+              onMouseEnter={() => setText(`${isFullscreen ? 'EXIT' : 'ENTER'} FULL SCREEN`)}
+            >
+              <Icon onClick={toggleFullscreen}>
+                { isFullscreen ? <RiFullscreenExitLine /> : <RiFullscreenFill /> }
+              </Icon>
+            </div>
+
+            <div
+              className={'cursor-pointer'}
               onMouseEnter={() => setText('CHANGE SITE THEME')}
             >
               <Icon onClick={toggleTheme}>
@@ -34,7 +47,7 @@ export const ActionBar = () => {
             </div>
 
             <div
-              className={'peer/linkedin'}
+              className={'cursor-pointer'}
               onMouseEnter={() => setText('STALK MY CAREER →')}
             >
               <Icon href={'https://www.linkedin.com/in/daniel-waldow-22a85398/'}>
@@ -43,7 +56,7 @@ export const ActionBar = () => {
             </div>
 
             <div
-              className={'peer/github'}
+              className={'cursor-pointer'}
               onMouseEnter={() => setText('STEAL MY CODE →')}
             >
               <Icon href={'https://github.com/waldowred5/waldow-portfolio-2024'}>
@@ -60,7 +73,7 @@ export const ActionBar = () => {
             h-5 items-center justify-center flex select-none
             `}
         >
-          <h2>{text}</h2>
+          <h2 className={'text-sm'}>{text}</h2>
         </div>
       </div>
     </div>

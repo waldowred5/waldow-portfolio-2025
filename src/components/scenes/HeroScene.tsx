@@ -97,7 +97,7 @@ export const HeroScene = () => {
           step: 0.02,
         },
       }),
-    }),
+    }, { collapsed: true }),
     wave: folder(
       {
         'Reset Wave Defaults': button(() => set(defaultWaveValues)),
@@ -142,9 +142,9 @@ export const HeroScene = () => {
           },
         }),
       },
-      { collapsed: false },
+      { collapsed: true },
     ),
-  }));
+  }), { collapsed: true });
 
   useFrame(({ clock }) => {
     waterMaterial.uniforms.uTime.value = clock.getElapsedTime();

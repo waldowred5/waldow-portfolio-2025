@@ -42,7 +42,7 @@ export const FX = () => {
       },
       { collapsed: true },
     ),
-  }));
+  }), { collapsed: true });
 
   return (
     <>

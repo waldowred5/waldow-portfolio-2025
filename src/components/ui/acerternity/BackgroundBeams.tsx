@@ -106,7 +106,7 @@ export const BackgroundBeams = memo(
             {paths.map((_, index) => (
               <motion.linearGradient
                 id={`linearGradient-${index}`}
-                key={`gradient-${index}-${theme}`} // Add theme to the key to reset animation
+                key={`gradient-${index}-${theme}`}
                 initial={{
                   x1: '0%',
                   x2: '0%',
