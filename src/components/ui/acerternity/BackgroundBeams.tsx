@@ -71,16 +71,6 @@ export const BackgroundBeams = memo(
     const secondaryColor = THEME_COLORS[theme].secondary;
     const tertiaryColor = convertToHex(THEME_COLORS[theme].tertiary);
 
-    // const [primaryColor, setPrimaryColor] = useState<string>(convertToHex(THEME_COLORS[theme].primary));
-    // const [secondaryColor, setSecondaryColor] = useState<string>(THEME_COLORS[theme].secondary);
-    // const [tertiaryColor, setTertiaryColor] = useState<string>(convertToHex(THEME_COLORS[theme].tertiary));
-    //
-    // useEffect(() => {
-    //   setPrimaryColor(convertToHex(THEME_COLORS[theme].primary));
-    //   setSecondaryColor(THEME_COLORS[theme].secondary);
-    //   setTertiaryColor(convertToHex(THEME_COLORS[theme].tertiary));
-    // }, [theme]);
-
     return (
       <div
         className={cn(
@@ -133,7 +123,7 @@ export const BackgroundBeams = memo(
                   duration: Math.random() * 2 + 10,
                   ease: 'easeInOut',
                   repeat: Infinity,
-                  delay: Math.random() * 6,
+                  delay: Math.random(),
                 }}
               >
                 <stop stopColor={primaryColor} stopOpacity={'0'}></stop>

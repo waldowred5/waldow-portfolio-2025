@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { FaGithub, FaLinkedin } from 'react-icons/fa';
 import { PiPaintBucketFill } from 'react-icons/pi';
 
-import { useTheme } from '../../store/useTheme.ts';
+import { useTheme } from '@/store/useTheme.ts';
+
 import { Icon } from './Icon.tsx';
 
 export const ActionBar = () => {
@@ -20,7 +21,7 @@ export const ActionBar = () => {
     <div className={'flex justify-center'}>
       <div className={'z-10 fixed top-3 md:top-4 md:right-4 flex flex-col gap-y-1'}>
         <div
-          className={'group/container peer/container hover:cursor-pointer gap-y-4 rounded-md backdrop-blur-[10px] backdrop-saturate-[15] bg-black/50'}
+          className={'group/container peer/container hover:cursor-pointer gap-y-4 rounded-md border-1 border-white backdrop-blur-[10px] backdrop-saturate-[15] bg-black/50'}
         >
           <div className={'flex grow-0 px-2'}>
             <div
@@ -55,7 +56,8 @@ export const ActionBar = () => {
           className={`
             peer-hover/container:backdrop-blur-[10px] peer-hover/container:backdrop-saturate-[15]
             peer-hover/container:bg-black/40 text-transparent peer-hover/container:text-white
-            transition duration-300 rounded-md h-5 items-center justify-center flex select-none
+            transition-all duration-300 rounded-md peer-hover/container:border-1 peer-hover/container:border-white 
+            h-5 items-center justify-center flex select-none
             `}
         >
           <h2>{text}</h2>

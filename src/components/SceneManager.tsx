@@ -1,6 +1,8 @@
 import { useFrame, useThree } from '@react-three/fiber';
 import { useControls } from 'leva';
 
+import { TABLET_BREAKPOINT } from '@/lib/constants.ts';
+
 import { useClamp } from '../hooks/useClamp.ts';
 import { useScroll } from '../store/useScroll.ts';
 import { useSettings } from '../store/useSettings.ts';
@@ -27,7 +29,7 @@ export const SceneManager = () => {
   });
 
   useFrame(() => {
-    if (innerWidth < 768) {
+    if (innerWidth < TABLET_BREAKPOINT) {
       // TODO: Fix this hooks warning
       // eslint-disable-next-line react-hooks/rules-of-hooks
       camera.position.z = useClamp(5.25 - (scrollPercentage * scrollPercentage), 4.25, 5.25);

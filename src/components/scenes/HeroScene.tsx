@@ -1,8 +1,9 @@
 import { useFrame } from '@react-three/fiber';
 import { button, folder, useControls } from 'leva';
-import { Color,ShaderMaterial, Vector2 } from 'three';
+import { Color, ShaderMaterial, Vector2 } from 'three';
 
-import { useScroll } from '@/store/useScroll.ts';
+import { TABLET_BREAKPOINT } from '@/lib/constants.ts';
+import { useMousePosition } from '@/store/useMousePosition.ts';
 import type { ITheme } from '@/store/useTheme.ts';
 import { THEME_COLORS, useTheme } from '@/store/useTheme.ts';
 import { useWindowSize } from '@/store/useWindowSize.ts';
@@ -11,78 +12,138 @@ import waterFragmentShader from '../../assets/shaders/water/fragment.glsl?raw';
 import waterVertexShader from '../../assets/shaders/water/vertex.glsl?raw';
 
 export const HeroScene = () => {
-  const {
-    theme,
-  } = useTheme((state: ITheme) => {
+  const { theme } = useTheme((state: ITheme) => {
     return {
       theme: state.theme,
     };
   });
 
-  const {
-    scrollPercentage,
-  } = useScroll((state) => {
-    return {
-      scrollPercentage: state.scrollPercentage,
-    };
-  });
-
-  const {
-    innerWidth,
-  } = useWindowSize((state) => {
+  const { innerWidth } = useWindowSize((state) => {
     return {
       innerWidth: state.innerWidth,
     };
   });
 
-  const defaultValues = {
+  const mousePosition = useMousePosition();
+
+  const defaultSunValues = {
+    radius: 4,
+    sunXPosition: 0,
+    sunXPositionMouseXFactor: 1400,
+    sunYPosition: 0,
+    sunYPositionMouseYFactor: 3600,
+    sunZPosition: innerWidth < TABLET_BREAKPOINT ? -5.5 : -3,
+  };
+
+  const defaultWaveValues = {
     waveXPosition: 0.5,
-    waveYPosition: -0.2,
+    waveYPosition: -0.5,
     waveZPosition: 3.5,
-    waveXRotation: -Math.PI * 0.45,
+    waveXRotation: -Math.PI * 0.4,
+    waveXRotationMouseYFactor: 3750,
     waveYRotation: 0,
+    waveYRotationMouseXFactor: 15000,
     waveZRotation: Math.PI * 0.55,
   };
 
-  const [{
-    waveXPosition,
-    waveYPosition,
-    waveZPosition,
-    waveXRotation,
-    waveYRotation,
-    waveZRotation,
-  }, set] = useControls('Hero Scene', () => ({
-    wave: folder({
-      'Reset Defaults': button(() => set(defaultValues)),
+  const [
+    {
+      radius,
+      sunXPosition,
+      sunXPositionMouseXFactor,
+      sunYPosition,
+      sunYPositionMouseYFactor,
+      sunZPosition,
+      waveXPosition,
+      waveYPosition,
+      waveZPosition,
+      waveXRotation,
+      waveXRotationMouseYFactor,
+      waveYRotation,
+      waveYRotationMouseXFactor,
+      waveZRotation,
+    },
+    set,
+  ] = useControls('Hero Scene', () => ({
+    sun: folder({
+      'Reset Sun Defaults': button(() => set(defaultSunValues)),
+      radius: {
+        value: defaultSunValues.radius,
+        step: 0.1,
+      },
       position: folder({
-        waveXPosition: {
-          value: defaultValues.waveXPosition,
-          step: 0.02
+        sunXPosition: {
+          value: defaultSunValues.sunXPosition,
+          step: 0.02,
         },
-        waveYPosition: {
-          value: defaultValues.waveYPosition,
-          step: 0.02
+        sunXPositionMouseXFactor: {
+          value: defaultSunValues.sunXPositionMouseXFactor,
+          step: 50,
+          min: 500,
+          max: 15000,
         },
-        waveZPosition: {
-          value: defaultValues.waveZPosition,
-          step: 0.02
+        sunYPosition: {
+          value: defaultSunValues.sunYPosition,
+          step: 0.02,
         },
-      }),
-      rotation: folder({
-        waveXRotation: {
-          value: defaultValues.waveXRotation,
-          step: 0.02
+        sunYPositionMouseYFactor: {
+          value: defaultSunValues.sunYPositionMouseYFactor,
+          step: 50,
+          min: 500,
+          max: 15000,
         },
-        waveYRotation: {
-          value: defaultValues.waveYRotation,
-          step: 0.02
-        },
-        waveZRotation: {
-          value: defaultValues.waveZRotation,
-          step: 0.02
+        sunZPosition: {
+          value: defaultSunValues.sunZPosition,
+          step: 0.02,
         },
       }),
-    }, { collapsed: true }),
+    }),
+    wave: folder(
+      {
+        'Reset Wave Defaults': button(() => set(defaultWaveValues)),
+        position: folder({
+          waveXPosition: {
+            value: defaultWaveValues.waveXPosition,
+            step: 0.02,
+          },
+          waveYPosition: {
+            value: defaultWaveValues.waveYPosition,
+            step: 0.02,
+          },
+          waveZPosition: {
+            value: defaultWaveValues.waveZPosition,
+            step: 0.02,
+          },
+        }),
+        rotation: folder({
+          waveXRotation: {
+            value: defaultWaveValues.waveXRotation,
+            step: 0.02,
+          },
+          waveXRotationMouseYFactor: {
+            value: defaultWaveValues.waveXRotationMouseYFactor,
+            step: 50,
+            min: 1500,
+            max: 35000,
+          },
+          waveYRotation: {
+            value: defaultWaveValues.waveYRotation,
+            step: 0.02,
+          },
+          waveYRotationMouseXFactor: {
+            value: defaultWaveValues.waveYRotationMouseXFactor,
+            step: 50,
+            min: 0,
+            max: 15000000,
+          },
+          waveZRotation: {
+            value: defaultWaveValues.waveZRotation,
+            step: 0.02,
+          },
+        }),
+      },
+      { collapsed: false },
+    ),
   }));
 
   useFrame(({ clock }) => {
@@ -117,24 +178,30 @@ export const HeroScene = () => {
 
   return (
     <>
-        {/* Wave */}
-        <mesh
-          rotation={[waveXRotation + scrollPercentage * 4, waveYRotation, waveZRotation]}
-          position={[waveXPosition, waveYPosition + scrollPercentage * 2, waveZPosition]}
-        >
-          <planeGeometry
-            args={[5, 12, 512, 512]}
-          />
-          <primitive object={waterMaterial}/>
-        </mesh>
+      {/* Sun */}
+      <mesh
+        position={[
+          sunXPosition + mousePosition.x / -sunXPositionMouseXFactor,
+          sunYPosition + mousePosition.y / sunYPositionMouseYFactor,
+          sunZPosition,
+        ]}
+      >
+        <sphereGeometry args={[radius, 64, 64]} />
+        <meshBasicMaterial color={THEME_COLORS[theme].tertiary} />
+      </mesh>
 
-        {/* Sun */}
-        <mesh
-          position={[0, scrollPercentage * 24, innerWidth < 768 ? -5.5 : -3]}
-        >
-          <sphereGeometry args={[4, 64, 64]}/>
-          <meshBasicMaterial color={THEME_COLORS[theme].tertiary}/>
-        </mesh>
+      {/* Wave */}
+      <mesh
+        rotation={[
+          waveXRotation + mousePosition.y / waveXRotationMouseYFactor,
+          waveYRotation - mousePosition.x / -waveYRotationMouseXFactor,
+          waveZRotation,
+        ]}
+        position={[waveXPosition, waveYPosition, waveZPosition]}
+      >
+        <planeGeometry args={[5, 12, 512, 512]} />
+        <primitive object={waterMaterial} />
+      </mesh>
     </>
   );
 };

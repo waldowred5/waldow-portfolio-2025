@@ -4,9 +4,9 @@ import { button, folder, useControls } from 'leva';
 export const FX = () => {
   const bloomDefaultValues = {
     bloomEnabled: true,
-    intensity: 1.2,
-    luminanceThreshold: 0.5,
-    luminanceSmoothing: 0.74,
+    intensity: 1.8,
+    luminanceThreshold: 0,
+    luminanceSmoothing: 0.18,
   };
 
   const [

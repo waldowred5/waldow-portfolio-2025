@@ -1,11 +1,10 @@
-import { BackgroundBeams } from '@/components/ui/acerternity/BackgroundBeams.tsx';
-
-import { FiberCanvas } from './components/FiberCanvas.tsx';
-import { EventManager } from './components/helpers/EventManager.tsx';
-import { LevaPanel } from './components/helpers/LevaPanel.tsx';
-import { ActionBar } from './components/ui/ActionBar.tsx';
-import { HeroText } from './components/ui/HeroText.tsx';
-import { Section } from './components/ui/Section.tsx';
+import { FiberCanvas } from '@/components/FiberCanvas.tsx';
+import { EventManager } from '@/components/helpers/EventManager.tsx';
+import { LevaPanel } from '@/components/helpers/LevaPanel.tsx';
+import { ActionBar } from '@/components/ui/ActionBar.tsx';
+import { Background } from '@/components/ui/Background.tsx';
+import { HeroText } from '@/components/ui/HeroText.tsx';
+import { Section } from '@/components/ui/Section.tsx';
 
 // FEATURES TODO:
 // - Update text to scale on viewport size
@@ -21,7 +20,8 @@ export const App = () => {
 
       <div className={'flex-col w-full'}>
         <EventManager />
-        <BackgroundBeams />
+
+        <Background />
 
         <FiberCanvas />
 
