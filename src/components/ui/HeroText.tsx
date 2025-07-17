@@ -8,11 +8,11 @@ import { HeroSubHeading } from './HeroSubHeading.tsx';
 export const HeroText = () => {
   return (
     <>
-      <div className={'absolute top-0 left-0 grid grid-rows-sm md:grid-rows-md flex flex-col items-center justify-center w-screen h-lvh text-white select-none'}>
+      <div className={'grid grid-rows-sm md:grid-rows-md flex flex-col items-center justify-center w-screen h-lvh text-white select-none'}>
         <div></div>
         <div className={'flex flex-col items-center'}>
           <h1
-            className={'text-4xl md:text-7xl lg:text-8xl font-extralight'}
+            className={'text-xl md:text-7xl lg:text-8xl font-extralight'}
             style={{ textShadow: '1px 1px 4px #000000' }}
           >
             {'DANIEL'}
@@ -29,7 +29,7 @@ export const HeroText = () => {
           <div className={'flex flex-col lg:flex-row gap-y-[18px] md:gap-y-[24px] lg:gap-x-[24px] items-center justify-center'}>
             <HeroSubHeading content={'FULL-TIME WEB DEV'} />
             <div className={'hidden lg:flex w-[2px] h-[24px] bg-white shadow-sm'}></div>
-            <HeroSubHeading content={'PART-TIME GAME DEV'} />
+            <HeroSubHeading content={'PART-TIME VFX DEV'} />
           </div>
           <HeroSubHeading content={'CASUAL HUMAN'} />
           <HeroSubHeading content={''} />

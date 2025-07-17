@@ -50,7 +50,7 @@ export const ActionBar = () => {
               className={'cursor-pointer'}
               onMouseEnter={() => setText('STALK MY CAREER →')}
             >
-              <Icon href={'https://www.linkedin.com/in/daniel-waldow-22a85398/'}>
+              <Icon href={'https://www.linkedin.com/in/daniel-waldow/'}>
                 <FaLinkedin/>
               </Icon>
             </div>
@@ -59,7 +59,7 @@ export const ActionBar = () => {
               className={'cursor-pointer'}
               onMouseEnter={() => setText('STEAL MY CODE →')}
             >
-              <Icon href={'https://github.com/waldowred5/waldow-portfolio-2024'}>
+              <Icon href={'https://github.com/waldowred5/waldow-portfolio-2025'}>
                 <FaGithub/>
               </Icon>
             </div>

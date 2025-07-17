@@ -14,6 +14,10 @@
   }
 }
 
+html, body {
+  overflow: hidden;
+}
+
 body {
   background: #000000;
   font-family: 'Kanit', sans-serif;
