@@ -1,8 +1,7 @@
 import { Route, Routes } from 'react-router';
 
 import { App } from '@/App.tsx';
-import { HeroScenePortal } from '@/components/scenes/HeroScenePortal.tsx';
-
+import { HeroScenePortal } from '@/components/scenes/Hero/HeroScenePortal.tsx';
 
 export const BrowserRoutes = () => {
   return (

@@ -14,7 +14,7 @@ import { Background } from '@/components/ui/Background.tsx';
 export const App = () => {
   return (
     <>
-      <LevaPanel/>
+      <LevaPanel />
 
       <div className={'flex-col w-full'}>
         <EventManager />
