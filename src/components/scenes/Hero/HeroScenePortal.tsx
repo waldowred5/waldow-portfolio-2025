@@ -1,7 +1,6 @@
 import { Canvas } from '@react-three/fiber';
 
-import { FX } from '@/components/helpers/FX.tsx';
-import { HeroScene } from '@/components/scenes/HeroScene.tsx';
+import { HeroScene } from '@/components/scenes/Hero/HeroScene.tsx';
 import { Background } from '@/components/ui/Background.tsx';
 
 export const HeroScenePortal = () => {
@@ -16,7 +15,6 @@ export const HeroScenePortal = () => {
         }}
         legacy={true}
       >
-        <FX />
         <HeroScene />
       </Canvas>
     </div>

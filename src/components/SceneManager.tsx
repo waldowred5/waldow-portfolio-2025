@@ -1,42 +1,53 @@
-import { useControls } from 'leva';
+import { button, folder, useControls } from 'leva';
 
-import { useSettings } from '../store/useSettings.ts';
-import { HeroScene } from './scenes/HeroScene.tsx';
+import { FloatingMacbook } from '@/components/scenes/FloatingMacbook.tsx';
+import { HeroScene } from '@/components/scenes/Hero/HeroScene.tsx';
+import { SCENE, useScene } from '@/store/useScene.ts';
 
 export const SceneManager = () => {
-  const {
-    FXEnabled,
-    statsDebugPanelEnabled,
-    updateFXEnabled,
-    updateStatsDebugPanelEnabled,
-  } = useSettings((state) => {
+  const { currentScene } = useScene((state) => {
     return {
-      FXEnabled: state.FXEnabled,
-      statsDebugPanelEnabled: state.statsDebugPanelEnabled,
-      updateFXEnabled: state.updateFXEnabled,
-      updateStatsDebugPanelEnabled: state.updateStatsDebugPanelEnabled,
+      currentScene: state.currentScene,
     };
   });
 
-  useControls('Settings', {
-    FXEnabled: {
-      value: FXEnabled,
-      onChange: (value: boolean) => {
-        updateFXEnabled(value);
-      }
-    },
-    statsEnabled: {
-      value: statsDebugPanelEnabled,
-      onChange: (value: boolean) => {
-        updateStatsDebugPanelEnabled(value);
-      }
-    },
-  });
+  const defaultValues = {
+    opacity: 1,
+    currentScene,
+  };
 
-  return (
-    <>
-      <HeroScene/>
-      {/* <CoderScene/> */}
-    </>
+  const [{ scene }, set] = useControls(
+    'Scene Manager',
+    () => ({
+      Scene: folder(
+        {
+          'Reset Scene Defaults': button(() => set(defaultValues)),
+          opacity: {
+            value: defaultValues.opacity,
+            step: 0.01,
+            min: 0,
+            max: 1,
+          },
+          scene: {
+            value: currentScene,
+            options: {
+              Hero: SCENE.HERO,
+              FloatingMacbook: SCENE.FLOATING_MACBOOK,
+            },
+          },
+        },
+        { collapsed: false },
+      ),
+    }),
+    { collapsed: false },
   );
+
+  const Scene = {
+    [SCENE.HERO]: HeroScene,
+    [SCENE.FLOATING_MACBOOK]: FloatingMacbook,
+  };
+
+  const Component = Scene[scene] || Scene[SCENE.HERO];
+
+  return <Component />;
 };

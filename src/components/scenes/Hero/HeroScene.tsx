@@ -1,5 +1,6 @@
 import { Html } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
+import { Bloom, EffectComposer } from '@react-three/postprocessing';
 import { button, folder, useControls } from 'leva';
 import { Color, ShaderMaterial, Vector2 } from 'three';
 
@@ -10,10 +11,14 @@ import type { ITheme } from '@/store/useTheme.ts';
 import { THEME_COLORS, useTheme } from '@/store/useTheme.ts';
 import { useWindowSize } from '@/store/useWindowSize.ts';
 
-import waterFragmentShader from '../../assets/shaders/water/fragment.glsl?raw';
-import waterVertexShader from '../../assets/shaders/water/vertex.glsl?raw';
+import waterFragmentShader from '../../../assets/shaders/water/fragment.glsl?raw';
+import waterVertexShader from '../../../assets/shaders/water/vertex.glsl?raw';
 
-export const HeroScene = () => {
+interface Props {
+  opacity?: number;
+}
+
+export const HeroScene = ({ opacity = 1 }: Props) => {
   const { theme } = useTheme((state: ITheme) => {
     return {
       theme: state.theme,
@@ -27,6 +32,13 @@ export const HeroScene = () => {
   });
 
   const mousePosition = useMousePosition();
+
+  const bloomDefaultValues = {
+    bloomEnabled: true,
+    intensity: 1.8,
+    luminanceThreshold: 0,
+    luminanceSmoothing: 0.18,
+  };
 
   const defaultSunValues = {
     radius: 4,
@@ -90,7 +102,7 @@ export const HeroScene = () => {
             max: 15000,
           },
         },
-        { collapsed: false },
+        { collapsed: true },
       ),
       wave: folder(
         {
@@ -138,16 +150,19 @@ export const HeroScene = () => {
         },
       }),
     }),
-    { collapsed: false },
+    { collapsed: true },
   );
 
   useFrame(({ clock }) => {
     waterMaterial.uniforms.uTime.value = clock.getElapsedTime();
+    waterMaterial.opacity = opacity;
   });
 
   const waterMaterial = new ShaderMaterial({
     vertexShader: waterVertexShader,
     fragmentShader: waterFragmentShader,
+    transparent: true,
+    opacity: 0,
     uniforms: {
       // Time
       uTime: { value: 0 },
@@ -173,6 +188,16 @@ export const HeroScene = () => {
 
   return (
     <>
+      {/* FX */}
+      <EffectComposer>
+        <Bloom
+          intensity={bloomDefaultValues.intensity}
+          luminanceThreshold={bloomDefaultValues.luminanceThreshold}
+          luminanceSmoothing={bloomDefaultValues.luminanceSmoothing}
+          mipmapBlur
+        />
+      </EffectComposer>
+
       {/* Sun */}
       <mesh
         position={[
@@ -182,7 +207,11 @@ export const HeroScene = () => {
         ]}
       >
         <sphereGeometry args={[radius, 64, 64]} />
-        <meshBasicMaterial color={THEME_COLORS[theme].tertiary} />
+        <meshBasicMaterial
+          color={THEME_COLORS[theme].tertiary}
+          transparent
+          opacity={opacity}
+        />
       </mesh>
 
       {/* Wave */}
