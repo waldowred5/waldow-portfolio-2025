@@ -1,37 +1,53 @@
 import { Canvas } from '@react-three/fiber';
+import { button, folder, useControls } from 'leva';
 import { Perf } from 'r3f-perf';
 
-import { useSettings } from '../store/useSettings.ts';
-import { FX } from './helpers/FX.tsx';
 import { KeyboardInputManager } from './helpers/KeyboardInputManager.tsx';
 import { SceneManager } from './SceneManager.tsx';
 
 export const FiberCanvas = () => {
-  const {
-    FXEnabled,
-    statsDebugPanelEnabled,
-  } = useSettings((state) => {
-    return {
-      FXEnabled: state.FXEnabled,
-      statsDebugPanelEnabled: state.statsDebugPanelEnabled,
-    };
-  });
+  const defaultCameraValues = {
+    fov: 75,
+  };
+
+  const [{ fov, statsDebugPanelEnabled }, set] = useControls(
+    'Settings',
+    () => ({
+      'Reset Settings': button(() =>
+        set({ fov: defaultCameraValues.fov, statsDebugPanelEnabled: false }),
+      ),
+      statsDebugPanelEnabled: {
+        value: false,
+      },
+      camera: folder(
+        {
+          'Reset Camera Defaults': button(() => set(defaultCameraValues)),
+          fov: {
+            value: defaultCameraValues.fov,
+            step: 5,
+          },
+        },
+        { collapsed: true },
+      ),
+    }),
+    { collapsed: true },
+  );
 
   return (
     <>
       <div className={'fixed flex w-full h-lvh'}>
         <KeyboardInputManager>
           <Canvas
+            legacy={true}
+            className={'touch-none'}
             camera={{
-              fov: 75,
+              fov,
               near: 0.1,
               far: 100,
             }}
-            legacy={true}
           >
-            { FXEnabled && <FX/> }
-            { statsDebugPanelEnabled && <Perf position={'bottom-right'}/> }
-            <SceneManager/>
+            {statsDebugPanelEnabled && <Perf position={'bottom-right'} />}
+            <SceneManager />
           </Canvas>
         </KeyboardInputManager>
       </div>
