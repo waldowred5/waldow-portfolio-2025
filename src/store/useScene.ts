@@ -2,7 +2,7 @@ import { createWithEqualityFn } from 'zustand/traditional';
 
 export const SCENE = {
   HERO: 'HERO',
-  FLOATING_MACBOOK: 'FLOATING_MACBOOK',
+  CODING: 'CODING',
 };
 
 interface SceneState {

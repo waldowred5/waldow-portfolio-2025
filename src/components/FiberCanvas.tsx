@@ -42,7 +42,7 @@ export const FiberCanvas = () => {
             className={'touch-none'}
             camera={{
               fov,
-              near: 0.1,
+              near: 0.01,
               far: 100,
             }}
           >

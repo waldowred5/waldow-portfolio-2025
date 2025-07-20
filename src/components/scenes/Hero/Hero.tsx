@@ -18,7 +18,7 @@ interface Props {
   opacity?: number;
 }
 
-export const HeroScene = ({ opacity = 1 }: Props) => {
+export const Hero = ({ opacity = 1 }: Props) => {
   const { theme } = useTheme((state: ITheme) => {
     return {
       theme: state.theme,

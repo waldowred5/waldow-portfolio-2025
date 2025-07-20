@@ -1,7 +1,7 @@
 import { button, folder, useControls } from 'leva';
 
-import { FloatingMacbook } from '@/components/scenes/FloatingMacbook.tsx';
-import { HeroScene } from '@/components/scenes/Hero/HeroScene.tsx';
+import { Coding } from '@/components/scenes/Coding.tsx';
+import { Hero } from '@/components/scenes/Hero/Hero.tsx';
 import { SCENE, useScene } from '@/store/useScene.ts';
 
 export const SceneManager = () => {
@@ -32,7 +32,7 @@ export const SceneManager = () => {
             value: currentScene,
             options: {
               Hero: SCENE.HERO,
-              FloatingMacbook: SCENE.FLOATING_MACBOOK,
+              Coding: SCENE.CODING,
             },
           },
         },
@@ -43,8 +43,8 @@ export const SceneManager = () => {
   );
 
   const Scene = {
-    [SCENE.HERO]: HeroScene,
-    [SCENE.FLOATING_MACBOOK]: FloatingMacbook,
+    [SCENE.HERO]: Hero,
+    [SCENE.CODING]: Coding,
   };
 
   const Component = Scene[scene] || Scene[SCENE.HERO];

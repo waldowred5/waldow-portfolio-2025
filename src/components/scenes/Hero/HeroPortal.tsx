@@ -1,9 +1,9 @@
 import { Canvas } from '@react-three/fiber';
 
-import { HeroScene } from '@/components/scenes/Hero/HeroScene.tsx';
+import { Hero } from '@/components/scenes/Hero/Hero.tsx';
 import { Background } from '@/components/ui/Background.tsx';
 
-export const HeroScenePortal = () => {
+export const HeroPortal = () => {
   return (
     <div className={'fixed flex w-full h-lvh'}>
       <Background />
@@ -15,7 +15,7 @@ export const HeroScenePortal = () => {
         }}
         legacy={true}
       >
-        <HeroScene />
+        <Hero />
       </Canvas>
     </div>
   );
