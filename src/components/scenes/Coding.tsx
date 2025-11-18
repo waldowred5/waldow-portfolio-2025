@@ -228,8 +228,8 @@ export const Coding = () => {
           position={[deskPosition.x, deskPosition.y, deskPosition.z]}
           rotation={[-Math.PI / 2, 0, 0]}
         >
-          {/*<meshPhongMaterial transparent opacity={0.15} />*/}
-          <MeshTransmissionMaterial {...config} />
+          <meshPhongMaterial transparent opacity={0.25} />
+          {/*<MeshTransmissionMaterial {...config} />*/}
         </RoundedBox>
 
         {/* Chair */}
@@ -238,7 +238,7 @@ export const Coding = () => {
           radius={0.5}
           position={[chairPosition.x, chairPosition.y, chairPosition.z]}
         >
-          <meshPhongMaterial transparent opacity={0.15} />
+          <meshPhongMaterial transparent opacity={0.25} />
           {/*<MeshTransmissionMaterial {...config} />*/}
         </RoundedBox>
 
