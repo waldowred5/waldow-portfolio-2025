@@ -5,7 +5,7 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 import tseslint from 'typescript-eslint';
 import reactESLintPlugin from 'eslint-plugin-react';
 import { globalIgnores } from 'eslint/config';
-import eslintPluginSimpleImportSort from "eslint-plugin-simple-import-sort";
+import eslintPluginSimpleImportSort from 'eslint-plugin-simple-import-sort';
 
 export default tseslint.config([
   globalIgnores(['dist']),
@@ -27,15 +27,17 @@ export default tseslint.config([
     },
     rules: {
       '@typescript-eslint/consistent-type-imports': 'error',
-      'semi': ['error', 'always'],
+      'erasable-syntax-only': 'off',
+      semi: ['error', 'always'],
       'object-curly-spacing': ['error', 'always'],
-      'quotes': ['error', 'single'],
+      quotes: ['error', 'single'],
+      'react/jsx-space-before-closing': ['error', 'always'],
       'simple-import-sort/imports': 'error',
       'simple-import-sort/exports': 'error',
       'react/jsx-curly-brace-presence': [
         'error',
         { props: 'always', children: 'always' },
       ],
-    }
+    },
   },
 ]);

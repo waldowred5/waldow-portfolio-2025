@@ -1,78 +1,53 @@
-import { useFrame, useThree } from '@react-three/fiber';
-import { useControls } from 'leva';
+import { button, folder, useControls } from 'leva';
 
-import { TABLET_BREAKPOINT } from '@/lib/constants.ts';
-
-import { useClamp } from '../hooks/useClamp.ts';
-import { useScroll } from '../store/useScroll.ts';
-import { useSettings } from '../store/useSettings.ts';
-import { useWindowSize } from '../store/useWindowSize.ts';
-import { HeroScene } from './scenes/HeroScene.tsx';
+import { Coding } from '@/components/scenes/Coding.tsx';
+import { Hero } from '@/components/scenes/Hero/Hero.tsx';
+import { SCENE, useScene } from '@/store/useScene.ts';
 
 export const SceneManager = () => {
-  const { camera } = useThree();
-
-  const {
-    scrollPercentage,
-  } = useScroll((state) => {
+  const { currentScene } = useScene((state) => {
     return {
-      scrollPercentage: state.scrollPercentage,
+      currentScene: state.currentScene,
     };
   });
 
-  const {
-    innerWidth,
-  } = useWindowSize((state) => {
-    return {
-      innerWidth: state.innerWidth,
-    };
-  });
+  const defaultValues = {
+    opacity: 1,
+    currentScene,
+  };
 
-  useFrame(() => {
-    if (innerWidth < TABLET_BREAKPOINT) {
-      // TODO: Fix this hooks warning
-      // eslint-disable-next-line react-hooks/rules-of-hooks
-      camera.position.z = useClamp(5.25 - (scrollPercentage * scrollPercentage), 4.25, 5.25);
-    } else {
-      // TODO: Fix this hooks warning
-      // eslint-disable-next-line react-hooks/rules-of-hooks
-      camera.position.z = useClamp(4 - (scrollPercentage * scrollPercentage), 3, 4);
-    }
-  });
-
-  const {
-    FXEnabled,
-    statsDebugPanelEnabled,
-    updateFXEnabled,
-    updateStatsDebugPanelEnabled,
-  } = useSettings((state) => {
-    return {
-      FXEnabled: state.FXEnabled,
-      statsDebugPanelEnabled: state.statsDebugPanelEnabled,
-      updateFXEnabled: state.updateFXEnabled,
-      updateStatsDebugPanelEnabled: state.updateStatsDebugPanelEnabled,
-    };
-  });
-
-  useControls('Settings', {
-    FXEnabled: {
-      value: FXEnabled,
-      onChange: (value: boolean) => {
-        updateFXEnabled(value);
-      }
-    },
-    statsEnabled: {
-      value: statsDebugPanelEnabled,
-      onChange: (value: boolean) => {
-        updateStatsDebugPanelEnabled(value);
-      }
-    },
-  });
-
-  return (
-    <>
-      <HeroScene/>
-      {/* <CoderScene/> */}
-    </>
+  const [{ scene }, set] = useControls(
+    'Scene Manager',
+    () => ({
+      Scene: folder(
+        {
+          'Reset Scene Defaults': button(() => set(defaultValues)),
+          opacity: {
+            value: defaultValues.opacity,
+            step: 0.01,
+            min: 0,
+            max: 1,
+          },
+          scene: {
+            value: currentScene,
+            options: {
+              Hero: SCENE.HERO,
+              Coding: SCENE.CODING,
+            },
+          },
+        },
+        { collapsed: false },
+      ),
+    }),
+    { collapsed: false },
   );
+
+  const Scene = {
+    [SCENE.HERO]: Hero,
+    [SCENE.CODING]: Coding,
+  };
+
+  const Component = Scene[scene] || Scene[SCENE.HERO];
+
+  return <Component />;
 };
