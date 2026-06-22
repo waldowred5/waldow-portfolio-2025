@@ -66,7 +66,8 @@ export const Macbook = (props: JSX.IntrinsicElements['group']) => {
   const { nodes, materials } = useGLTF(
     'https://vazxmixjsiawhamofees.supabase.co/storage/v1/object/public/models/macbook/model.gltf'
   ) as GLTFResult;
-  return (
+  
+return (
     <group ref={group} {...props} dispose={null}>
       { props.children }
       <group position={[0, 0.52, 0]} scale={[0.1, 0.1, 0.1]}>

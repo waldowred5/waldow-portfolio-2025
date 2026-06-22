@@ -21,21 +21,24 @@ export const Hero2DFallback = () => {
     let rafId: number;
 
     const tick = (now: number) => {
-      if (startTime === null) startTime = now;
+      if (startTime === null) {
+        startTime = now;
+      }
 
       const loaded = isLoadedRef.current;
       const t = (now - startTime) / DURATION;
 
       // Ease-in-quad: slow start, accelerates. Drifts past 3s so it never appears frozen.
-      const naturalTarget = t < 1
-        ? Math.pow(t, 2) * 0.9
-        : Math.min(0.9 + (t - 1) * 0.03, 0.97);
+      const naturalTarget =
+        t < 1 ? Math.pow(t, 2) * 0.9 : Math.min(0.9 + (t - 1) * 0.03, 0.97);
 
       const target = loaded ? 1 : Math.max(naturalTarget, current);
       const factor = loaded ? 0.15 : 0.04;
 
       current += (target - current) * factor;
-      if (Math.abs(target - current) < 0.0008) current = target;
+      if (Math.abs(target - current) < 0.0008) {
+        current = target;
+      }
 
       // Direct DOM write — no React re-render per frame
       if (glowRef.current) {
@@ -45,6 +48,7 @@ export const Hero2DFallback = () => {
       if (current >= 0.999 && loaded) {
         setGlowFading();
         setFadeOut(true);
+
         return;
       }
 
@@ -52,16 +56,22 @@ export const Hero2DFallback = () => {
     };
 
     rafId = requestAnimationFrame(tick);
+
     return () => cancelAnimationFrame(rafId);
   }, [setGlowFading]);
 
   useEffect(() => {
-    if (!fadeOut) return;
+    if (!fadeOut) {
+      return;
+    }
     const t = setTimeout(() => setUnmounted(true), 900);
+
     return () => clearTimeout(t);
   }, [fadeOut]);
 
-  if (unmounted) return null;
+  if (unmounted) {
+    return null;
+  }
 
   return (
     <div

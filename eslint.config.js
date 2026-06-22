@@ -28,10 +28,18 @@ export default tseslint.config([
     rules: {
       '@typescript-eslint/consistent-type-imports': 'error',
       'erasable-syntax-only': 'off',
+      'newline-before-return': 'error',
+      'curly': 'error',
+      'nonblock-statement-body-position': ['error', 'below'],
       semi: ['error', 'always'],
       'object-curly-spacing': ['error', 'always'],
       quotes: ['error', 'single'],
-      'react/jsx-space-before-closing': ['error', 'always'],
+      'react/jsx-tag-spacing': ['error', {
+        closingSlash: 'never',
+        beforeSelfClosing: 'always',
+        afterOpening: 'never',
+        beforeClosing: 'allow',
+      }],
       'simple-import-sort/imports': 'error',
       'simple-import-sort/exports': 'error',
       'react/jsx-curly-brace-presence': [

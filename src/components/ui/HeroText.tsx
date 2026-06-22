@@ -10,7 +10,8 @@ const getRandomTagline = () => {
   const { verbs, taglines } = TAGLINES[letter];
   const verb = verbs[Math.floor(Math.random() * verbs.length)];
   const tagline = taglines[Math.floor(Math.random() * taglines.length)];
-  return `${verb}${tagline}`;
+  
+return `${verb}${tagline}`;
 };
 
 export const HeroText = () => {
@@ -21,14 +22,16 @@ export const HeroText = () => {
 
   useEffect(() => {
     const id = setTimeout(() => setMounted(true), 50);
-    return () => clearTimeout(id);
+    
+return () => clearTimeout(id);
   }, []);
 
   useEffect(() => {
     const id = setInterval(() => {
       setDotFrame(f => (f + 1) % ELLIPSIS_FRAMES.length);
     }, 400);
-    return () => clearInterval(id);
+    
+return () => clearInterval(id);
   }, []);
 
   useEffect(() => {
@@ -39,7 +42,8 @@ export const HeroText = () => {
         setVisible(true);
       }, 300);
     }, 6500);
-    return () => clearInterval(id);
+    
+return () => clearInterval(id);
   }, []);
 
   const visibleDots = ELLIPSIS_FRAMES[dotFrame];
