@@ -1,6 +1,5 @@
 import {
   type CameraControls as ThreeCameraControls,
-  MeshTransmissionMaterial,
   RoundedBox,
 } from '@react-three/drei';
 import {
@@ -12,7 +11,6 @@ import {
 import { useThree } from '@react-three/fiber';
 import { button, buttonGroup, folder, useControls } from 'leva';
 import { Suspense, useEffect, useRef, useState } from 'react';
-import type { PerspectiveCamera as ThreePerspectiveCamera } from 'three';
 
 import { Macbook } from '@/components/models/Macbook.tsx';
 import { WaldowAvatar } from '@/components/models/WaldowAvatar.tsx';
@@ -164,6 +162,7 @@ export const Coding = () => {
     { collapsed: true },
   );
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const config = useControls('Coding Scene', {
     'Transmissive Mesh': folder({
       meshPhysicalMaterial: false,
