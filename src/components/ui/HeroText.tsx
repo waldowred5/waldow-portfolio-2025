@@ -1,27 +1,36 @@
-import { useEffect,useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { TAGLINES } from './heroTextTaglines.ts';
 
 const LETTERS = Object.keys(TAGLINES) as Array<keyof typeof TAGLINES>;
 const ELLIPSIS_FRAMES = [1, 2, 3, 2];
 
-function getRandomTagline() {
+const getRandomTagline = () => {
   const letter = LETTERS[Math.floor(Math.random() * LETTERS.length)];
   const { verbs, taglines } = TAGLINES[letter];
   const verb = verbs[Math.floor(Math.random() * verbs.length)];
   const tagline = taglines[Math.floor(Math.random() * taglines.length)];
+
   return `${verb}${tagline}`;
-}
+};
 
 export const HeroText = () => {
   const [tagline, setTagline] = useState(() => getRandomTagline());
   const [visible, setVisible] = useState(true);
   const [dotFrame, setDotFrame] = useState(0);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const id = setTimeout(() => setMounted(true), 50);
+
+    return () => clearTimeout(id);
+  }, []);
 
   useEffect(() => {
     const id = setInterval(() => {
-      setDotFrame(f => (f + 1) % ELLIPSIS_FRAMES.length);
+      setDotFrame((f) => (f + 1) % ELLIPSIS_FRAMES.length);
     }, 400);
+
     return () => clearInterval(id);
   }, []);
 
@@ -33,6 +42,7 @@ export const HeroText = () => {
         setVisible(true);
       }, 300);
     }, 6500);
+
     return () => clearInterval(id);
   }, []);
 
@@ -41,14 +51,14 @@ export const HeroText = () => {
   return (
     <>
       <div
-        className={
-          'grid grid-rows-sm md:grid-rows-md flex flex-col items-center justify-center w-screen h-lvh text-white select-none'
-        }
+        className={`grid grid-rows-sm md:grid-rows-md flex flex-col items-center justify-center w-screen h-lvh text-white select-none transition-opacity duration-700 ${mounted ? 'opacity-100' : 'opacity-0'}`}
       >
         <div></div>
         <div className={'flex flex-col items-center'}>
           <h1
-            className={'text-xl md:text-7xl lg:text-8xl font-extralight text-shadow-hero'}
+            className={
+              'text-xl md:text-7xl lg:text-8xl font-extralight text-shadow-hero'
+            }
           >
             {'DANIEL'}
           </h1>
@@ -63,18 +73,18 @@ export const HeroText = () => {
             className={'bg-white shadow-sm h-[2px] w-[80vw] my-[20px]'}
           ></div>
         </div>
-        <div className={'h-[3.5rem] md:h-[5rem] flex items-center justify-center'}>
+        <div
+          className={'h-[3.5rem] md:h-[5rem] flex items-center justify-center'}
+        >
           <h3
-            className={'text-xl md:text-4xl/[36px] font-normal text-center text-shadow-hero uppercase transition-opacity duration-300'}
-            style={{ opacity: visible ? 1 : 0 }}
+            className={`text-xl md:text-4xl/[36px] font-normal text-center text-shadow-hero uppercase transition-opacity duration-300 ${visible ? 'opacity-100' : 'opacity-0'}`}
           >
             {tagline}
             <span aria-hidden={'true'}>
-              {[0, 1, 2].map(i => (
+              {[0, 1, 2].map((i) => (
                 <span
                   key={i}
-                  className={'transition-opacity duration-200'}
-                  style={{ opacity: visibleDots > i ? 1 : 0 }}
+                  className={`transition-opacity duration-200 ${visibleDots > i ? 'opacity-100' : 'opacity-0'}`}
                 >
                   {'.'}
                 </span>

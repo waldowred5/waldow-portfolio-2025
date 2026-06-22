@@ -36,6 +36,7 @@ export const TAGLINES = {
       'experimenting',
       'expressing',
       'enabling',
+      'expensing',
     ],
     taglines: [
       ' experiences',
@@ -153,8 +154,8 @@ export const TAGLINES = {
     ],
   },
   X: {
-    verbs: ['xenomorphing', 'x-raying', 'xoring', 'xenocoding', 'xperiencing'],
-    taglines: [' xperience', ' xenomorphic xpressions', ' xcellence'],
+    verbs: ['xenomorphing', 'x-raying', 'xoring', 'xenocoding', 'xperiencing', 'xpensing'],
+    taglines: [' xperiences', ' xenomorphic xpressions', ' xcellence'],
   },
   Y: {
     verbs: ['yielding', 'yarning', 'yoking', 'yarnspinning',],

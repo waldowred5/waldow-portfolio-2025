@@ -3,6 +3,7 @@ import { FaGithub, FaLinkedin } from 'react-icons/fa';
 import { PiPaintBucketFill } from 'react-icons/pi';
 import { RiFullscreenExitLine,RiFullscreenFill } from 'react-icons/ri';
 
+import { useCanvasLoaded } from '@/store/useCanvasLoaded.ts';
 import { useTheme } from '@/store/useTheme.ts';
 import { useToggleFullscreen } from '@/store/useToggleFullscreen.ts';
 
@@ -19,6 +20,7 @@ export const ActionBar = () => {
     };
   });
 
+  const isLoaded = useCanvasLoaded((s) => s.isLoaded);
   const { isFullscreen, toggleFullscreen } = useToggleFullscreen();
 
   return (
@@ -38,10 +40,10 @@ export const ActionBar = () => {
             </div>
 
             <div
-              className={'cursor-pointer'}
-              onMouseEnter={() => setText('CHANGE SITE THEME')}
+              className={`${isLoaded ? 'cursor-pointer' : 'cursor-not-allowed opacity-30'}`}
+              onMouseEnter={() => isLoaded && setText('CHANGE SITE THEME')}
             >
-              <Icon onClick={toggleTheme}>
+              <Icon onClick={isLoaded ? toggleTheme : undefined}>
                 <PiPaintBucketFill />
               </Icon>
             </div>
