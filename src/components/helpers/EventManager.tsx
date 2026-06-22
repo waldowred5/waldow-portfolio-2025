@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 
 import { useScroll } from '../../store/useScroll.ts';
 import { useWindowSize } from '../../store/useWindowSize.ts';
@@ -20,9 +20,9 @@ export const EventManager = () => {
     };
   });
 
-  const handleScroll = () => {
+  const handleScroll = useCallback(() => {
     updateScrollPercentage(window.scrollY / window.innerHeight);
-  };
+  }, [updateScrollPercentage]);
 
   useEffect(() => {
     window.addEventListener('scroll', handleScroll);
@@ -30,11 +30,11 @@ export const EventManager = () => {
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, []);
+  }, [handleScroll]);
 
-  const handleWindowResize = () => {
+  const handleWindowResize = useCallback(() => {
     updateWindowSize(window.innerHeight, window.innerWidth);
-  };
+  }, [updateWindowSize]);
 
   useEffect(() => {
     window.addEventListener('resize', handleWindowResize);
@@ -42,7 +42,7 @@ export const EventManager = () => {
     return () => {
       window.removeEventListener('resize', handleWindowResize);
     };
-  }, []);
+  }, [handleWindowResize]);
 
   return (
     <></>

@@ -45,7 +45,7 @@ const ANIMATION = {
 export const WaldowAvatar = (props: JSX.IntrinsicElements['group']) => {
   // @ts-expect-error ...
   const group = useRef<Group>();
-  // @ts-ignore
+  // @ts-expect-error GLTFResult type mismatch with useGLTF return
   const { nodes, materials } = useGLTF('/models/waldow.glb') as GLTFResult;
   const { animations: typingAnimation } = useFBX('/animations/typing.fbx');
   const { actions } = useAnimations(typingAnimation, group);
@@ -56,7 +56,7 @@ export const WaldowAvatar = (props: JSX.IntrinsicElements['group']) => {
   useEffect(() => {
     console.log({ typingAnimation, actions });
     actions?.[ANIMATION.TYPING]?.reset().play();
-  }, [actions]);
+  }, [actions, typingAnimation]);
 
   const defaultValues = {
     position: { x: 0.73, y: -4.84, z: 4.85 },

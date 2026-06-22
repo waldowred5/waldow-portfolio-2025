@@ -42,7 +42,7 @@ export const ActionBar = () => {
               onMouseEnter={() => setText('CHANGE SITE THEME')}
             >
               <Icon onClick={toggleTheme}>
-                <PiPaintBucketFill/>
+                <PiPaintBucketFill />
               </Icon>
             </div>
 
@@ -51,7 +51,7 @@ export const ActionBar = () => {
               onMouseEnter={() => setText('STALK MY CAREER →')}
             >
               <Icon href={'https://www.linkedin.com/in/daniel-waldow/'}>
-                <FaLinkedin/>
+                <FaLinkedin />
               </Icon>
             </div>
 
@@ -60,7 +60,7 @@ export const ActionBar = () => {
               onMouseEnter={() => setText('STEAL MY CODE →')}
             >
               <Icon href={'https://github.com/waldowred5/waldow-portfolio-2025'}>
-                <FaGithub/>
+                <FaGithub />
               </Icon>
             </div>
           </div>
