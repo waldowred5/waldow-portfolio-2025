@@ -158,6 +158,10 @@ body {
 
 
 
+.glow-gradient {
+  background: radial-gradient(circle, rgba(255,255,50,0.95) 0%, rgba(255,225,0,0.82) 22%, rgba(255,25,0,0.55) 46%, rgba(210,35,0,0.28) 66%, transparent 82%);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

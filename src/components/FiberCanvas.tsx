@@ -48,11 +48,7 @@ export const FiberCanvas = () => {
   return (
     <>
       <div
-        className={'fixed flex w-full h-lvh'}
-        style={{
-          opacity: isGlowFading ? 1 : 0,
-          transition: 'opacity 300ms ease-in-out',
-        }}
+        className={`fixed flex w-full h-lvh transition-opacity duration-300 ${isGlowFading ? 'opacity-100' : 'opacity-0'}`}
       >
         <KeyboardInputManager>
           <Canvas

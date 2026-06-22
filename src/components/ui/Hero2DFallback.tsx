@@ -75,25 +75,15 @@ export const Hero2DFallback = () => {
 
   return (
     <div
-      className={'fixed inset-0 pointer-events-none'}
-      style={{
-        opacity: fadeOut ? 0 : 1,
-        transition: fadeOut ? 'opacity 1200ms ease-out' : 'none',
-      }}
+      className={`fixed inset-0 pointer-events-none ${fadeOut ? 'opacity-0 transition-opacity duration-[1200ms] ease-out' : 'opacity-100'}`}
     >
       <div
         ref={glowRef}
+        className={
+          'absolute w-[150vmax] h-[150vmax] top-1/2 left-1/2 rounded-full will-change-transform glow-gradient'
+        }
         style={{
-          position: 'absolute',
-          width: '150vmax',
-          height: '150vmax',
-          top: '50%',
-          left: '50%',
-          borderRadius: '50%',
           transform: 'translate(-50%, -50%) scale(0)',
-          background:
-            'radial-gradient(circle, rgba(255,255,50,0.95) 0%, rgba(255,225,0,0.82) 22%, rgba(255,25,0,0.55) 46%, rgba(210,35,0,0.28) 66%, transparent 82%)',
-          willChange: 'transform',
         }}
       />
     </div>
