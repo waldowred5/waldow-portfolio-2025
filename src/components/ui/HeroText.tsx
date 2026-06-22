@@ -32,7 +32,7 @@ export const HeroText = () => {
         setTagline(getRandomTagline());
         setVisible(true);
       }, 300);
-    }, 7000);
+    }, 6500);
     return () => clearInterval(id);
   }, []);
 
@@ -63,9 +63,9 @@ export const HeroText = () => {
             className={'bg-white shadow-sm h-[2px] w-[80vw] my-[20px]'}
           ></div>
         </div>
-        <div className={'flex flex-col gap-y-[18px] md:gap-y-[24px]'}>
+        <div className={'h-[3.5rem] md:h-[5rem] flex items-center justify-center'}>
           <h3
-            className={'text-xl md:text-4xl/[36px] font-normal text-center text-shadow-hero uppercase transition-opacity duration-300 min-h-[1.5em]'}
+            className={'text-xl md:text-4xl/[36px] font-normal text-center text-shadow-hero uppercase transition-opacity duration-300'}
             style={{ opacity: visible ? 1 : 0 }}
           >
             {tagline}
