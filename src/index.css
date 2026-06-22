@@ -156,10 +156,6 @@ body {
   --sidebar-ring: oklch(0.551 0.027 264.364);
 }
 
-@keyframes loading-slide {
-  0% { left: -35%; }
-  100% { left: 135%; }
-}
 
 
 @layer base {

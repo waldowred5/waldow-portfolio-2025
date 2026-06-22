@@ -6,7 +6,6 @@ import { LevaPanel } from '@/components/helpers/LevaPanel.tsx';
 import { ActionBar } from '@/components/ui/ActionBar.tsx';
 import { Background } from '@/components/ui/Background.tsx';
 import { Hero2DFallback } from '@/components/ui/Hero2DFallback.tsx';
-import { HeroLoadingBar } from '@/components/ui/HeroLoadingBar.tsx';
 import { useCanvasLoaded } from '@/store/useCanvasLoaded.ts';
 
 // FEATURES TODO:
@@ -30,9 +29,8 @@ export const App = () => {
       <div className={'flex-col w-full'}>
         <EventManager />
         <Background />
-        <FiberCanvas />
         <Hero2DFallback />
-        <HeroLoadingBar />
+        <FiberCanvas />
         <ActionBar />
       </div>
     </>

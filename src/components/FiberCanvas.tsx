@@ -9,9 +9,9 @@ import { KeyboardInputManager } from './helpers/KeyboardInputManager.tsx';
 import { SceneManager } from './SceneManager.tsx';
 
 export const FiberCanvas = () => {
-  const { setCanvasReady, isLoaded } = useCanvasLoaded((s) => ({
+  const { setCanvasReady, isGlowFading } = useCanvasLoaded((s) => ({
     setCanvasReady: s.setCanvasReady,
-    isLoaded: s.isLoaded,
+    isGlowFading: s.isGlowFading,
   }));
 
   const handleCanvasCreated = useCallback(() => {
@@ -50,8 +50,8 @@ export const FiberCanvas = () => {
       <div
         className={'fixed flex w-full h-lvh'}
         style={{
-          opacity: isLoaded ? 1 : 0,
-          transition: 'opacity 900ms ease-in-out',
+          opacity: isGlowFading ? 1 : 0,
+          transition: 'opacity 300ms ease-in-out',
         }}
       >
         <KeyboardInputManager>

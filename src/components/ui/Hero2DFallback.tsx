@@ -1,106 +1,91 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { useCanvasLoaded } from '@/store/useCanvasLoaded.ts';
-import { PARALLAX_X_FACTOR, PARALLAX_Y_FACTOR, useMousePosition } from '@/store/useMousePosition.ts';
 
 export const Hero2DFallback = () => {
   const isLoaded = useCanvasLoaded((s) => s.isLoaded);
-  const mousePosition = useMousePosition();
-  const [progress, setProgress] = useState(0);
+  const setGlowFading = useCanvasLoaded((s) => s.setGlowFading);
+  const [fadeOut, setFadeOut] = useState(false);
+  const [unmounted, setUnmounted] = useState(false);
   const isLoadedRef = useRef(false);
+  const glowRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     isLoadedRef.current = isLoaded;
   }, [isLoaded]);
 
   useEffect(() => {
-    const DELAY = 500;
-    const NATURAL_DURATION = 2500;
+    const DURATION = 3000;
     let startTime: number | null = null;
     let current = 0;
     let rafId: number;
 
     const tick = (now: number) => {
       if (startTime === null) startTime = now;
-      const elapsed = Math.max(0, now - startTime - DELAY);
-      const t = Math.min(elapsed / NATURAL_DURATION, 1);
-      // Ease-out cubic: starts fast, decelerates near the 0.9 cap
-      const eased = 1 - Math.pow(1 - t, 3);
 
-      // Natural ceiling is 0.9; jumps to 1.0 only when fully loaded
-      const target = isLoadedRef.current ? 1 : eased * 0.9;
+      const loaded = isLoadedRef.current;
+      const t = (now - startTime) / DURATION;
 
-      // Display always lerps toward target — never set directly
-      current += (target - current) * 0.05;
-      if (Math.abs(current - target) < 0.0005) current = target;
+      // Ease-in-quad: slow start, accelerates. Drifts past 3s so it never appears frozen.
+      const naturalTarget = t < 1
+        ? Math.pow(t, 2) * 0.9
+        : Math.min(0.9 + (t - 1) * 0.03, 0.97);
 
-      setProgress(current);
+      const target = loaded ? 1 : Math.max(naturalTarget, current);
+      const factor = loaded ? 0.15 : 0.04;
 
-      // Keep running until display reaches 1.0 AND load is complete
-      if (!(isLoadedRef.current && current >= 0.9995)) {
-        rafId = requestAnimationFrame(tick);
+      current += (target - current) * factor;
+      if (Math.abs(target - current) < 0.0008) current = target;
+
+      // Direct DOM write — no React re-render per frame
+      if (glowRef.current) {
+        glowRef.current.style.transform = `translate(-50%, -50%) scale(${current})`;
       }
+
+      if (current >= 0.999 && loaded) {
+        setGlowFading();
+        setFadeOut(true);
+        return;
+      }
+
+      rafId = requestAnimationFrame(tick);
     };
 
     rafId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafId);
-  }, []);
+  }, [setGlowFading]);
 
-  // cx: 100 = shadow centered on sun (new moon), -80 = shadow off left (full sun)
-  const shadowCx = 100 - 180 * progress;
+  useEffect(() => {
+    if (!fadeOut) return;
+    const t = setTimeout(() => setUnmounted(true), 900);
+    return () => clearTimeout(t);
+  }, [fadeOut]);
 
-  // Glow x: tracks the lit right portion moving from right edge toward center
-  const glowXPct = 77 - 27 * progress;
-
-  // Screen glow ramps up sharply as progress approaches 1
-  const screenGlowIntensity = Math.pow(progress, 1.5);
-
-  const sunOffsetX = mousePosition.x * PARALLAX_X_FACTOR;
-  const sunOffsetY = mousePosition.y * PARALLAX_Y_FACTOR;
+  if (unmounted) return null;
 
   return (
     <div
-      className={`fixed inset-0 pointer-events-none flex items-center justify-center transition-opacity duration-700 ${isLoaded ? 'opacity-0' : 'opacity-100'}`}
+      className={'fixed inset-0 pointer-events-none'}
+      style={{
+        opacity: fadeOut ? 0 : 1,
+        transition: fadeOut ? 'opacity 1200ms ease-out' : 'none',
+      }}
     >
-      {/* Full-screen orange glow that fills the screen as progress approaches 100% */}
       <div
-        className={'absolute inset-0'}
+        ref={glowRef}
         style={{
-          background: `radial-gradient(ellipse 100% 100% at 50% 50%, rgba(255,90,0,${screenGlowIntensity * 0.75}) 0%, rgba(210,40,0,${screenGlowIntensity * 0.5}) 45%, transparent 75%)`,
+          position: 'absolute',
+          width: '150vmax',
+          height: '150vmax',
+          top: '50%',
+          left: '50%',
+          borderRadius: '50%',
+          transform: 'translate(-50%, -50%) scale(0)',
+          background:
+            'radial-gradient(circle, rgba(255,255,50,0.95) 0%, rgba(255,225,0,0.82) 22%, rgba(255,25,0,0.55) 46%, rgba(210,35,0,0.28) 66%, transparent 82%)',
+          willChange: 'transform',
         }}
       />
-
-      <div
-        className={'relative w-[50vmin] h-[50vmin] md:w-[800px] md:h-[800px]'}
-        style={{ transform: `translate(${sunOffsetX}px, ${sunOffsetY}px)` }}
-      >
-        {/* Orange glow grows from right-side crescent to full disc */}
-        <div
-          className={'absolute inset-[-60%]'}
-          style={{
-            background: `radial-gradient(circle at ${glowXPct}% 50%, rgba(255,120,0,${0.85 * progress}) 0%, rgba(230,60,0,${0.55 * progress}) 30%, transparent 65%)`,
-          }}
-        />
-
-        <svg viewBox={'0 0 200 200'} className={'relative w-full h-full'}>
-          <defs>
-            <clipPath id={'sun-clip'}>
-              <circle cx={'100'} cy={'100'} r={'90'} />
-            </clipPath>
-          </defs>
-
-          <circle cx={'100'} cy={'100'} r={'90'} fill={'#f5e642'} />
-
-          {/* Dark shadow circle slides left to reveal the sun (moon phase effect) */}
-          <circle
-            cx={shadowCx}
-            cy={'100'}
-            r={'90'}
-            fill={'#000000'}
-            clipPath={'url(#sun-clip)'}
-          />
-        </svg>
-      </div>
     </div>
   );
 };
