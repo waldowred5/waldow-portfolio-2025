@@ -162,8 +162,7 @@ export const Coding = () => {
     { collapsed: true },
   );
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const config = useControls('Coding Scene', {
+  useControls('Coding Scene', {
     'Transmissive Mesh': folder({
       meshPhysicalMaterial: false,
       transmissionSampler: false,

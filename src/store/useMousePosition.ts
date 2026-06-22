@@ -23,7 +23,7 @@ export const useMousePosition = () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('touchmove', handleTouchMove);
     };
-  }, []);
+  }, [innerHeight, innerWidth]);
 
   return mousePosition;
 };

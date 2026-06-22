@@ -56,7 +56,7 @@ export const WaldowAvatar = (props: JSX.IntrinsicElements['group']) => {
   useEffect(() => {
     console.log({ typingAnimation, actions });
     actions?.[ANIMATION.TYPING]?.reset().play();
-  }, [actions]);
+  }, [actions, typingAnimation]);
 
   const defaultValues = {
     position: { x: 0.73, y: -4.84, z: 4.85 },
