@@ -1,11 +1,23 @@
 import { Canvas } from '@react-three/fiber';
 import { button, folder, useControls } from 'leva';
 import { Perf } from 'r3f-perf';
+import { useCallback } from 'react';
+
+import { useCanvasLoaded } from '@/store/useCanvasLoaded.ts';
 
 import { KeyboardInputManager } from './helpers/KeyboardInputManager.tsx';
 import { SceneManager } from './SceneManager.tsx';
 
 export const FiberCanvas = () => {
+  const { setCanvasReady, isLoaded } = useCanvasLoaded((s) => ({
+    setCanvasReady: s.setCanvasReady,
+    isLoaded: s.isLoaded,
+  }));
+
+  const handleCanvasCreated = useCallback(() => {
+    requestAnimationFrame(() => requestAnimationFrame(() => setCanvasReady()));
+  }, [setCanvasReady]);
+
   const defaultCameraValues = {
     fov: 75,
   };
@@ -35,7 +47,13 @@ export const FiberCanvas = () => {
 
   return (
     <>
-      <div className={'fixed flex w-full h-lvh'}>
+      <div
+        className={'fixed flex w-full h-lvh'}
+        style={{
+          opacity: isLoaded ? 1 : 0,
+          transition: 'opacity 900ms ease-in-out',
+        }}
+      >
         <KeyboardInputManager>
           <Canvas
             legacy={true}
@@ -45,6 +63,7 @@ export const FiberCanvas = () => {
               near: 0.01,
               far: 100,
             }}
+            onCreated={handleCanvasCreated}
           >
             {statsDebugPanelEnabled && <Perf position={'bottom-right'} />}
             <SceneManager />

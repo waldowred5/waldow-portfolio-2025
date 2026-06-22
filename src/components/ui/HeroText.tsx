@@ -1,22 +1,28 @@
-import { useEffect,useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { TAGLINES } from './heroTextTaglines.ts';
 
 const LETTERS = Object.keys(TAGLINES) as Array<keyof typeof TAGLINES>;
 const ELLIPSIS_FRAMES = [1, 2, 3, 2];
 
-function getRandomTagline() {
+const getRandomTagline = () => {
   const letter = LETTERS[Math.floor(Math.random() * LETTERS.length)];
   const { verbs, taglines } = TAGLINES[letter];
   const verb = verbs[Math.floor(Math.random() * verbs.length)];
   const tagline = taglines[Math.floor(Math.random() * taglines.length)];
   return `${verb}${tagline}`;
-}
+};
 
 export const HeroText = () => {
   const [tagline, setTagline] = useState(() => getRandomTagline());
   const [visible, setVisible] = useState(true);
   const [dotFrame, setDotFrame] = useState(0);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const id = setTimeout(() => setMounted(true), 50);
+    return () => clearTimeout(id);
+  }, []);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -41,9 +47,8 @@ export const HeroText = () => {
   return (
     <>
       <div
-        className={
-          'grid grid-rows-sm md:grid-rows-md flex flex-col items-center justify-center w-screen h-lvh text-white select-none'
-        }
+        className={'grid grid-rows-sm md:grid-rows-md flex flex-col items-center justify-center w-screen h-lvh text-white select-none transition-opacity duration-700'}
+        style={{ opacity: mounted ? 1 : 0 }}
       >
         <div></div>
         <div className={'flex flex-col items-center'}>
