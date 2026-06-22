@@ -45,6 +45,7 @@ const ANIMATION = {
 export const WaldowAvatar = (props: JSX.IntrinsicElements['group']) => {
   // @ts-expect-error ...
   const group = useRef<Group>();
+  // @ts-ignore
   const { nodes, materials } = useGLTF('/models/waldow.glb') as GLTFResult;
   const { animations: typingAnimation } = useFBX('/animations/typing.fbx');
   const { actions } = useAnimations(typingAnimation, group);
