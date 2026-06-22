@@ -9,6 +9,7 @@ import { TABLET_BREAKPOINT } from '@/lib/constants.ts';
 import { useMousePosition } from '@/store/useMousePosition.ts';
 import type { ITheme } from '@/store/useTheme.ts';
 import { THEME_COLORS, useTheme } from '@/store/useTheme.ts';
+import { VIEW_MODE, useViewMode } from '@/store/useViewMode.ts';
 import { useWindowSize } from '@/store/useWindowSize.ts';
 
 import waterFragmentShader from '../../../assets/shaders/water/fragment.glsl?raw';
@@ -32,6 +33,8 @@ export const Hero = ({ opacity = 1 }: Props) => {
   });
 
   const mousePosition = useMousePosition();
+
+  const viewMode = useViewMode((state) => state.viewMode);
 
   const bloomDefaultValues = {
     bloomEnabled: true,
@@ -156,6 +159,7 @@ export const Hero = ({ opacity = 1 }: Props) => {
   useFrame(({ clock }) => {
     waterMaterial.uniforms.uTime.value = clock.getElapsedTime();
     waterMaterial.opacity = opacity;
+    waterMaterial.wireframe = viewMode === VIEW_MODE.WIREFRAME;
   });
 
   const waterMaterial = new ShaderMaterial({
@@ -211,6 +215,7 @@ export const Hero = ({ opacity = 1 }: Props) => {
           color={THEME_COLORS[theme].tertiary}
           transparent
           opacity={opacity}
+          wireframe={viewMode === VIEW_MODE.WIREFRAME}
         />
       </mesh>
 
