@@ -2,6 +2,7 @@ import { Html } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import { Bloom, EffectComposer } from '@react-three/postprocessing';
 import { button, folder, useControls } from 'leva';
+import { useMemo, useRef } from 'react';
 import { Color, ShaderMaterial, Vector2 } from 'three';
 
 import { HeroText } from '@/components/ui/HeroText.tsx';
@@ -9,11 +10,58 @@ import { TABLET_BREAKPOINT } from '@/lib/constants.ts';
 import { useMousePosition } from '@/store/useMousePosition.ts';
 import type { ITheme } from '@/store/useTheme.ts';
 import { THEME_COLORS, useTheme } from '@/store/useTheme.ts';
-import { VIEW_MODE, useViewMode } from '@/store/useViewMode.ts';
+import { useViewMode, VIEW_MODE } from '@/store/useViewMode.ts';
 import { useWindowSize } from '@/store/useWindowSize.ts';
 
 import waterFragmentShader from '../../../assets/shaders/water/fragment.glsl?raw';
 import waterVertexShader from '../../../assets/shaders/water/vertex.glsl?raw';
+
+const sunVertexShader = /* glsl */ `
+  varying vec3 vPosition;
+  void main() {
+    vPosition = position;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+
+const sunFragmentShader = /* glsl */ `
+  uniform vec3 uColor;
+  uniform float uOpacity;
+  uniform float uDissolveProgress;
+  uniform float uEdge;
+  uniform vec3 uEdgeColor;
+  varying vec3 vPosition;
+
+  float hash(vec3 p) {
+    p = fract(p * vec3(443.8975, 397.2973, 491.1871));
+    p += dot(p.zyx, p + vec3(19.19));
+    return fract((p.x + p.y) * p.z);
+  }
+
+  float noise(vec3 p) {
+    vec3 i = floor(p);
+    vec3 f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    return mix(
+      mix(mix(hash(i), hash(i + vec3(1.0, 0.0, 0.0)), f.x),
+          mix(hash(i + vec3(0.0, 1.0, 0.0)), hash(i + vec3(1.0, 1.0, 0.0)), f.x), f.y),
+      mix(mix(hash(i + vec3(0.0, 0.0, 1.0)), hash(i + vec3(1.0, 0.0, 1.0)), f.x),
+          mix(hash(i + vec3(0.0, 1.0, 1.0)), hash(i + vec3(1.0, 1.0, 1.0)), f.x), f.y),
+      f.z
+    );
+  }
+
+  void main() {
+    float n = noise(vPosition * 3.0);
+    if (n < uDissolveProgress) discard;
+    vec3 color = uColor;
+    if (uDissolveProgress > 0.001) {
+      float edgeFactor = smoothstep(uDissolveProgress + uEdge, uDissolveProgress, n);
+      color = mix(color, uEdgeColor, edgeFactor);
+    }
+    gl_FragColor = vec4(color, uOpacity);
+  }
+`;
 
 interface Props {
   opacity?: number;
@@ -156,38 +204,104 @@ export const Hero = ({ opacity = 1 }: Props) => {
     { collapsed: true },
   );
 
+  const waterMaterial = useMemo(
+    () =>
+      new ShaderMaterial({
+        vertexShader: waterVertexShader,
+        fragmentShader: waterFragmentShader,
+        transparent: true,
+        opacity: 0,
+        uniforms: {
+          // Time
+          uTime: { value: 0 },
+
+          // Big Wave Elevation
+          uBigWavesElevation: { value: 0.2 },
+          uBigWavesFrequency: { value: new Vector2(1.0, 1.15) },
+          uBigWavesSpeed: { value: 0.6 },
+
+          // Small Wave Elevation
+          uSmallWavesElevation: { value: 0.125 },
+          uSmallWavesFrequency: { value: 2.0 },
+          uSmallWavesSpeed: { value: 0.2 },
+          uSmallWavesIterations: { value: 4.0 },
+
+          // Transition dissolve
+          uDissolveProgress: { value: 0 },
+          uEdge: { value: 0.08 },
+          uEdgeColor: { value: new Color(...THEME_COLORS[theme].tertiary) },
+
+          // Color
+          uColorOffset: { value: 0.08 },
+          uColorMultiplier: { value: 4.8 },
+          uDepthColor: { value: new Color(THEME_COLORS[theme].secondary) },
+          uSurfaceColor: { value: new Color(...THEME_COLORS[theme].primary) },
+        },
+      }),
+    [theme],
+  );
+
+  const sunMaterial = useMemo(
+    () =>
+      new ShaderMaterial({
+        vertexShader: sunVertexShader,
+        fragmentShader: sunFragmentShader,
+        transparent: true,
+        uniforms: {
+          uColor: { value: new Color(...THEME_COLORS[theme].tertiary) },
+          uOpacity: { value: opacity },
+          uDissolveProgress: { value: 0 },
+          uEdge: { value: 0.1 },
+          uEdgeColor: { value: new Color(2.0, 2.0, 2.0) },
+        },
+      }),
+    [theme],
+  );
+
+  const transitionStartRef = useRef<number | null>(null);
+  const prevViewModeRef = useRef(viewMode);
+  const wireframeDisplayedRef = useRef(viewMode === VIEW_MODE.WIREFRAME);
+  const wireframeFlippedRef = useRef(false);
+
+  const TRANSITION_DURATION = 0.6;
+
   useFrame(({ clock }) => {
-    waterMaterial.uniforms.uTime.value = clock.getElapsedTime();
+    // Read viewMode directly from store to avoid stale closure captures
+    const currentViewMode = useViewMode.getState().viewMode;
+    const elapsed = clock.getElapsedTime();
+
+    if (currentViewMode !== prevViewModeRef.current) {
+      prevViewModeRef.current = currentViewMode;
+      transitionStartRef.current = elapsed;
+      wireframeFlippedRef.current = false;
+    }
+
+    let dissolveProgress = 0;
+    if (transitionStartRef.current !== null) {
+      const t = Math.min(
+        (elapsed - transitionStartRef.current) / TRANSITION_DURATION,
+        1.0,
+      );
+      dissolveProgress = t < 0.5 ? t * 2 : (1 - t) * 2;
+
+      if (t >= 0.5 && !wireframeFlippedRef.current) {
+        wireframeDisplayedRef.current = currentViewMode === VIEW_MODE.WIREFRAME;
+        wireframeFlippedRef.current = true;
+      }
+
+      if (t >= 1.0) {
+        transitionStartRef.current = null;
+      }
+    }
+
+    waterMaterial.uniforms.uTime.value = elapsed;
+    waterMaterial.uniforms.uDissolveProgress.value = dissolveProgress;
     waterMaterial.opacity = opacity;
-    waterMaterial.wireframe = viewMode === VIEW_MODE.WIREFRAME;
-  });
+    waterMaterial.wireframe = wireframeDisplayedRef.current;
 
-  const waterMaterial = new ShaderMaterial({
-    vertexShader: waterVertexShader,
-    fragmentShader: waterFragmentShader,
-    transparent: true,
-    opacity: 0,
-    uniforms: {
-      // Time
-      uTime: { value: 0 },
-
-      // Big Wave Elevation
-      uBigWavesElevation: { value: 0.2 },
-      uBigWavesFrequency: { value: new Vector2(1.0, 1.15) },
-      uBigWavesSpeed: { value: 0.6 },
-
-      // Small Wave Elevation
-      uSmallWavesElevation: { value: 0.125 },
-      uSmallWavesFrequency: { value: 2.0 },
-      uSmallWavesSpeed: { value: 0.2 },
-      uSmallWavesIterations: { value: 4.0 },
-
-      // Color
-      uColorOffset: { value: 0.08 },
-      uColorMultiplier: { value: 4.8 },
-      uDepthColor: { value: new Color(THEME_COLORS[theme].secondary) },
-      uSurfaceColor: { value: new Color(...THEME_COLORS[theme].primary) },
-    },
+    sunMaterial.uniforms.uDissolveProgress.value = dissolveProgress;
+    sunMaterial.uniforms.uOpacity.value = opacity;
+    sunMaterial.wireframe = wireframeDisplayedRef.current;
   });
 
   return (
@@ -211,12 +325,7 @@ export const Hero = ({ opacity = 1 }: Props) => {
         ]}
       >
         <sphereGeometry args={[radius, 64, 64]} />
-        <meshBasicMaterial
-          color={THEME_COLORS[theme].tertiary}
-          transparent
-          opacity={opacity}
-          wireframe={viewMode === VIEW_MODE.WIREFRAME}
-        />
+        <primitive object={sunMaterial} />
       </mesh>
 
       {/* Wave */}
