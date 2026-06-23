@@ -4,9 +4,7 @@ export const useToggleFullscreen = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const toggleFullscreen = async () => {
-    if (
-      !document.fullscreenElement && !isFullscreen
-    ) {
+    if (!document.fullscreenElement && !isFullscreen) {
       try {
         await document.documentElement.requestFullscreen();
         setIsFullscreen(true);

@@ -4,24 +4,30 @@ import { Vector3 } from 'three';
 
 interface IUseApplyTorque {
   keys: {
-    upward?: boolean,
-    downward?: boolean,
-    leftward?: boolean,
-    rightward?: boolean,
-  },
-  selectedVertexPosition: Vector3 | null,
-  selectedVertex: Mesh | null,
-  body: RapierRigidBody | null,
-  delta: number,
+    upward?: boolean;
+    downward?: boolean;
+    leftward?: boolean;
+    rightward?: boolean;
+  };
+  selectedVertexPosition: Vector3 | null;
+  selectedVertex: Mesh | null;
+  body: RapierRigidBody | null;
+  delta: number;
 }
 
-export const useApplyTorque = ({ keys, selectedVertex, selectedVertexPosition, body, delta }: IUseApplyTorque) => {
+export const useApplyTorque = ({
+  keys,
+  selectedVertex,
+  selectedVertexPosition,
+  body,
+  delta,
+}: IUseApplyTorque) => {
   const { upward, downward, leftward, rightward } = keys;
 
   const torque = {
     x: 0,
     y: 0,
-    z: 0
+    z: 0,
   };
   const torqueStrength = 1000 * delta;
 
@@ -29,24 +35,32 @@ export const useApplyTorque = ({ keys, selectedVertex, selectedVertexPosition, b
     const torqueStrengthModifier = 0.02;
     const distanceStrengthModifier = 2.2;
     const directionStrengthModifier = 2.2;
-    const locus = selectedVertexPosition.distanceTo(new Vector3(0, 0, 1.3)) * distanceStrengthModifier;
-    const yStrengthModifier = Math.abs(selectedVertexPosition.y) * directionStrengthModifier;
-    const xStrengthModifier = Math.abs(selectedVertexPosition.x) * directionStrengthModifier;
+    const locus =
+      selectedVertexPosition.distanceTo(new Vector3(0, 0, 1.3)) *
+      distanceStrengthModifier;
+    const yStrengthModifier =
+      Math.abs(selectedVertexPosition.y) * directionStrengthModifier;
+    const xStrengthModifier =
+      Math.abs(selectedVertexPosition.x) * directionStrengthModifier;
 
     if (selectedVertexPosition.y > 0) {
-      torque.x += torqueStrength * torqueStrengthModifier * locus * yStrengthModifier;
+      torque.x +=
+        torqueStrength * torqueStrengthModifier * locus * yStrengthModifier;
     }
 
     if (selectedVertexPosition.y < 0) {
-      torque.x -= torqueStrength * torqueStrengthModifier * locus * yStrengthModifier;
+      torque.x -=
+        torqueStrength * torqueStrengthModifier * locus * yStrengthModifier;
     }
 
     if (selectedVertexPosition.x < 0) {
-      torque.y += torqueStrength * torqueStrengthModifier * locus * xStrengthModifier;
+      torque.y +=
+        torqueStrength * torqueStrengthModifier * locus * xStrengthModifier;
     }
 
     if (selectedVertexPosition.x > 0) {
-      torque.y -= torqueStrength * torqueStrengthModifier * locus * xStrengthModifier;
+      torque.y -=
+        torqueStrength * torqueStrengthModifier * locus * xStrengthModifier;
     }
   }
 

@@ -6,8 +6,8 @@ export enum VIEW_MODE {
 }
 
 export interface IViewMode {
-  viewMode: VIEW_MODE
-  toggleViewMode: () => void
+  viewMode: VIEW_MODE;
+  toggleViewMode: () => void;
 }
 
 export const useViewMode = createWithEqualityFn<IViewMode>((set) => {
@@ -17,7 +17,10 @@ export const useViewMode = createWithEqualityFn<IViewMode>((set) => {
     toggleViewMode: () => {
       set((state) => ({
         ...state,
-        viewMode: state.viewMode === VIEW_MODE.FULL ? VIEW_MODE.WIREFRAME : VIEW_MODE.FULL,
+        viewMode:
+          state.viewMode === VIEW_MODE.FULL
+            ? VIEW_MODE.WIREFRAME
+            : VIEW_MODE.FULL,
       }));
     },
   };

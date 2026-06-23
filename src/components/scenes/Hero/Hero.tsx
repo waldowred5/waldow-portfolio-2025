@@ -3,7 +3,14 @@ import { useFrame } from '@react-three/fiber';
 import { Bloom, EffectComposer } from '@react-three/postprocessing';
 import { button, folder, useControls } from 'leva';
 import { useMemo, useRef } from 'react';
-import { BufferAttribute, Color, PlaneGeometry, ShaderMaterial, SphereGeometry, Vector2 } from 'three';
+import {
+  BufferAttribute,
+  Color,
+  PlaneGeometry,
+  ShaderMaterial,
+  SphereGeometry,
+  Vector2,
+} from 'three';
 
 import { HeroText } from '@/components/ui/HeroText.tsx';
 import { TABLET_BREAKPOINT } from '@/lib/constants.ts';
@@ -229,6 +236,7 @@ export const Hero = ({ opacity = 1 }: Props) => {
       barycentric[(i + 2) * 3 + 2] = 1;
     }
     geo.setAttribute('aBarycentric', new BufferAttribute(barycentric, 3));
+
     return geo;
   }, []);
 
@@ -242,10 +250,10 @@ export const Hero = ({ opacity = 1 }: Props) => {
       barycentric[(i + 2) * 3 + 2] = 1;
     }
     geo.setAttribute('aBarycentric', new BufferAttribute(barycentric, 3));
+
     return geo;
   }, []);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- theme color updates handled via uniform mutation in useFrame
   const waterMaterial = useMemo(
     () =>
       new ShaderMaterial({
@@ -286,6 +294,7 @@ export const Hero = ({ opacity = 1 }: Props) => {
           },
         },
       }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- theme color and opacity updates handled via uniform mutation in useFrame
     [],
   );
 
@@ -309,6 +318,7 @@ export const Hero = ({ opacity = 1 }: Props) => {
           },
         },
       }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- theme color and opacity updates handled via uniform mutation in useFrame
     [],
   );
 

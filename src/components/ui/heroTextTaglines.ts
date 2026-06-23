@@ -154,11 +154,18 @@ export const TAGLINES = {
     ],
   },
   X: {
-    verbs: ['xenomorphing', 'x-raying', 'xoring', 'xenocoding', 'xperiencing', 'xpensing'],
+    verbs: [
+      'xenomorphing',
+      'x-raying',
+      'xoring',
+      'xenocoding',
+      'xperiencing',
+      'xpensing',
+    ],
     taglines: [' xperiences', ' xenomorphic xpressions', ' xcellence'],
   },
   Y: {
-    verbs: ['yielding', 'yarning', 'yoking', 'yarnspinning',],
+    verbs: ['yielding', 'yarning', 'yoking', 'yarnspinning'],
     taglines: [
       ' years of youthful yearning',
       ' yonder',
