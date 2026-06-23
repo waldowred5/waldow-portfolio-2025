@@ -1,3 +1,5 @@
+attribute vec3 aBarycentric;
+
 uniform float uBigWavesElevation;
 uniform vec2 uBigWavesFrequency;
 uniform float uBigWavesSpeed;
@@ -10,6 +12,7 @@ uniform float uSmallWavesIterations;
 
 varying float vElevation;
 varying float vDissolveNoise;
+varying vec3 vBarycentric;
 
 // Classic Perlin 3D Noise
 // by Stefan Gustavson
@@ -125,4 +128,5 @@ void main() {
     // Varyings
     vElevation = elevation;
     vDissolveNoise = clamp(cnoise(vec3(uv * 5.0, 42.0)) * 0.5 + 0.5, 0.0, 1.0);
+    vBarycentric = aBarycentric;
 }

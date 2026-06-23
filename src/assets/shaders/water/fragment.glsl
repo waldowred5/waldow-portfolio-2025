@@ -5,16 +5,21 @@ uniform vec3 uOldSurfaceColor;
 uniform float uColorOffset;
 uniform float uColorMultiplier;
 
-uniform float uDissolveProgress;
+uniform float uWireframeProgress;
 uniform float uThemeDissolveProgress;
 uniform float uEdge;
 uniform vec3 uEdgeColor;
 
 varying float vElevation;
 varying float vDissolveNoise;
+varying vec3 vBarycentric;
 
 void main() {
-    if (vDissolveNoise < uDissolveProgress) discard;
+    float edgeMin = min(vBarycentric.x, min(vBarycentric.y, vBarycentric.z));
+    float lineWidth = fwidth(edgeMin) * 1.5;
+    bool inWireframeZone = vDissolveNoise < uWireframeProgress;
+
+    if (inWireframeZone && edgeMin >= lineWidth) discard;
 
     float mixStrength = (vElevation + uColorOffset) * uColorMultiplier;
 
@@ -22,11 +27,6 @@ void main() {
     vec3 oldColor = mix(uOldDepthColor, uOldSurfaceColor, mixStrength);
 
     vec3 color = vDissolveNoise < uThemeDissolveProgress ? newColor : oldColor;
-
-    if (uDissolveProgress > 0.001) {
-        float edgeFactor = smoothstep(uDissolveProgress + uEdge, uDissolveProgress, vDissolveNoise);
-        color = mix(color, uEdgeColor, edgeFactor);
-    }
 
     gl_FragColor = vec4(color, 1.0);
 }
