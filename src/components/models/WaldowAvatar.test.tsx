@@ -29,6 +29,9 @@ const mockAnimation = Object.assign(new Object3D(), {
   duration: 1,
 });
 
+const mockPlay = vi.fn();
+const mockReset = vi.fn().mockReturnThis();
+
 const useGLTFMock = Object.assign(
   vi.fn(() => ({
     nodes: {
@@ -52,7 +55,7 @@ vi.mock('@react-three/drei', () => ({
   useGLTF: useGLTFMock,
   useFBX: vi.fn(() => ({ animations: [mockAnimation] })),
   useAnimations: vi.fn(() => ({
-    actions: { TYPING: { reset: vi.fn().mockReturnThis(), play: vi.fn() } },
+    actions: { TYPING: { reset: mockReset, play: mockPlay } },
   })),
 }));
 
@@ -72,15 +75,23 @@ vi.mock('leva', () => ({
 const { WaldowAvatar } = await import('./WaldowAvatar');
 
 describe('WaldowAvatar', () => {
-  it('renders without crashing', async () => {
-    await expect(
-      ReactThreeTestRenderer.create(<WaldowAvatar />),
-    ).resolves.toBeDefined();
-  });
-
-  it('renders skinned meshes', async () => {
+  it('renders all 9 skinned meshes', async () => {
     const renderer = await ReactThreeTestRenderer.create(<WaldowAvatar />);
     const skinned = renderer.scene.findAllByType('SkinnedMesh');
-    expect(skinned.length).toBeGreaterThan(0);
+    expect(skinned.length).toBe(9);
+  });
+
+  it('named meshes render with correct identifiers', async () => {
+    const renderer = await ReactThreeTestRenderer.create(<WaldowAvatar />);
+    expect(renderer.scene.findByProps({ name: 'EyeLeft' })).toBeTruthy();
+    expect(renderer.scene.findByProps({ name: 'EyeRight' })).toBeTruthy();
+    expect(renderer.scene.findByProps({ name: 'Wolf3D_Head' })).toBeTruthy();
+    expect(renderer.scene.findByProps({ name: 'Wolf3D_Teeth' })).toBeTruthy();
+  });
+
+  it('plays typing animation on mount', async () => {
+    mockPlay.mockClear();
+    await ReactThreeTestRenderer.create(<WaldowAvatar />);
+    expect(mockPlay).toHaveBeenCalled();
   });
 });

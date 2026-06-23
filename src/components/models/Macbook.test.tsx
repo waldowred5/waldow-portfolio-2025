@@ -67,9 +67,9 @@ vi.mock('@react-three/drei', () => ({ useGLTF: useGLTFMock }));
 const { Macbook } = await import('./Macbook');
 
 describe('Macbook', () => {
-  it('renders a group with mesh children', async () => {
+  it('renders all 27 model meshes', async () => {
     const renderer = await ReactThreeTestRenderer.create(<Macbook />);
-    expect(renderer.scene.findAllByType('Mesh').length).toBeGreaterThan(0);
+    expect(renderer.scene.findAllByType('Mesh').length).toBe(27);
   });
 
   it('renders children passed as props', async () => {

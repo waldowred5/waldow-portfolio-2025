@@ -5,7 +5,8 @@ import { TAGLINES } from './heroTextTaglines';
 describe('TAGLINES', () => {
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
-  it('has an entry for every letter of the alphabet', () => {
+  it('has exactly 26 entries, one for each letter of the alphabet', () => {
+    expect(Object.keys(TAGLINES).length).toBe(26);
     letters.forEach((letter) => {
       expect(TAGLINES).toHaveProperty(letter);
     });

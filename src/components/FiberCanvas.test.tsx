@@ -39,11 +39,6 @@ vi.mock('@/components/helpers/KeyboardInputManager.tsx', () => ({
 const { FiberCanvas } = await import('./FiberCanvas');
 
 describe('FiberCanvas', () => {
-  it('renders without crashing', () => {
-    const { container } = render(<FiberCanvas />);
-    expect(container).toBeInTheDocument();
-  });
-
   it('renders the Canvas element', () => {
     const { getByTestId } = render(<FiberCanvas />);
     expect(getByTestId('canvas')).toBeInTheDocument();

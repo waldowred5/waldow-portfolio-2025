@@ -18,11 +18,6 @@ vi.mock('@/components/ui/Background.tsx', () => ({
 const { HeroPortal } = await import('./HeroPortal');
 
 describe('HeroPortal', () => {
-  it('renders without crashing', () => {
-    const { container } = render(<HeroPortal />);
-    expect(container).toBeInTheDocument();
-  });
-
   it('renders Background', () => {
     const { getByTestId } = render(<HeroPortal />);
     expect(getByTestId('background')).toBeInTheDocument();
@@ -31,5 +26,12 @@ describe('HeroPortal', () => {
   it('renders Canvas', () => {
     const { getByTestId } = render(<HeroPortal />);
     expect(getByTestId('canvas')).toBeInTheDocument();
+  });
+
+  it('renders Hero inside Canvas', () => {
+    const { getByTestId } = render(<HeroPortal />);
+    const canvas = getByTestId('canvas');
+    const hero = getByTestId('hero');
+    expect(canvas).toContainElement(hero);
   });
 });
