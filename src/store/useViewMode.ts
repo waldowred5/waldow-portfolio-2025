@@ -1,12 +1,14 @@
 import { createWithEqualityFn } from 'zustand/traditional';
 
-export enum VIEW_MODE {
-  FULL,
-  WIREFRAME,
-}
+export const VIEW_MODE = {
+  FULL: 'FULL',
+  WIREFRAME: 'WIREFRAME',
+} as const;
+
+export type ViewMode = (typeof VIEW_MODE)[keyof typeof VIEW_MODE];
 
 export interface IViewMode {
-  viewMode: VIEW_MODE;
+  viewMode: ViewMode;
   toggleViewMode: () => void;
 }
 
