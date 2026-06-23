@@ -26,27 +26,6 @@ export default defineConfig({
         'src/**/*.test.{ts,tsx}',
         'src/test/**',
         'src/main.tsx',
-        'src/App.tsx',
-        'src/routes.tsx',
-        // WebGL-coupled — needs dedicated R3F test harness
-        'src/components/FiberCanvas.tsx',
-        'src/components/scenes/**',
-        'src/components/models/**',
-        'src/components/helpers/LevaPanel.tsx',
-        // DOM render components — need @testing-library/react render tests (separate ticket)
-        'src/components/ui/acerternity/**',
-        'src/components/ui/ActionBar.tsx',
-        'src/components/ui/Background.tsx',
-        'src/components/ui/Hero2DFallback.tsx',
-        'src/components/ui/HeroText.tsx',
-        'src/components/ui/Icon.tsx',
-        'src/components/ui/RoundedFrame.tsx',
-        'src/components/ui/Section.tsx',
-        // rAF/event-loop — jsdom branches not deterministically exercisable
-        'src/store/useMousePosition.ts',
-        'src/store/useScroll.ts',
-        'src/store/useToggleFullscreen.ts',
-        'src/store/useWindowSize.ts',
       ],
       thresholds: {
         statements: 80,
