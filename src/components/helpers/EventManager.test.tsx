@@ -35,6 +35,17 @@ describe('EventManager', () => {
 
   it('updates window size store on window resize event', () => {
     Object.defineProperty(window, 'innerHeight', {
+      value: 600,
+      configurable: true,
+    });
+    Object.defineProperty(window, 'innerWidth', {
+      value: 800,
+      configurable: true,
+    });
+
+    render(<EventManager />);
+
+    Object.defineProperty(window, 'innerHeight', {
       value: 900,
       configurable: true,
     });
@@ -42,8 +53,6 @@ describe('EventManager', () => {
       value: 1440,
       configurable: true,
     });
-
-    render(<EventManager />);
     window.dispatchEvent(new Event('resize'));
 
     expect(useWindowSize.getState().innerHeight).toBe(900);
@@ -78,10 +87,23 @@ describe('EventManager', () => {
     });
 
     const { unmount } = render(<EventManager />);
+    window.dispatchEvent(new Event('resize'));
+    expect(useWindowSize.getState().innerHeight).toBe(1200);
+    expect(useWindowSize.getState().innerWidth).toBe(1920);
+
     unmount();
+
+    Object.defineProperty(window, 'innerHeight', {
+      value: 2560,
+      configurable: true,
+    });
+    Object.defineProperty(window, 'innerWidth', {
+      value: 1440,
+      configurable: true,
+    });
     window.dispatchEvent(new Event('resize'));
 
-    expect(useWindowSize.getState().innerHeight).toBe(0);
-    expect(useWindowSize.getState().innerWidth).toBe(0);
+    expect(useWindowSize.getState().innerHeight).toBe(1200);
+    expect(useWindowSize.getState().innerWidth).toBe(1920);
   });
 });
