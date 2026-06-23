@@ -26,10 +26,13 @@ const sunVertexShader = /* glsl */ `
 
 const sunFragmentShader = /* glsl */ `
   uniform vec3 uColor;
+  uniform vec3 uOldColor;
   uniform float uOpacity;
   uniform float uDissolveProgress;
+  uniform float uThemeDissolveProgress;
   uniform float uEdge;
   uniform vec3 uEdgeColor;
+  uniform vec3 uThemeEdgeColor;
   varying vec3 vPosition;
 
   float hash(vec3 p) {
@@ -54,11 +57,19 @@ const sunFragmentShader = /* glsl */ `
   void main() {
     float n = noise(vPosition * 3.0);
     if (n < uDissolveProgress) discard;
-    vec3 color = uColor;
+
+    vec3 color = n < uThemeDissolveProgress ? uColor : uOldColor;
+
     if (uDissolveProgress > 0.001) {
       float edgeFactor = smoothstep(uDissolveProgress + uEdge, uDissolveProgress, n);
       color = mix(color, uEdgeColor, edgeFactor);
     }
+
+    if (uThemeDissolveProgress > 0.001 && uThemeDissolveProgress < 0.999) {
+      float themeEdgeFactor = smoothstep(uThemeDissolveProgress + uEdge, uThemeDissolveProgress, n);
+      color = mix(color, uThemeEdgeColor, themeEdgeFactor);
+    }
+
     gl_FragColor = vec4(color, uOpacity);
   }
 `;
@@ -204,6 +215,7 @@ export const Hero = ({ opacity = 1 }: Props) => {
     { collapsed: true },
   );
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- theme color updates handled via uniform mutation in useFrame
   const waterMaterial = useMemo(
     () =>
       new ShaderMaterial({
@@ -228,6 +240,7 @@ export const Hero = ({ opacity = 1 }: Props) => {
 
           // Transition dissolve
           uDissolveProgress: { value: 0 },
+          uThemeDissolveProgress: { value: 0 },
           uEdge: { value: 0.08 },
           uEdgeColor: { value: new Color(...THEME_COLORS[theme].tertiary) },
 
@@ -236,11 +249,14 @@ export const Hero = ({ opacity = 1 }: Props) => {
           uColorMultiplier: { value: 4.8 },
           uDepthColor: { value: new Color(THEME_COLORS[theme].secondary) },
           uSurfaceColor: { value: new Color(...THEME_COLORS[theme].primary) },
+          uOldDepthColor: { value: new Color(THEME_COLORS[theme].secondary) },
+          uOldSurfaceColor: { value: new Color(...THEME_COLORS[theme].primary) },
         },
       }),
-    [theme],
+    [],
   );
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- theme color updates handled via uniform mutation in useFrame
   const sunMaterial = useMemo(
     () =>
       new ShaderMaterial({
@@ -249,13 +265,16 @@ export const Hero = ({ opacity = 1 }: Props) => {
         transparent: true,
         uniforms: {
           uColor: { value: new Color(...THEME_COLORS[theme].tertiary) },
+          uOldColor: { value: new Color(...THEME_COLORS[theme].tertiary) },
           uOpacity: { value: opacity },
           uDissolveProgress: { value: 0 },
+          uThemeDissolveProgress: { value: 0 },
           uEdge: { value: 0.1 },
           uEdgeColor: { value: new Color(2.0, 2.0, 2.0) },
+          uThemeEdgeColor: { value: new Color(...THEME_COLORS[theme].tertiary) },
         },
       }),
-    [theme],
+    [],
   );
 
   const transitionStartRef = useRef<number | null>(null);
@@ -263,17 +282,38 @@ export const Hero = ({ opacity = 1 }: Props) => {
   const wireframeDisplayedRef = useRef(viewMode === VIEW_MODE.WIREFRAME);
   const wireframeFlippedRef = useRef(false);
 
+  const themeTransitionStartRef = useRef<number | null>(null);
+  const prevThemeRef = useRef(theme);
+
   const TRANSITION_DURATION = 0.6;
 
   useFrame(({ clock }) => {
-    // Read viewMode directly from store to avoid stale closure captures
+    // Read state directly from store to avoid stale closure captures
     const currentViewMode = useViewMode.getState().viewMode;
+    const currentTheme = useTheme.getState().theme;
     const elapsed = clock.getElapsedTime();
 
     if (currentViewMode !== prevViewModeRef.current) {
       prevViewModeRef.current = currentViewMode;
       transitionStartRef.current = elapsed;
       wireframeFlippedRef.current = false;
+    }
+
+    if (currentTheme !== prevThemeRef.current) {
+      prevThemeRef.current = currentTheme;
+      // Capture current colors as old before swapping to new theme
+      waterMaterial.uniforms.uOldDepthColor.value.copy(waterMaterial.uniforms.uDepthColor.value);
+      waterMaterial.uniforms.uOldSurfaceColor.value.copy(waterMaterial.uniforms.uSurfaceColor.value);
+      sunMaterial.uniforms.uOldColor.value.copy(sunMaterial.uniforms.uColor.value);
+      const newColors = THEME_COLORS[currentTheme];
+      waterMaterial.uniforms.uDepthColor.value.set(newColors.secondary);
+      waterMaterial.uniforms.uSurfaceColor.value.set(...newColors.primary);
+      waterMaterial.uniforms.uEdgeColor.value.set(...newColors.tertiary);
+      sunMaterial.uniforms.uColor.value.set(...newColors.tertiary);
+      sunMaterial.uniforms.uThemeEdgeColor.value.set(...newColors.tertiary);
+      waterMaterial.uniforms.uThemeDissolveProgress.value = 0;
+      sunMaterial.uniforms.uThemeDissolveProgress.value = 0;
+      themeTransitionStartRef.current = elapsed;
     }
 
     let dissolveProgress = 0;
@@ -291,6 +331,19 @@ export const Hero = ({ opacity = 1 }: Props) => {
 
       if (t >= 1.0) {
         transitionStartRef.current = null;
+      }
+    }
+
+    if (themeTransitionStartRef.current !== null) {
+      const t = Math.min(
+        (elapsed - themeTransitionStartRef.current) / TRANSITION_DURATION,
+        1.0,
+      );
+      waterMaterial.uniforms.uThemeDissolveProgress.value = t;
+      sunMaterial.uniforms.uThemeDissolveProgress.value = t;
+
+      if (t >= 1.0) {
+        themeTransitionStartRef.current = null;
       }
     }
 
