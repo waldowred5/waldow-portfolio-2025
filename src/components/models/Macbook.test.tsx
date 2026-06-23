@@ -64,19 +64,19 @@ const useGLTFMock = Object.assign(
 
 vi.mock('@react-three/drei', () => ({ useGLTF: useGLTFMock }));
 
-const { Macbook } = await import('./Macbook');
+const { Macbook_LEGACY } = await import('./Macbook_LEGACY.tsx');
 
-describe('Macbook', () => {
+describe('Macbook_LEGACY', () => {
   it('renders all 27 model meshes', async () => {
-    const renderer = await ReactThreeTestRenderer.create(<Macbook />);
+    const renderer = await ReactThreeTestRenderer.create(<Macbook_LEGACY />);
     expect(renderer.scene.findAllByType('Mesh').length).toBe(27);
   });
 
   it('renders children passed as props', async () => {
     const renderer = await ReactThreeTestRenderer.create(
-      <Macbook>
+      <Macbook_LEGACY>
         <mesh name={'child-mesh'} />
-      </Macbook>,
+      </Macbook_LEGACY>,
     );
     expect(renderer.scene.findByProps({ name: 'child-mesh' })).toBeTruthy();
   });

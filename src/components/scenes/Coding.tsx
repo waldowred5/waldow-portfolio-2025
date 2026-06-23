@@ -39,9 +39,9 @@ export const Coding = () => {
   };
 
   const defaultPortalValues = {
-    portalSizeFactor: 1.14,
-    portalPosition: { x: 0, y: 1.56, z: -1.36 },
-    portalRotation: { x: -0.26, y: 0, z: 0 },
+    portalSizeFactor: 1.35,
+    portalPosition: { x: 0, y: 1.69, z: -1.69 },
+    portalRotation: { x: -0.35, y: 0, z: 0 },
   };
 
   const defaultDeskValues = {
@@ -121,7 +121,7 @@ export const Coding = () => {
             z: defaultMacbookValues.sceneRotation.z,
           },
         },
-        { collapsed: false },
+        { collapsed: true },
       ),
       desk: folder({
         'Reset Desk Defaults': button(() => set(defaultDeskValues)),

@@ -39,7 +39,7 @@ export const SceneManager = () => {
         { collapsed: false },
       ),
     }),
-    { collapsed: false },
+    { collapsed: true },
   );
 
   const Scene = {

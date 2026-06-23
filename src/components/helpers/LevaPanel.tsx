@@ -8,7 +8,7 @@ export const LevaPanel = () => {
       <div
         className={`fixed top-20 right-5 z-50 ${isDev ? 'block' : 'hidden'}`}
       >
-        <Leva fill collapsed={true} />
+        <Leva fill collapsed={false} />
       </div>
     </>
   );

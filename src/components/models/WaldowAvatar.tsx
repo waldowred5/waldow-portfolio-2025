@@ -10,6 +10,8 @@ import type { JSX } from 'react/jsx-runtime';
 import type { Group, MeshStandardMaterial, SkinnedMesh } from 'three';
 import type { GLTF } from 'three-stdlib';
 
+import { Mouse } from './Mouse.tsx';
+
 type NodeMeshes = {
   Hips: Group;
   Wolf3D_Hair: SkinnedMesh;
@@ -48,18 +50,24 @@ export const WaldowAvatar = (props: JSX.IntrinsicElements['group']) => {
   // @ts-expect-error GLTFResult type mismatch with useGLTF return
   const { nodes, materials } = useGLTF('/models/waldow.glb') as GLTFResult;
   const { animations: typingAnimation } = useFBX('/animations/typing.fbx');
-  const { actions } = useAnimations(typingAnimation, group);
 
   typingAnimation[0].name = ANIMATION.TYPING;
-  materials.Wolf3D_Outfit_Top.color.set('cyan');
+  typingAnimation[0].tracks = typingAnimation[0].tracks.filter(
+    (track) => !track.name.startsWith('Armature.'),
+  );
+
+  const { actions } = useAnimations(typingAnimation, group);
 
   useEffect(() => {
-    console.log({ typingAnimation, actions });
+    materials.Wolf3D_Outfit_Top.color.set('cyan');
+  }, [materials]);
+
+  useEffect(() => {
     actions?.[ANIMATION.TYPING]?.reset().play();
-  }, [actions, typingAnimation]);
+  }, [actions]);
 
   const defaultValues = {
-    position: { x: 0.73, y: -4.84, z: 4.85 },
+    position: { x: 1, y: -5, z: 4.6 },
     rotation: { x: -Math.PI / 2, y: 0, z: Math.PI },
     scale: 7.8,
   };
@@ -95,6 +103,7 @@ export const WaldowAvatar = (props: JSX.IntrinsicElements['group']) => {
   return (
     <Suspense fallback={'Loading...'}>
       <group ref={group} {...props} dispose={null}>
+        <Mouse hips={nodes.Hips} />
         <group
           scale={scale}
           rotation={[rotation.x, rotation.y, rotation.z]}
