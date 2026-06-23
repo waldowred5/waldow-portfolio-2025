@@ -23,10 +23,11 @@ const { useControls } = await import('leva');
 
 afterEach(() => {
   useScene.setState({ currentScene: SCENE.HERO });
-  vi.mocked(useControls).mockReturnValue([
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (vi.mocked(useControls) as any).mockReturnValue([
     { scene: SCENE.HERO, opacity: 1 },
     vi.fn(),
-  ] as never);
+  ]);
 });
 
 describe('SceneManager', () => {
@@ -37,10 +38,11 @@ describe('SceneManager', () => {
   });
 
   it('renders coding scene when leva scene is CODING', async () => {
-    vi.mocked(useControls).mockReturnValue([
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (vi.mocked(useControls) as any).mockReturnValue([
       { scene: SCENE.CODING, opacity: 1 },
       vi.fn(),
-    ] as never);
+    ]);
 
     const renderer = await ReactThreeTestRenderer.create(<SceneManager />);
     const mesh = renderer.scene.findByProps({ name: 'coding' });
@@ -48,10 +50,11 @@ describe('SceneManager', () => {
   });
 
   it('falls back to hero scene for unknown scene value', async () => {
-    vi.mocked(useControls).mockReturnValue([
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (vi.mocked(useControls) as any).mockReturnValue([
       { scene: 'UNKNOWN', opacity: 1 },
       vi.fn(),
-    ] as never);
+    ]);
 
     const renderer = await ReactThreeTestRenderer.create(<SceneManager />);
     const mesh = renderer.scene.findByProps({ name: 'hero' });

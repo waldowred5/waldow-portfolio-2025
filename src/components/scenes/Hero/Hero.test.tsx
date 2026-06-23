@@ -1,6 +1,6 @@
 import ReactThreeTestRenderer from '@react-three/test-renderer';
 import type { BufferGeometry, Mesh, ShaderMaterial } from 'three';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { THEME, useTheme } from '@/store/useTheme.ts';
 import { useViewMode, VIEW_MODE } from '@/store/useViewMode.ts';

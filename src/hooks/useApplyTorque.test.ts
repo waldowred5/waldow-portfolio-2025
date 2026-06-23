@@ -1,3 +1,4 @@
+import type { RapierRigidBody } from '@react-three/rapier';
 import { Vector3 } from 'three';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -31,7 +32,7 @@ describe('useApplyTorque', () => {
       keys: noKeys,
       selectedVertex: null,
       selectedVertexPosition: null,
-      body,
+      body: body as unknown as RapierRigidBody,
       delta: 0.016,
     });
     expect(body.applyTorqueImpulse).toHaveBeenCalledWith(
@@ -46,7 +47,7 @@ describe('useApplyTorque', () => {
       keys: { ...noKeys, upward: true },
       selectedVertex: null,
       selectedVertexPosition: null,
-      body,
+      body: body as unknown as RapierRigidBody,
       delta: 0.016,
     });
     const [torque] = body.applyTorqueImpulse.mock.calls[0];
@@ -59,7 +60,7 @@ describe('useApplyTorque', () => {
       keys: { ...noKeys, downward: true },
       selectedVertex: null,
       selectedVertexPosition: null,
-      body,
+      body: body as unknown as RapierRigidBody,
       delta: 0.016,
     });
     const [torque] = body.applyTorqueImpulse.mock.calls[0];
@@ -72,7 +73,7 @@ describe('useApplyTorque', () => {
       keys: { ...noKeys, leftward: true },
       selectedVertex: null,
       selectedVertexPosition: null,
-      body,
+      body: body as unknown as RapierRigidBody,
       delta: 0.016,
     });
     const [torque] = body.applyTorqueImpulse.mock.calls[0];
@@ -85,7 +86,7 @@ describe('useApplyTorque', () => {
       keys: { ...noKeys, rightward: true },
       selectedVertex: null,
       selectedVertexPosition: null,
-      body,
+      body: body as unknown as RapierRigidBody,
       delta: 0.016,
     });
     const [torque] = body.applyTorqueImpulse.mock.calls[0];
@@ -100,7 +101,7 @@ describe('useApplyTorque', () => {
       keys: noKeys,
       selectedVertex: mesh,
       selectedVertexPosition: pos,
-      body,
+      body: body as unknown as RapierRigidBody,
       delta: 0.016,
     });
     const [torque] = body.applyTorqueImpulse.mock.calls[0];
@@ -115,7 +116,7 @@ describe('useApplyTorque', () => {
       keys: noKeys,
       selectedVertex: mesh,
       selectedVertexPosition: pos,
-      body,
+      body: body as unknown as RapierRigidBody,
       delta: 0.016,
     });
     const [torque] = body.applyTorqueImpulse.mock.calls[0];
@@ -130,7 +131,7 @@ describe('useApplyTorque', () => {
       keys: noKeys,
       selectedVertex: mesh,
       selectedVertexPosition: pos,
-      body,
+      body: body as unknown as RapierRigidBody,
       delta: 0.016,
     });
     const [torque] = body.applyTorqueImpulse.mock.calls[0];
@@ -145,7 +146,7 @@ describe('useApplyTorque', () => {
       keys: noKeys,
       selectedVertex: mesh,
       selectedVertexPosition: pos,
-      body,
+      body: body as unknown as RapierRigidBody,
       delta: 0.016,
     });
     const [torque] = body.applyTorqueImpulse.mock.calls[0];
