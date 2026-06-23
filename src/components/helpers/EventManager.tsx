@@ -4,17 +4,13 @@ import { useScroll } from '../../store/useScroll.ts';
 import { useWindowSize } from '../../store/useWindowSize.ts';
 
 export const EventManager = () => {
-  const {
-    updateScrollPercentage,
-  } = useScroll((state) => {
+  const { updateScrollPercentage } = useScroll((state) => {
     return {
       updateScrollPercentage: state.updateScrollPercentage,
     };
   });
 
-  const {
-    updateWindowSize,
-  } = useWindowSize((state) => {
+  const { updateWindowSize } = useWindowSize((state) => {
     return {
       updateWindowSize: state.updateWindowSize,
     };
@@ -44,7 +40,5 @@ export const EventManager = () => {
     };
   }, [handleWindowResize]);
 
-  return (
-    <></>
-  );
+  return <></>;
 };

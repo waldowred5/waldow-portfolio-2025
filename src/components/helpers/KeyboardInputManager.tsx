@@ -22,7 +22,7 @@ export const KeyboardInputManager = ({ children }: Props) => {
         { name: 'escape', keys: ['Escape'] },
       ]}
     >
-      { children }
+      {children}
     </KeyboardControls>
   );
 };

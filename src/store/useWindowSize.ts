@@ -20,6 +20,6 @@ export const useWindowSize = createWithEqualityFn<WindowSizeState>((set) => {
           innerWidth: width,
         };
       });
-    }
+    },
   };
 });

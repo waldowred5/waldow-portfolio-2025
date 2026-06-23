@@ -6,11 +6,7 @@ import glsl from 'vite-plugin-glsl';
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [
-    glsl(),
-    react(),
-    tailwindcss(),
-  ],
+  plugins: [glsl(), react(), tailwindcss()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

@@ -1,20 +1,20 @@
 import { useState } from 'react';
+import { BsLayersHalf } from 'react-icons/bs';
 import { FaGithub, FaLinkedin } from 'react-icons/fa';
 import { PiPaintBucketFill } from 'react-icons/pi';
-import { RiFullscreenExitLine,RiFullscreenFill } from 'react-icons/ri';
+import { RiFullscreenExitLine, RiFullscreenFill } from 'react-icons/ri';
 
 import { useCanvasLoaded } from '@/store/useCanvasLoaded.ts';
 import { useTheme } from '@/store/useTheme.ts';
 import { useToggleFullscreen } from '@/store/useToggleFullscreen.ts';
+import { useViewMode, VIEW_MODE } from '@/store/useViewMode.ts';
 
 import { Icon } from './Icon.tsx';
 
 export const ActionBar = () => {
   const [text, setText] = useState('');
 
-  const {
-    toggleTheme,
-  } = useTheme((state) => {
+  const { toggleTheme } = useTheme((state) => {
     return {
       toggleTheme: state.toggleTheme,
     };
@@ -22,20 +22,55 @@ export const ActionBar = () => {
 
   const isLoaded = useCanvasLoaded((s) => s.isLoaded);
   const { isFullscreen, toggleFullscreen } = useToggleFullscreen();
+  const { viewMode, toggleViewMode } = useViewMode((state) => ({
+    viewMode: state.viewMode,
+    toggleViewMode: state.toggleViewMode,
+  }));
 
   return (
     <div className={'flex justify-center'}>
-      <div className={'z-10 fixed top-3 md:top-4 md:right-4 flex flex-col gap-y-1'}>
+      <div
+        className={'z-10 fixed top-3 md:top-4 md:right-4 flex flex-col gap-y-1'}
+      >
         <div
-          className={'group/container peer/container hover:cursor-pointer gap-y-4 rounded-md border-1 border-white backdrop-blur-[10px] backdrop-saturate-[15] bg-black/50'}
+          className={
+            'group/container peer/container hover:cursor-pointer gap-y-4 rounded-md border-1 border-white backdrop-blur-[10px] backdrop-saturate-[15] bg-black/50'
+          }
         >
           <div className={'flex grow-0 px-2'}>
             <div
               className={'cursor-pointer'}
-              onMouseEnter={() => setText(`${isFullscreen ? 'EXIT' : 'ENTER'} FULL SCREEN`)}
+              onMouseEnter={() =>
+                setText(`${isFullscreen ? 'EXIT' : 'ENTER'} FULL SCREEN`)
+              }
             >
               <Icon onClick={toggleFullscreen}>
-                { isFullscreen ? <RiFullscreenExitLine /> : <RiFullscreenFill /> }
+                {isFullscreen ? <RiFullscreenExitLine /> : <RiFullscreenFill />}
+              </Icon>
+            </div>
+
+            <div
+              className={`${isLoaded ? 'cursor-pointer' : 'cursor-not-allowed opacity-30'}`}
+              onMouseEnter={() =>
+                isLoaded &&
+                setText(
+                  `${viewMode === VIEW_MODE.WIREFRAME ? 'EXIT' : 'ENTER'} WIREFRAME`,
+                )
+              }
+            >
+              <Icon
+                onClick={
+                  isLoaded
+                    ? () => {
+                        toggleViewMode();
+                        setText(
+                          `${viewMode === VIEW_MODE.FULL ? 'EXIT' : 'ENTER'} WIREFRAME`,
+                        );
+                      }
+                    : undefined
+                }
+              >
+                <BsLayersHalf />
               </Icon>
             </div>
 
@@ -61,7 +96,9 @@ export const ActionBar = () => {
               className={'cursor-pointer'}
               onMouseEnter={() => setText('STEAL MY CODE →')}
             >
-              <Icon href={'https://github.com/waldowred5/waldow-portfolio-2025'}>
+              <Icon
+                href={'https://github.com/waldowred5/waldow-portfolio-2025'}
+              >
                 <FaGithub />
               </Icon>
             </div>

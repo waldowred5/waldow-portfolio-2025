@@ -7,9 +7,7 @@ interface SectionProps {
 export const Section = ({ children }: SectionProps) => {
   return (
     <>
-      <div className={'flex shrink h-lvh'}>
-        { children }
-      </div>
+      <div className={'flex shrink h-lvh'}>{children}</div>
     </>
   );
 };

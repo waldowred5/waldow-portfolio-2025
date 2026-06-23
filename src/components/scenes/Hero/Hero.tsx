@@ -2,17 +2,88 @@ import { Html } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import { Bloom, EffectComposer } from '@react-three/postprocessing';
 import { button, folder, useControls } from 'leva';
-import { Color, ShaderMaterial, Vector2 } from 'three';
+import { useMemo, useRef } from 'react';
+import {
+  BufferAttribute,
+  Color,
+  PlaneGeometry,
+  ShaderMaterial,
+  SphereGeometry,
+  Vector2,
+} from 'three';
 
 import { HeroText } from '@/components/ui/HeroText.tsx';
 import { TABLET_BREAKPOINT } from '@/lib/constants.ts';
 import { useMousePosition } from '@/store/useMousePosition.ts';
 import type { ITheme } from '@/store/useTheme.ts';
 import { THEME_COLORS, useTheme } from '@/store/useTheme.ts';
+import { useViewMode, VIEW_MODE } from '@/store/useViewMode.ts';
 import { useWindowSize } from '@/store/useWindowSize.ts';
 
 import waterFragmentShader from '../../../assets/shaders/water/fragment.glsl?raw';
 import waterVertexShader from '../../../assets/shaders/water/vertex.glsl?raw';
+
+const sunVertexShader = /* glsl */ `
+  attribute vec3 aBarycentric;
+  varying vec3 vPosition;
+  varying vec3 vBarycentric;
+  void main() {
+    vPosition = position;
+    vBarycentric = aBarycentric;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+
+const sunFragmentShader = /* glsl */ `
+  uniform vec3 uColor;
+  uniform vec3 uOldColor;
+  uniform float uOpacity;
+  uniform float uWireframeProgress;
+  uniform float uThemeDissolveProgress;
+  uniform float uEdge;
+  uniform vec3 uEdgeColor;
+  uniform vec3 uThemeEdgeColor;
+  uniform float uNoiseSeed;
+  varying vec3 vPosition;
+  varying vec3 vBarycentric;
+
+  float hash(vec3 p) {
+    p = fract(p * vec3(443.8975, 397.2973, 491.1871));
+    p += dot(p.zyx, p + vec3(19.19));
+    return fract((p.x + p.y) * p.z);
+  }
+
+  float noise(vec3 p) {
+    vec3 i = floor(p);
+    vec3 f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    return mix(
+      mix(mix(hash(i), hash(i + vec3(1.0, 0.0, 0.0)), f.x),
+          mix(hash(i + vec3(0.0, 1.0, 0.0)), hash(i + vec3(1.0, 1.0, 0.0)), f.x), f.y),
+      mix(mix(hash(i + vec3(0.0, 0.0, 1.0)), hash(i + vec3(1.0, 0.0, 1.0)), f.x),
+          mix(hash(i + vec3(0.0, 1.0, 1.0)), hash(i + vec3(1.0, 1.0, 1.0)), f.x), f.y),
+      f.z
+    );
+  }
+
+  void main() {
+    float n = noise(vPosition * 3.0 + uNoiseSeed);
+
+    float edgeMin = min(vBarycentric.x, min(vBarycentric.y, vBarycentric.z));
+    float lineWidth = fwidth(edgeMin) * 1.5;
+    bool inWireframeZone = n < uWireframeProgress;
+    if (inWireframeZone && edgeMin >= lineWidth) discard;
+
+    vec3 color = n < uThemeDissolveProgress ? uColor : uOldColor;
+
+    if (uThemeDissolveProgress > 0.001 && uThemeDissolveProgress < 0.999) {
+      float themeEdgeFactor = smoothstep(uThemeDissolveProgress + uEdge, uThemeDissolveProgress, n);
+      color = mix(color, uThemeEdgeColor, themeEdgeFactor);
+    }
+
+    gl_FragColor = vec4(color, uOpacity);
+  }
+`;
 
 interface Props {
   opacity?: number;
@@ -32,6 +103,8 @@ export const Hero = ({ opacity = 1 }: Props) => {
   });
 
   const mousePosition = useMousePosition();
+
+  const viewMode = useViewMode((state) => state.viewMode);
 
   const bloomDefaultValues = {
     bloomEnabled: true,
@@ -153,37 +226,184 @@ export const Hero = ({ opacity = 1 }: Props) => {
     { collapsed: true },
   );
 
+  const waveGeometry = useMemo(() => {
+    const geo = new PlaneGeometry(5, 12, 512, 512).toNonIndexed();
+    const count = geo.attributes.position.count;
+    const barycentric = new Float32Array(count * 3);
+    for (let i = 0; i < count; i += 3) {
+      barycentric[i * 3] = 1;
+      barycentric[(i + 1) * 3 + 1] = 1;
+      barycentric[(i + 2) * 3 + 2] = 1;
+    }
+    geo.setAttribute('aBarycentric', new BufferAttribute(barycentric, 3));
+
+    return geo;
+  }, []);
+
+  const sunGeometry = useMemo(() => {
+    const geo = new SphereGeometry(1, 64, 64).toNonIndexed();
+    const count = geo.attributes.position.count;
+    const barycentric = new Float32Array(count * 3);
+    for (let i = 0; i < count; i += 3) {
+      barycentric[i * 3] = 1;
+      barycentric[(i + 1) * 3 + 1] = 1;
+      barycentric[(i + 2) * 3 + 2] = 1;
+    }
+    geo.setAttribute('aBarycentric', new BufferAttribute(barycentric, 3));
+
+    return geo;
+  }, []);
+
+  const waterMaterial = useMemo(
+    () =>
+      new ShaderMaterial({
+        vertexShader: waterVertexShader,
+        fragmentShader: waterFragmentShader,
+        transparent: true,
+        opacity: 0,
+        uniforms: {
+          // Time
+          uTime: { value: 0 },
+
+          // Big Wave Elevation
+          uBigWavesElevation: { value: 0.2 },
+          uBigWavesFrequency: { value: new Vector2(1.0, 1.15) },
+          uBigWavesSpeed: { value: 0.6 },
+
+          // Small Wave Elevation
+          uSmallWavesElevation: { value: 0.125 },
+          uSmallWavesFrequency: { value: 2.0 },
+          uSmallWavesSpeed: { value: 0.2 },
+          uSmallWavesIterations: { value: 4.0 },
+
+          // Transition dissolve
+          uWireframeProgress: { value: 0 },
+          uThemeDissolveProgress: { value: 0 },
+          uNoiseSeed: { value: 42.0 },
+          uEdge: { value: 0.08 },
+          uEdgeColor: { value: new Color(...THEME_COLORS[theme].tertiary) },
+
+          // Color
+          uColorOffset: { value: 0.08 },
+          uColorMultiplier: { value: 4.8 },
+          uDepthColor: { value: new Color(THEME_COLORS[theme].secondary) },
+          uSurfaceColor: { value: new Color(...THEME_COLORS[theme].primary) },
+          uOldDepthColor: { value: new Color(THEME_COLORS[theme].secondary) },
+          uOldSurfaceColor: {
+            value: new Color(...THEME_COLORS[theme].primary),
+          },
+        },
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- theme color and opacity updates handled via uniform mutation in useFrame
+    [],
+  );
+
+  const sunMaterial = useMemo(
+    () =>
+      new ShaderMaterial({
+        vertexShader: sunVertexShader,
+        fragmentShader: sunFragmentShader,
+        transparent: true,
+        uniforms: {
+          uColor: { value: new Color(...THEME_COLORS[theme].tertiary) },
+          uOldColor: { value: new Color(...THEME_COLORS[theme].tertiary) },
+          uOpacity: { value: opacity },
+          uWireframeProgress: { value: 0 },
+          uThemeDissolveProgress: { value: 0 },
+          uNoiseSeed: { value: 42.0 },
+          uEdge: { value: 0.1 },
+          uEdgeColor: { value: new Color(2.0, 2.0, 2.0) },
+          uThemeEdgeColor: {
+            value: new Color(...THEME_COLORS[theme].tertiary),
+          },
+        },
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- theme color and opacity updates handled via uniform mutation in useFrame
+    [],
+  );
+
+  const transitionStartRef = useRef<number | null>(null);
+  const prevViewModeRef = useRef(viewMode);
+
+  const themeTransitionStartRef = useRef<number | null>(null);
+  const prevThemeRef = useRef(theme);
+
+  const TRANSITION_DURATION = 0.9;
+
   useFrame(({ clock }) => {
-    waterMaterial.uniforms.uTime.value = clock.getElapsedTime();
+    // Read state directly from store to avoid stale closure captures
+    const currentViewMode = useViewMode.getState().viewMode;
+    const currentTheme = useTheme.getState().theme;
+    const elapsed = clock.getElapsedTime();
+
+    if (currentViewMode !== prevViewModeRef.current) {
+      prevViewModeRef.current = currentViewMode;
+      transitionStartRef.current = elapsed;
+      const seed = Math.random() * 100;
+      waterMaterial.uniforms.uNoiseSeed.value = seed;
+      sunMaterial.uniforms.uNoiseSeed.value = seed;
+    }
+
+    if (currentTheme !== prevThemeRef.current) {
+      prevThemeRef.current = currentTheme;
+      // Capture current colors as old before swapping to new theme
+      waterMaterial.uniforms.uOldDepthColor.value.copy(
+        waterMaterial.uniforms.uDepthColor.value,
+      );
+      waterMaterial.uniforms.uOldSurfaceColor.value.copy(
+        waterMaterial.uniforms.uSurfaceColor.value,
+      );
+      sunMaterial.uniforms.uOldColor.value.copy(
+        sunMaterial.uniforms.uColor.value,
+      );
+      const newColors = THEME_COLORS[currentTheme];
+      waterMaterial.uniforms.uDepthColor.value.set(newColors.secondary);
+      waterMaterial.uniforms.uSurfaceColor.value.set(...newColors.primary);
+      waterMaterial.uniforms.uEdgeColor.value.set(...newColors.tertiary);
+      sunMaterial.uniforms.uColor.value.set(...newColors.tertiary);
+      sunMaterial.uniforms.uThemeEdgeColor.value.set(...newColors.tertiary);
+      waterMaterial.uniforms.uThemeDissolveProgress.value = 0;
+      sunMaterial.uniforms.uThemeDissolveProgress.value = 0;
+      const themeSeed = Math.random() * 100;
+      waterMaterial.uniforms.uNoiseSeed.value = themeSeed;
+      sunMaterial.uniforms.uNoiseSeed.value = themeSeed;
+      themeTransitionStartRef.current = elapsed;
+    }
+
+    const toWireframe = currentViewMode === VIEW_MODE.WIREFRAME;
+    let wireframeProgress = toWireframe ? 1.0 : 0.0;
+
+    if (transitionStartRef.current !== null) {
+      const t = Math.min(
+        (elapsed - transitionStartRef.current) / TRANSITION_DURATION,
+        1.0,
+      );
+      wireframeProgress = toWireframe ? t : 1.0 - t;
+
+      if (t >= 1.0) {
+        transitionStartRef.current = null;
+      }
+    }
+
+    if (themeTransitionStartRef.current !== null) {
+      const t = Math.min(
+        (elapsed - themeTransitionStartRef.current) / TRANSITION_DURATION,
+        1.0,
+      );
+      waterMaterial.uniforms.uThemeDissolveProgress.value = t;
+      sunMaterial.uniforms.uThemeDissolveProgress.value = t;
+
+      if (t >= 1.0) {
+        themeTransitionStartRef.current = null;
+      }
+    }
+
+    waterMaterial.uniforms.uTime.value = elapsed;
+    waterMaterial.uniforms.uWireframeProgress.value = wireframeProgress;
     waterMaterial.opacity = opacity;
-  });
 
-  const waterMaterial = new ShaderMaterial({
-    vertexShader: waterVertexShader,
-    fragmentShader: waterFragmentShader,
-    transparent: true,
-    opacity: 0,
-    uniforms: {
-      // Time
-      uTime: { value: 0 },
-
-      // Big Wave Elevation
-      uBigWavesElevation: { value: 0.2 },
-      uBigWavesFrequency: { value: new Vector2(1.0, 1.15) },
-      uBigWavesSpeed: { value: 0.6 },
-
-      // Small Wave Elevation
-      uSmallWavesElevation: { value: 0.125 },
-      uSmallWavesFrequency: { value: 2.0 },
-      uSmallWavesSpeed: { value: 0.2 },
-      uSmallWavesIterations: { value: 4.0 },
-
-      // Color
-      uColorOffset: { value: 0.08 },
-      uColorMultiplier: { value: 4.8 },
-      uDepthColor: { value: new Color(THEME_COLORS[theme].secondary) },
-      uSurfaceColor: { value: new Color(...THEME_COLORS[theme].primary) },
-    },
+    sunMaterial.uniforms.uWireframeProgress.value = wireframeProgress;
+    sunMaterial.uniforms.uOpacity.value = opacity;
   });
 
   return (
@@ -200,22 +420,20 @@ export const Hero = ({ opacity = 1 }: Props) => {
 
       {/* Sun */}
       <mesh
+        geometry={sunGeometry}
+        scale={[radius, radius, radius]}
         position={[
           sunPosition.x + mousePosition.x / -sunXPositionMouseXFactor,
           sunPosition.y + mousePosition.y / sunYPositionMouseYFactor,
           sunPosition.z,
         ]}
       >
-        <sphereGeometry args={[radius, 64, 64]} />
-        <meshBasicMaterial
-          color={THEME_COLORS[theme].tertiary}
-          transparent
-          opacity={opacity}
-        />
+        <primitive object={sunMaterial} />
       </mesh>
 
       {/* Wave */}
       <mesh
+        geometry={waveGeometry}
         position={[wavePosition.x, wavePosition.y, wavePosition.z]}
         rotation={[
           waveRotation.x + mousePosition.y / waveXRotationMouseYFactor,
@@ -223,7 +441,6 @@ export const Hero = ({ opacity = 1 }: Props) => {
           waveRotation.z,
         ]}
       >
-        <planeGeometry args={[5, 12, 512, 512]} />
         <primitive object={waterMaterial} />
       </mesh>
 

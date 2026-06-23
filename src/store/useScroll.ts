@@ -17,6 +17,6 @@ export const useScroll = createWithEqualityFn<ScrollState>((set) => {
           scrollPercentage: newScrollPercentage,
         };
       });
-    }
+    },
   };
 });
