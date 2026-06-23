@@ -36,6 +36,7 @@ const sunFragmentShader = /* glsl */ `
   uniform float uEdge;
   uniform vec3 uEdgeColor;
   uniform vec3 uThemeEdgeColor;
+  uniform float uNoiseSeed;
   varying vec3 vPosition;
   varying vec3 vBarycentric;
 
@@ -59,7 +60,7 @@ const sunFragmentShader = /* glsl */ `
   }
 
   void main() {
-    float n = noise(vPosition * 3.0);
+    float n = noise(vPosition * 3.0 + uNoiseSeed);
 
     float edgeMin = min(vBarycentric.x, min(vBarycentric.y, vBarycentric.z));
     float lineWidth = fwidth(edgeMin) * 1.5;
@@ -270,6 +271,7 @@ export const Hero = ({ opacity = 1 }: Props) => {
           // Transition dissolve
           uWireframeProgress: { value: 0 },
           uThemeDissolveProgress: { value: 0 },
+          uNoiseSeed: { value: 42.0 },
           uEdge: { value: 0.08 },
           uEdgeColor: { value: new Color(...THEME_COLORS[theme].tertiary) },
 
@@ -299,6 +301,7 @@ export const Hero = ({ opacity = 1 }: Props) => {
           uOpacity: { value: opacity },
           uWireframeProgress: { value: 0 },
           uThemeDissolveProgress: { value: 0 },
+          uNoiseSeed: { value: 42.0 },
           uEdge: { value: 0.1 },
           uEdgeColor: { value: new Color(2.0, 2.0, 2.0) },
           uThemeEdgeColor: {
@@ -326,6 +329,9 @@ export const Hero = ({ opacity = 1 }: Props) => {
     if (currentViewMode !== prevViewModeRef.current) {
       prevViewModeRef.current = currentViewMode;
       transitionStartRef.current = elapsed;
+      const seed = Math.random() * 100;
+      waterMaterial.uniforms.uNoiseSeed.value = seed;
+      sunMaterial.uniforms.uNoiseSeed.value = seed;
     }
 
     if (currentTheme !== prevThemeRef.current) {
@@ -348,6 +354,9 @@ export const Hero = ({ opacity = 1 }: Props) => {
       sunMaterial.uniforms.uThemeEdgeColor.value.set(...newColors.tertiary);
       waterMaterial.uniforms.uThemeDissolveProgress.value = 0;
       sunMaterial.uniforms.uThemeDissolveProgress.value = 0;
+      const themeSeed = Math.random() * 100;
+      waterMaterial.uniforms.uNoiseSeed.value = themeSeed;
+      sunMaterial.uniforms.uNoiseSeed.value = themeSeed;
       themeTransitionStartRef.current = elapsed;
     }
 
