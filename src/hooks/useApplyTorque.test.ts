@@ -121,4 +121,34 @@ describe('useApplyTorque', () => {
     const [torque] = body.applyTorqueImpulse.mock.calls[0];
     expect(torque.x).toBeLessThan(0);
   });
+
+  it('adds positive y torque from vertex left of centre (negative x)', () => {
+    const body = mockBody();
+    const mesh = {} as never;
+    const pos = new Vector3(-1, 0, 0);
+    useApplyTorque({
+      keys: noKeys,
+      selectedVertex: mesh,
+      selectedVertexPosition: pos,
+      body,
+      delta: 0.016,
+    });
+    const [torque] = body.applyTorqueImpulse.mock.calls[0];
+    expect(torque.y).toBeGreaterThan(0);
+  });
+
+  it('subtracts y torque from vertex right of centre (positive x)', () => {
+    const body = mockBody();
+    const mesh = {} as never;
+    const pos = new Vector3(1, 0, 0);
+    useApplyTorque({
+      keys: noKeys,
+      selectedVertex: mesh,
+      selectedVertexPosition: pos,
+      body,
+      delta: 0.016,
+    });
+    const [torque] = body.applyTorqueImpulse.mock.calls[0];
+    expect(torque.y).toBeLessThan(0);
+  });
 });

@@ -69,3 +69,61 @@ describe('Hero', () => {
     ).resolves.toBeDefined();
   });
 });
+
+describe('Hero useFrame transitions', () => {
+  beforeEach(() => {
+    useTheme.setState({ theme: THEME.ELECTRIC_BLUE });
+    useViewMode.setState({ viewMode: VIEW_MODE.FULL });
+  });
+
+  afterEach(() => {
+    useTheme.setState({ theme: THEME.ELECTRIC_BLUE });
+    useViewMode.setState({ viewMode: VIEW_MODE.FULL });
+  });
+
+  it('randomises noise seed when viewMode changes to WIREFRAME', async () => {
+    const renderer = await ReactThreeTestRenderer.create(<Hero />);
+    const meshes = renderer.scene.findAllByType('Mesh');
+    const sunMesh = meshes[0];
+    const mat = (sunMesh.instance as Mesh<BufferGeometry, ShaderMaterial>)
+      .material;
+
+    expect(mat.uniforms.uNoiseSeed.value).toBe(42);
+
+    useViewMode.setState({ viewMode: VIEW_MODE.WIREFRAME });
+    await renderer.advanceFrames(1, 0);
+
+    expect(mat.uniforms.uNoiseSeed.value).not.toBe(42);
+  });
+
+  it('randomises noise seed when theme changes', async () => {
+    const renderer = await ReactThreeTestRenderer.create(<Hero />);
+    const meshes = renderer.scene.findAllByType('Mesh');
+    const waveMesh = meshes[1];
+    const waveMat = (waveMesh.instance as Mesh<BufferGeometry, ShaderMaterial>)
+      .material;
+
+    expect(waveMat.uniforms.uNoiseSeed.value).toBe(42);
+
+    useTheme.setState({ theme: THEME.FIRE });
+    await renderer.advanceFrames(1, 0);
+
+    expect(waveMat.uniforms.uNoiseSeed.value).not.toBe(42);
+  });
+
+  it('updates sun color uniform when theme changes', async () => {
+    const renderer = await ReactThreeTestRenderer.create(<Hero />);
+    const meshes = renderer.scene.findAllByType('Mesh');
+    const sunMesh = meshes[0];
+    const mat = (sunMesh.instance as Mesh<BufferGeometry, ShaderMaterial>)
+      .material;
+
+    const initialColorR = mat.uniforms.uColor.value.r;
+
+    useTheme.setState({ theme: THEME.FIRE });
+    await renderer.advanceFrames(1, 0);
+
+    // FIRE tertiary differs from ELECTRIC_BLUE tertiary
+    expect(mat.uniforms.uColor.value.r).not.toBe(initialColorR);
+  });
+});

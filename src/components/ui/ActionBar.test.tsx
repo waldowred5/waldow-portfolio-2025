@@ -89,4 +89,31 @@ describe('ActionBar', () => {
     fireEvent.mouseEnter(fullscreenDiv);
     expect(getByText('ENTER FULL SCREEN')).toBeInTheDocument();
   });
+
+  it('shows theme hover label when canvas is loaded', () => {
+    useCanvasLoaded.setState({
+      isLoaded: true,
+      isCanvasReady: true,
+      isFontsReady: true,
+      isGlowFading: false,
+    });
+    const { container, getByText } = render(<ActionBar />);
+    const themeDiv = container.querySelectorAll('.cursor-pointer')[2];
+    fireEvent.mouseEnter(themeDiv);
+    expect(getByText('CHANGE SITE THEME')).toBeInTheDocument();
+  });
+
+  it('shows linkedin hover label', () => {
+    const { container, getByText } = render(<ActionBar />);
+    const linkedinDiv = container.querySelectorAll('.cursor-pointer')[1];
+    fireEvent.mouseEnter(linkedinDiv);
+    expect(getByText('STALK MY CAREER →')).toBeInTheDocument();
+  });
+
+  it('shows github hover label', () => {
+    const { container, getByText } = render(<ActionBar />);
+    const githubDiv = container.querySelectorAll('.cursor-pointer')[2];
+    fireEvent.mouseEnter(githubDiv);
+    expect(getByText('STEAL MY CODE →')).toBeInTheDocument();
+  });
 });

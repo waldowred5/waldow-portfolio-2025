@@ -5,19 +5,25 @@ vi.mock('leva', () => ({
   button: vi.fn(),
   buttonGroup: vi.fn(),
   folder: vi.fn((_: unknown, content: unknown) => content),
-  useControls: vi.fn(() => [
-    {
-      enableCameraControls: true,
-      scenePosition: { x: 0, y: -0.8, z: 1 },
-      sceneRotation: { x: 0.34, y: 0.42, z: 0 },
-      deskPosition: { x: 0.8, y: 0.4, z: -0.7 },
-      chairPosition: { x: 0.76, y: -3.09, z: 4.5 },
-      portalSizeFactor: 1.14,
-      portalPosition: { x: 0, y: 1.56, z: -1.36 },
-      portalRotation: { x: -0.26, y: 0, z: 0 },
-    },
-    vi.fn(),
-  ]),
+  useControls: vi.fn((_name: unknown, factory: unknown) => {
+    if (typeof factory === 'function') {
+      factory();
+    }
+
+    return [
+      {
+        enableCameraControls: true,
+        scenePosition: { x: 0, y: -0.8, z: 1 },
+        sceneRotation: { x: 0.34, y: 0.42, z: 0 },
+        deskPosition: { x: 0.8, y: 0.4, z: -0.7 },
+        chairPosition: { x: 0.76, y: -3.09, z: 4.5 },
+        portalSizeFactor: 1.14,
+        portalPosition: { x: 0, y: 1.56, z: -1.36 },
+        portalRotation: { x: -0.26, y: 0, z: 0 },
+      },
+      vi.fn(),
+    ];
+  }),
 }));
 
 vi.mock('@react-three/drei', () => ({

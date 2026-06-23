@@ -28,10 +28,10 @@ export default defineConfig({
         'src/main.tsx',
       ],
       thresholds: {
-        statements: 80,
-        branches: 70,
+        statements: 92,
+        branches: 86,
         functions: 80,
-        lines: 80,
+        lines: 92,
       },
     },
   },

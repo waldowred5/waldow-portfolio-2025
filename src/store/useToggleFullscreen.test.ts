@@ -70,4 +70,29 @@ describe('useToggleFullscreen', () => {
       act(() => result.current.toggleFullscreen()),
     ).resolves.not.toThrow();
   });
+
+  it('does not throw when exitFullscreen rejects', async () => {
+    Object.defineProperty(document.documentElement, 'requestFullscreen', {
+      value: vi.fn().mockImplementation(() => {
+        Object.defineProperty(document, 'fullscreenElement', {
+          value: document.body,
+          configurable: true,
+        });
+
+        return Promise.resolve();
+      }),
+      configurable: true,
+    });
+    Object.defineProperty(document, 'exitFullscreen', {
+      value: vi.fn().mockRejectedValue(new Error('exit failed')),
+      configurable: true,
+      writable: true,
+    });
+
+    const { result } = renderHook(() => useToggleFullscreen());
+    await act(() => result.current.toggleFullscreen());
+    await expect(
+      act(() => result.current.toggleFullscreen()),
+    ).resolves.not.toThrow();
+  });
 });
