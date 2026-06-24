@@ -13,7 +13,7 @@ interface SceneState {
 }
 export const useScene = createWithEqualityFn<SceneState>((set) => {
   return {
-    currentScene: SCENE.CODING,
+    currentScene: SCENE.HERO,
 
     // Actions
     updateScene: (scene) => {

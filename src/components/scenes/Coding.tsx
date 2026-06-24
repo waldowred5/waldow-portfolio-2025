@@ -8,30 +8,32 @@ import {
   Html,
   PerspectiveCamera,
 } from '@react-three/drei';
-import { useThree } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import { button, buttonGroup, folder, useControls } from 'leva';
 import { Suspense, useEffect, useRef, useState } from 'react';
+import { Color, type RectAreaLight } from 'three';
 
 import { Macbook } from '@/components/models/Macbook.tsx';
 import { WaldowAvatar } from '@/components/models/WaldowAvatar.tsx';
+import { THEME_TRANSITION_DURATION } from '@/lib/constants.ts';
+import { type ITheme, THEME_COLORS, useTheme } from '@/store/useTheme.ts';
 
 export const Coding = () => {
+  const { theme } = useTheme((state: ITheme) => ({ theme: state.theme }));
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [occlusionMode, setOcclusionMode] = useState<boolean | 'blending'>(
     false,
   );
   const cameraControls = useRef<ThreeCameraControls>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const rectLightRef = useRef<RectAreaLight>(null);
+  const currentLerpedColor = useRef(new Color(THEME_COLORS[theme].secondary));
+  const lerpState = useRef({
+    fromColor: new Color(THEME_COLORS[theme].secondary),
+    toColor: new Color(THEME_COLORS[theme].secondary),
+    elapsed: THEME_TRANSITION_DURATION,
+  });
   const { camera } = useThree();
-
-  useEffect(() => {
-    if (iframeLoaded) {
-      // If the iframe is loaded, set occlusion mode to 'blending'
-      setOcclusionMode('blending');
-    } else {
-      // If the iframe is not loaded, disable occlusion
-      setOcclusionMode(false);
-    }
-  }, [iframeLoaded]);
 
   const defaultMacbookValues = {
     scenePosition: { x: 0, y: -0.8, z: 1 },
@@ -57,6 +59,51 @@ export const Coding = () => {
       z: 16,
     },
   };
+
+  useEffect(() => {
+    if (iframeLoaded) {
+      setOcclusionMode('blending');
+    } else {
+      setOcclusionMode(false);
+    }
+  }, [iframeLoaded]);
+
+  useEffect(() => {
+    iframeRef.current?.contentWindow?.postMessage({ type: 'THEME_CHANGE', theme }, '*');
+  }, [theme]);
+
+  useEffect(() => {
+    lerpState.current.fromColor.copy(currentLerpedColor.current);
+    lerpState.current.toColor.set(THEME_COLORS[theme].secondary);
+    lerpState.current.elapsed = 0;
+  }, [theme]);
+
+  useFrame((_, delta) => {
+    const light = rectLightRef.current;
+    const state = lerpState.current;
+    if (!light) return;
+
+    if (state.elapsed < THEME_TRANSITION_DURATION) {
+      state.elapsed = Math.min(state.elapsed + delta, THEME_TRANSITION_DURATION);
+      const t = state.elapsed / THEME_TRANSITION_DURATION;
+      currentLerpedColor.current.copy(state.fromColor).lerp(state.toColor, t);
+    }
+
+    light.color.copy(currentLerpedColor.current);
+  });
+
+  useEffect(() => {
+    const controls = cameraControls.current;
+    if (!controls) return;
+    controls.setLookAt(0, 0, 5, 0, 0, 0, false);
+    controls.setLookAt(
+      defaultCameraValues.cameraPosition.x,
+      defaultCameraValues.cameraPosition.y,
+      defaultCameraValues.cameraPosition.z,
+      0, 0, 0,
+      true,
+    );
+  }, []);
 
   const [
     {
@@ -200,6 +247,7 @@ export const Coding = () => {
         makeDefault
         enabled={enableCameraControls}
         ref={cameraControls}
+        smoothTime={0.6}
       />
 
       <group
@@ -209,10 +257,10 @@ export const Coding = () => {
         <Environment preset={'city'} />
         <ambientLight intensity={0.5} />
         <rectAreaLight
+          ref={rectLightRef}
           width={2.5}
           height={1.65}
-          intensity={65}
-          color={'#ff6900'}
+          intensity={165}
           rotation={[-0.1, Math.PI, 0]}
           position={[0, 0.55, -1.15]}
         />
@@ -250,6 +298,7 @@ export const Coding = () => {
             rotation={[portalRotation.x, portalRotation.y, portalRotation.z]}
           >
             <iframe
+              ref={iframeRef}
               src={'/portal'}
               className={'w-[1024px] h-[670px] rounded-[20px] border-none'}
               onLoad={() => setIframeLoaded(true)}

@@ -1,9 +1,22 @@
+import { useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 
 import { Hero } from '@/components/scenes/Hero/Hero.tsx';
 import { Background } from '@/components/ui/Background.tsx';
+import { useTheme } from '@/store/useTheme.ts';
 
 export const HeroPortal = () => {
+  useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      if (event.data?.type === 'THEME_CHANGE') {
+        useTheme.setState({ theme: event.data.theme });
+      }
+    };
+
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, []);
+
   return (
     <div className={'fixed flex w-full h-lvh'}>
       <Background />

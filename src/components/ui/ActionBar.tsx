@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { BsLayersHalf } from 'react-icons/bs';
+import { BsHouseDoor, BsLayersHalf, BsPerson } from 'react-icons/bs';
 import { FaGithub, FaLinkedin } from 'react-icons/fa';
 import { PiPaintBucketFill } from 'react-icons/pi';
 import { RiFullscreenExitLine, RiFullscreenFill } from 'react-icons/ri';
 
 import { useCanvasLoaded } from '@/store/useCanvasLoaded.ts';
+import { SCENE, useScene } from '@/store/useScene.ts';
 import { useTheme } from '@/store/useTheme.ts';
 import { useToggleFullscreen } from '@/store/useToggleFullscreen.ts';
 import { useViewMode, VIEW_MODE } from '@/store/useViewMode.ts';
@@ -22,6 +23,9 @@ export const ActionBar = () => {
 
   const isLoaded = useCanvasLoaded((s) => s.isLoaded);
   const { isFullscreen, toggleFullscreen } = useToggleFullscreen();
+  const { updateScene } = useScene((state) => ({
+    updateScene: state.updateScene,
+  }));
   const { viewMode, toggleViewMode } = useViewMode((state) => ({
     viewMode: state.viewMode,
     toggleViewMode: state.toggleViewMode,
@@ -38,6 +42,26 @@ export const ActionBar = () => {
           }
         >
           <div className={'flex grow-0 px-2'}>
+            <div
+              className={'cursor-pointer'}
+              onMouseEnter={() => setText('HOME')}
+            >
+              <Icon onClick={() => updateScene(SCENE.HERO)}>
+                <BsHouseDoor />
+              </Icon>
+            </div>
+
+            <div
+              className={'cursor-pointer'}
+              onMouseEnter={() => setText('MEET THE DEVELOPER')}
+            >
+              <Icon onClick={() => updateScene(SCENE.CODING)}>
+                <BsPerson />
+              </Icon>
+            </div>
+
+            <div className={'w-px h-5 bg-white/40 self-center mx-1'} />
+
             <div
               className={'cursor-pointer'}
               onMouseEnter={() =>
@@ -108,7 +132,7 @@ export const ActionBar = () => {
           className={`
             peer-hover/container:backdrop-blur-[10px] peer-hover/container:backdrop-saturate-[15]
             peer-hover/container:bg-black/40 text-transparent peer-hover/container:text-white
-            transition-all duration-300 rounded-md peer-hover/container:border-1 peer-hover/container:border-white 
+            transition-all duration-300 rounded-md peer-hover/container:border-1 peer-hover/container:border-white
             h-5 items-center justify-center flex select-none
             `}
         >

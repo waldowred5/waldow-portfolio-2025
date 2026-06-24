@@ -1,6 +1,7 @@
 import { motion } from 'motion/react';
 import { memo } from 'react';
 
+import { THEME_TRANSITION_DURATION } from '@/lib/constants.ts';
 import { cn, convertToHex } from '@/lib/utils.ts';
 import { type ITheme, THEME_COLORS, useTheme } from '@/store/useTheme.ts';
 
@@ -76,6 +77,7 @@ export const BackgroundBeams = memo(({ className }: { className?: string }) => {
       )}
     >
       <svg
+        key={theme}
         className={'pointer-events-none absolute z-0 h-full w-full'}
         width={'100%'}
         height={'100%'}
@@ -105,7 +107,7 @@ export const BackgroundBeams = memo(({ className }: { className?: string }) => {
           {paths.map((_, index) => (
             <motion.linearGradient
               id={`linearGradient-${index}`}
-              key={`gradient-${index}-${theme}`}
+              key={`gradient-${index}`}
               initial={{
                 x1: '0%',
                 x2: '0%',
@@ -125,14 +127,26 @@ export const BackgroundBeams = memo(({ className }: { className?: string }) => {
                 delay: Math.random(),
               }}
             >
-              <stop stopColor={primaryColor} stopOpacity={'0'}></stop>
-              <stop stopColor={primaryColor}></stop>
-              <stop offset={'32.5%'} stopColor={secondaryColor}></stop>
-              <stop
-                offset={'100%'}
-                stopColor={tertiaryColor}
+              <motion.stop
+                animate={{ stopColor: primaryColor }}
+                transition={{ duration: THEME_TRANSITION_DURATION }}
                 stopOpacity={'0'}
-              ></stop>
+              />
+              <motion.stop
+                animate={{ stopColor: primaryColor }}
+                transition={{ duration: THEME_TRANSITION_DURATION }}
+              />
+              <motion.stop
+                offset={'32.5%'}
+                animate={{ stopColor: secondaryColor }}
+                transition={{ duration: THEME_TRANSITION_DURATION }}
+              />
+              <motion.stop
+                offset={'100%'}
+                animate={{ stopColor: tertiaryColor }}
+                transition={{ duration: THEME_TRANSITION_DURATION }}
+                stopOpacity={'0'}
+              />
             </motion.linearGradient>
           ))}
 

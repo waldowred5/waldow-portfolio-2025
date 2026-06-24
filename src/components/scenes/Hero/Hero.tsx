@@ -1,4 +1,4 @@
-import { Html } from '@react-three/drei';
+import { Html, PerspectiveCamera } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import { Bloom, EffectComposer } from '@react-three/postprocessing';
 import { button, folder, useControls } from 'leva';
@@ -13,7 +13,10 @@ import {
 } from 'three';
 
 import { HeroText } from '@/components/ui/HeroText.tsx';
-import { TABLET_BREAKPOINT } from '@/lib/constants.ts';
+import {
+  TABLET_BREAKPOINT,
+  THEME_TRANSITION_DURATION,
+} from '@/lib/constants.ts';
 import { useMousePosition } from '@/store/useMousePosition.ts';
 import type { ITheme } from '@/store/useTheme.ts';
 import { THEME_COLORS, useTheme } from '@/store/useTheme.ts';
@@ -328,7 +331,7 @@ export const Hero = ({ opacity = 1 }: Props) => {
   const themeTransitionStartRef = useRef<number | null>(null);
   const prevThemeRef = useRef(theme);
 
-  const TRANSITION_DURATION = 0.9;
+  const TRANSITION_DURATION = THEME_TRANSITION_DURATION;
 
   useFrame(({ clock }) => {
     // Read state directly from store to avoid stale closure captures
@@ -408,6 +411,14 @@ export const Hero = ({ opacity = 1 }: Props) => {
 
   return (
     <>
+      <PerspectiveCamera
+        makeDefault
+        fov={75}
+        near={0.01}
+        far={100}
+        position={[0, 0, 5]}
+      />
+
       {/* FX */}
       <EffectComposer>
         <Bloom
