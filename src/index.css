@@ -32,6 +32,20 @@
   --text-shadow-hero: 1px 1px 4px #000000;
 }
 
+@utility text-hero-waldow {
+  font-size: min(19.3lvh, 13rem);
+  line-height: min(19.3lvh, 13rem);
+}
+
+@utility text-hero-daniel {
+  font-size: min(8.9lvh, 6rem);
+}
+
+@utility text-hero-tagline {
+  font-size: min(3.3lvh, 2.25rem);
+  line-height: min(3.3lvh, 2.25rem);
+}
+
 * {
   ::-webkit-scrollbar {
     display: none;

@@ -60,11 +60,6 @@ export const Coding = ({ isActive = true }: Props) => {
 
   const defaultCameraValues = {
     enableCameraControls: true,
-    cameraPosition: {
-      x: -1.5,
-      y: 3.5,
-      z: 16,
-    },
   };
 
   useEffect(() => {
@@ -83,8 +78,7 @@ export const Coding = ({ isActive = true }: Props) => {
   useFrame((_, delta) => {
     const light = rectLightRef.current;
     const state = lerpState.current;
-    if (!light) 
-return;
+    if (!light) return;
 
     if (state.elapsed < THEME_TRANSITION_DURATION) {
       state.elapsed = Math.min(
@@ -101,7 +95,6 @@ return;
   const [
     {
       enableCameraControls,
-      cameraPosition,
       scenePosition,
       sceneRotation,
       environmentIntensity,
@@ -111,6 +104,7 @@ return;
       portalPosition,
       portalRotation,
       showPortalNormal,
+      showPortalHorizontal,
       cameraDistance,
     },
     set,
@@ -122,10 +116,6 @@ return;
         enableCameraControls: {
           value: defaultCameraValues.enableCameraControls,
           label: 'Enable Camera Controls',
-        },
-        cameraPosition: {
-          value: defaultCameraValues.cameraPosition,
-          label: 'Intro Position',
         },
         logCamera: button(() => {
           const pos = camera.position;
@@ -190,19 +180,22 @@ return;
         },
         { collapsed: true },
       ),
-      desk: folder({
-        'Reset Desk Defaults': button(() => set(defaultDeskValues)),
-        deskPosition: {
-          x: defaultDeskValues.deskPosition.x,
-          y: defaultDeskValues.deskPosition.y,
-          z: defaultDeskValues.deskPosition.z,
+      desk: folder(
+        {
+          'Reset Desk Defaults': button(() => set(defaultDeskValues)),
+          deskPosition: {
+            x: defaultDeskValues.deskPosition.x,
+            y: defaultDeskValues.deskPosition.y,
+            z: defaultDeskValues.deskPosition.z,
+          },
+          chairPosition: {
+            x: defaultDeskValues.chairPosition.x,
+            y: defaultDeskValues.chairPosition.y,
+            z: defaultDeskValues.chairPosition.z,
+          },
         },
-        chairPosition: {
-          x: defaultDeskValues.chairPosition.x,
-          y: defaultDeskValues.chairPosition.y,
-          z: defaultDeskValues.chairPosition.z,
-        },
-      }),
+        { collapsed: true },
+      ),
       portal: folder(
         {
           'Reset Portal Defaults': button(() => set(defaultPortalValues)),
@@ -223,15 +216,17 @@ return;
             z: defaultPortalValues.portalRotation.z,
           },
           logPortalWorldPos: button(() => {
-            if (!portalRef.current) return;
+            if (!portalRef.current) 
+return;
             const pos = portalRef.current.getWorldPosition(new Vector3());
             console.log(
               `Portal world pos: x=${pos.x.toFixed(3)}, y=${pos.y.toFixed(3)}, z=${pos.z.toFixed(3)}`,
             );
           }),
           showPortalNormal: { value: false, label: 'Show Portal Axis' },
+          showPortalHorizontal: { value: false, label: 'Show Horizontal Axis' },
           cameraDistance: {
-            value: 2.35,
+            value: 2,
             min: 0,
             max: 20,
             step: 0.05,
@@ -249,18 +244,24 @@ return;
   useFrame(() => {
     const becameActive = isActive && !prevIsActiveRef.current;
     prevIsActiveRef.current = isActive;
-    if (!becameActive || !cameraControls.current) return;
-    if (portalRef.current) portalRef.current.updateWorldMatrix(true, false);
-    const target = portalRef.current
-      ? portalRef.current.getWorldPosition(new Vector3())
-      : new Vector3();
+    if (!becameActive || !cameraControls.current || !portalRef.current) 
+return;
+    portalRef.current.updateWorldMatrix(true, false);
+    const worldPos = portalRef.current.getWorldPosition(new Vector3());
+    const worldQuat = portalRef.current.getWorldQuaternion(new Quaternion());
+    const normal = new Vector3(0, 0, 1).applyQuaternion(worldQuat);
+    const camPos = worldPos.clone().addScaledVector(normal, cameraDistance);
+    cameraControls.current.camera.up
+      .set(0, 1, 0)
+      .applyQuaternion(worldQuat)
+      .normalize();
     cameraControls.current.setLookAt(
-      cameraPosition.x,
-      cameraPosition.y,
-      cameraPosition.z,
-      target.x,
-      target.y,
-      target.z,
+      camPos.x,
+      camPos.y,
+      camPos.z,
+      worldPos.x,
+      worldPos.y,
+      worldPos.z,
       false,
     );
   });
@@ -272,6 +273,10 @@ return;
     const worldQuat = portalRef.current.getWorldQuaternion(new Quaternion());
     const normal = new Vector3(0, 0, 1).applyQuaternion(worldQuat);
     const camPos = worldPos.clone().addScaledVector(normal, cameraDistance);
+    cameraControls.current.camera.up
+      .set(0, 1, 0)
+      .applyQuaternion(worldQuat)
+      .normalize();
     cameraControls.current.setLookAt(
       camPos.x,
       camPos.y,
@@ -312,10 +317,7 @@ return;
 
   return (
     <Suspense>
-      <PerspectiveCamera
-        makeDefault={isActive}
-        position={[cameraPosition.x, cameraPosition.y, cameraPosition.z]}
-      />
+      <PerspectiveCamera makeDefault={isActive} />
       <CameraControls
         makeDefault={isActive}
         enabled={isActive && enableCameraControls}
@@ -375,6 +377,16 @@ return;
                   [0, 0, 10],
                 ]}
                 color={'yellow'}
+                lineWidth={1}
+              />
+            )}
+            {showPortalHorizontal && (
+              <Line
+                points={[
+                  [-10, 0, 0],
+                  [10, 0, 0],
+                ]}
+                color={'cyan'}
                 lineWidth={1}
               />
             )}

@@ -57,14 +57,14 @@ export const HeroText = () => {
         <div className={'flex flex-col items-center'}>
           <h1
             className={
-              'text-xl md:text-7xl lg:text-8xl font-extralight text-shadow-hero'
+              'text-xl md:text-7xl lg:text-hero-daniel font-extralight text-shadow-hero'
             }
           >
             {'DANIEL'}
           </h1>
           <h1
             className={
-              'text-7xl/[72px] md:text-[144px]/[144px] lg:text-[208px]/[208px] font-extrabold text-shadow-hero'
+              'text-7xl/[72px] md:text-[144px]/[144px] lg:text-hero-waldow font-extrabold text-shadow-hero'
             }
           >
             {'WALDOW'}
@@ -77,7 +77,7 @@ export const HeroText = () => {
           className={'h-[3.5rem] md:h-[5rem] flex items-center justify-center'}
         >
           <h3
-            className={`text-xl md:text-4xl/[36px] font-normal text-center text-shadow-hero uppercase transition-opacity duration-300 ${visible ? 'opacity-100' : 'opacity-0'}`}
+            className={`text-xl md:text-hero-tagline font-normal text-center text-shadow-hero uppercase transition-opacity duration-300 ${visible ? 'opacity-100' : 'opacity-0'}`}
           >
             {tagline}
             <span aria-hidden={'true'}>
