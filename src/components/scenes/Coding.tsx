@@ -16,9 +16,14 @@ import { Color, type RectAreaLight } from 'three';
 import { Macbook } from '@/components/models/Macbook.tsx';
 import { WaldowAvatar } from '@/components/models/WaldowAvatar.tsx';
 import { THEME_TRANSITION_DURATION } from '@/lib/constants.ts';
+import { useCodingSceneReady } from '@/store/useCodingSceneReady.ts';
 import { type ITheme, THEME_COLORS, useTheme } from '@/store/useTheme.ts';
 
-export const Coding = () => {
+interface Props {
+  isActive?: boolean;
+}
+
+export const Coding = ({ isActive = true }: Props) => {
   const { theme } = useTheme((state: ITheme) => ({ theme: state.theme }));
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [occlusionMode, setOcclusionMode] = useState<boolean | 'blending'>(
@@ -34,6 +39,7 @@ export const Coding = () => {
     elapsed: THEME_TRANSITION_DURATION,
   });
   const { camera } = useThree();
+  const setPortalReady = useCodingSceneReady((s) => s.setPortalReady);
 
   const defaultMacbookValues = {
     scenePosition: { x: 0, y: -0.8, z: 1 },
@@ -85,8 +91,7 @@ export const Coding = () => {
   useFrame((_, delta) => {
     const light = rectLightRef.current;
     const state = lerpState.current;
-    if (!light) 
-return;
+    if (!light) return;
 
     if (state.elapsed < THEME_TRANSITION_DURATION) {
       state.elapsed = Math.min(
@@ -100,11 +105,12 @@ return;
     light.color.copy(currentLerpedColor.current);
   });
 
-  const introFiredRef = useRef(false);
+  const prevIsActiveRef = useRef(false);
 
   useFrame(() => {
-    if (introFiredRef.current || !cameraControls.current) return;
-    introFiredRef.current = true;
+    const becameActive = isActive && !prevIsActiveRef.current;
+    prevIsActiveRef.current = isActive;
+    if (!becameActive || !cameraControls.current) return;
     cameraControls.current.setLookAt(-0.5, 0.9, 1.5, 0, 0.9, 0, false);
     cameraControls.current.setLookAt(
       defaultCameraValues.cameraPosition.x,
@@ -259,7 +265,7 @@ return;
   return (
     <Suspense>
       <PerspectiveCamera
-        makeDefault
+        makeDefault={isActive}
         position={[
           defaultCameraValues.cameraPosition.x,
           defaultCameraValues.cameraPosition.y,
@@ -267,8 +273,8 @@ return;
         ]}
       />
       <CameraControls
-        makeDefault
-        enabled={enableCameraControls}
+        makeDefault={isActive}
+        enabled={isActive && enableCameraControls}
         ref={cameraControls}
         smoothTime={2.0}
       />
@@ -281,12 +287,12 @@ return;
           preset={'city'}
           environmentIntensity={environmentIntensity}
         />
-        <ambientLight intensity={0.2} />
+        <ambientLight intensity={isActive ? 0.2 : 0} />
         <rectAreaLight
           ref={rectLightRef}
           width={2.5}
           height={1.65}
-          intensity={165}
+          intensity={isActive ? 165 : 0}
           rotation={[-0.1, Math.PI, 0]}
           position={[0, 0.55, -1.15]}
         />
@@ -301,7 +307,6 @@ return;
           rotation={[-Math.PI / 2, 0, 0]}
         >
           <meshPhongMaterial transparent opacity={0.25} />
-          {/*<MeshTransmissionMaterial {...config} />*/}
         </RoundedBox>
 
         {/* Chair */}
@@ -311,7 +316,6 @@ return;
           position={[chairPosition.x, chairPosition.y, chairPosition.z]}
         >
           <meshPhongMaterial transparent opacity={0.25} />
-          {/*<MeshTransmissionMaterial {...config} />*/}
         </RoundedBox>
 
         <Macbook>
@@ -326,8 +330,11 @@ return;
             <iframe
               ref={iframeRef}
               src={'/portal'}
-              className={'w-[1024px] h-[670px] rounded-[20px] border-none'}
-              onLoad={() => setIframeLoaded(true)}
+              className={`w-[1024px] h-[670px] rounded-[20px] border-none${isActive ? '' : ' opacity-0 pointer-events-none'}`}
+              onLoad={() => {
+                setIframeLoaded(true);
+                setPortalReady();
+              }}
             />
           </Html>
         </Macbook>

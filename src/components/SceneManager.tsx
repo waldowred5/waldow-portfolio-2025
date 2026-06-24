@@ -15,15 +15,15 @@ export const SceneManager = () => {
   }));
 
   const isLoaded = useCanvasLoaded((s) => s.isLoaded);
-  const { isReady, setReady } = useCodingSceneReady((s) => ({
-    isReady: s.isReady,
-    setReady: s.setReady,
+  const { assetsReady, setAssetsReady } = useCodingSceneReady((s) => ({
+    assetsReady: s.assetsReady,
+    setAssetsReady: s.setAssetsReady,
   }));
   const { active } = useProgress();
 
   useEffect(() => {
-    if (isLoaded && !active && !isReady) setReady();
-  }, [active, isLoaded, isReady, setReady]);
+    if (isLoaded && !active && !assetsReady) setAssetsReady();
+  }, [active, isLoaded, assetsReady, setAssetsReady]);
 
   const defaultValues = {
     scene: currentScene,
@@ -57,12 +57,17 @@ export const SceneManager = () => {
     set({ scene: currentScene });
   }, [currentScene]);
 
-  const SceneMap = {
-    [SCENE.HERO]: Hero,
-    [SCENE.CODING]: Coding,
-  };
+  const isHero = currentScene === SCENE.HERO;
+  const isCoding = currentScene === SCENE.CODING;
 
-  const Component = SceneMap[currentScene] || SceneMap[SCENE.HERO];
-
-  return <Component />;
+  return (
+    <>
+      <group visible={isHero}>
+        <Hero isActive={isHero} />
+      </group>
+      <group visible={isCoding}>
+        <Coding isActive={isCoding} />
+      </group>
+    </>
+  );
 };

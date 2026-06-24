@@ -90,9 +90,10 @@ const sunFragmentShader = /* glsl */ `
 
 interface Props {
   opacity?: number;
+  isActive?: boolean;
 }
 
-export const Hero = ({ opacity = 1 }: Props) => {
+export const Hero = ({ opacity = 1, isActive = true }: Props) => {
   const { theme } = useTheme((state: ITheme) => {
     return {
       theme: state.theme,
@@ -412,7 +413,7 @@ export const Hero = ({ opacity = 1 }: Props) => {
   return (
     <>
       <PerspectiveCamera
-        makeDefault
+        makeDefault={isActive}
         fov={75}
         near={0.01}
         far={100}
@@ -420,14 +421,14 @@ export const Hero = ({ opacity = 1 }: Props) => {
       />
 
       {/* FX */}
-      <EffectComposer>
+      {isActive && <EffectComposer>
         <Bloom
           intensity={bloomDefaultValues.intensity}
           luminanceThreshold={bloomDefaultValues.luminanceThreshold}
           luminanceSmoothing={bloomDefaultValues.luminanceSmoothing}
           mipmapBlur
         />
-      </EffectComposer>
+      </EffectComposer>}
 
       {/* Sun */}
       <mesh
@@ -456,16 +457,18 @@ export const Hero = ({ opacity = 1 }: Props) => {
       </mesh>
 
       {/* Title */}
-      <Html
-        center
-        position={[
-          sunPosition.x + (mousePosition.x / -sunXPositionMouseXFactor) * 0.1,
-          sunPosition.y + mousePosition.y / sunYPositionMouseYFactor,
-          htmlPosition.z,
-        ]}
-      >
-        <HeroText />
-      </Html>
+      {isActive && (
+        <Html
+          center
+          position={[
+            sunPosition.x + (mousePosition.x / -sunXPositionMouseXFactor) * 0.1,
+            sunPosition.y + mousePosition.y / sunYPositionMouseYFactor,
+            htmlPosition.z,
+          ]}
+        >
+          <HeroText />
+        </Html>
+      )}
     </>
   );
 };
