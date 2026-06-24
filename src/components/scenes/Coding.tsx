@@ -38,6 +38,7 @@ export const Coding = () => {
   const defaultMacbookValues = {
     scenePosition: { x: 0, y: -0.8, z: 1 },
     sceneRotation: { x: 0.34, y: 0.42, z: 0 },
+    environmentIntensity: 0.5,
   };
 
   const defaultPortalValues = {
@@ -69,7 +70,10 @@ export const Coding = () => {
   }, [iframeLoaded]);
 
   useEffect(() => {
-    iframeRef.current?.contentWindow?.postMessage({ type: 'THEME_CHANGE', theme }, '*');
+    iframeRef.current?.contentWindow?.postMessage(
+      { type: 'THEME_CHANGE', theme },
+      '*',
+    );
   }, [theme]);
 
   useEffect(() => {
@@ -81,10 +85,14 @@ export const Coding = () => {
   useFrame((_, delta) => {
     const light = rectLightRef.current;
     const state = lerpState.current;
-    if (!light) return;
+    if (!light) 
+return;
 
     if (state.elapsed < THEME_TRANSITION_DURATION) {
-      state.elapsed = Math.min(state.elapsed + delta, THEME_TRANSITION_DURATION);
+      state.elapsed = Math.min(
+        state.elapsed + delta,
+        THEME_TRANSITION_DURATION,
+      );
       const t = state.elapsed / THEME_TRANSITION_DURATION;
       currentLerpedColor.current.copy(state.fromColor).lerp(state.toColor, t);
     }
@@ -94,13 +102,16 @@ export const Coding = () => {
 
   useEffect(() => {
     const controls = cameraControls.current;
-    if (!controls) return;
+    if (!controls) 
+return;
     controls.setLookAt(0, 0, 5, 0, 0, 0, false);
     controls.setLookAt(
       defaultCameraValues.cameraPosition.x,
       defaultCameraValues.cameraPosition.y,
       defaultCameraValues.cameraPosition.z,
-      0, 0, 0,
+      0,
+      0,
+      0,
       true,
     );
   }, []);
@@ -110,6 +121,7 @@ export const Coding = () => {
       enableCameraControls,
       scenePosition,
       sceneRotation,
+      environmentIntensity,
       deskPosition,
       chairPosition,
       portalSizeFactor,
@@ -167,6 +179,13 @@ export const Coding = () => {
             y: defaultMacbookValues.sceneRotation.y,
             z: defaultMacbookValues.sceneRotation.z,
           },
+          environmentIntensity: {
+            value: defaultMacbookValues.environmentIntensity,
+            min: 0,
+            max: 0.03,
+            step: 0.01,
+            label: 'Environment Intensity',
+          },
         },
         { collapsed: true },
       ),
@@ -210,27 +229,30 @@ export const Coding = () => {
   );
 
   useControls('Coding Scene', {
-    'Transmissive Mesh': folder({
-      meshPhysicalMaterial: false,
-      transmissionSampler: false,
-      backside: false,
-      samples: { value: 10, min: 1, max: 32, step: 1 },
-      resolution: { value: 2048, min: 256, max: 2048, step: 256 },
-      transmission: { value: 1, min: 0, max: 1 },
-      roughness: { value: 0.0, min: 0, max: 1, step: 0.01 },
-      thickness: { value: 3.5, min: 0, max: 10, step: 0.01 },
-      ior: { value: 1.5, min: 1, max: 5, step: 0.01 },
-      chromaticAberration: { value: 0.06, min: 0, max: 1 },
-      anisotropy: { value: 0.1, min: 0, max: 1, step: 0.01 },
-      distortion: { value: 0.0, min: 0, max: 1, step: 0.01 },
-      distortionScale: { value: 0.3, min: 0.01, max: 1, step: 0.01 },
-      temporalDistortion: { value: 0.5, min: 0, max: 1, step: 0.01 },
-      clearcoat: { value: 1, min: 0, max: 1 },
-      attenuationDistance: { value: 0.5, min: 0, max: 10, step: 0.01 },
-      attenuationColor: '#ffffff',
-      color: '#c9ffa1',
-      bg: '#839681',
-    }),
+    'Transmissive Mesh': folder(
+      {
+        meshPhysicalMaterial: false,
+        transmissionSampler: false,
+        backside: false,
+        samples: { value: 10, min: 1, max: 32, step: 1 },
+        resolution: { value: 2048, min: 256, max: 2048, step: 256 },
+        transmission: { value: 1, min: 0, max: 1 },
+        roughness: { value: 0.0, min: 0, max: 1, step: 0.01 },
+        thickness: { value: 3.5, min: 0, max: 10, step: 0.01 },
+        ior: { value: 1.5, min: 1, max: 5, step: 0.01 },
+        chromaticAberration: { value: 0.06, min: 0, max: 1 },
+        anisotropy: { value: 0.1, min: 0, max: 1, step: 0.01 },
+        distortion: { value: 0.0, min: 0, max: 1, step: 0.01 },
+        distortionScale: { value: 0.3, min: 0.01, max: 1, step: 0.01 },
+        temporalDistortion: { value: 0.5, min: 0, max: 1, step: 0.01 },
+        clearcoat: { value: 1, min: 0, max: 1 },
+        attenuationDistance: { value: 0.5, min: 0, max: 10, step: 0.01 },
+        attenuationColor: '#ffffff',
+        color: '#c9ffa1',
+        bg: '#839681',
+      },
+      { collapsed: true },
+    ),
   });
 
   return (
@@ -254,8 +276,11 @@ export const Coding = () => {
         position={[scenePosition.x, scenePosition.y, scenePosition.z]}
         rotation={[sceneRotation.x, sceneRotation.y, sceneRotation.z]}
       >
-        <Environment preset={'city'} />
-        <ambientLight intensity={0.5} />
+        <Environment
+          preset={'city'}
+          environmentIntensity={environmentIntensity}
+        />
+        <ambientLight intensity={0.2} />
         <rectAreaLight
           ref={rectLightRef}
           width={2.5}

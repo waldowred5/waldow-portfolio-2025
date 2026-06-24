@@ -59,10 +59,6 @@ export const WaldowAvatar = (props: JSX.IntrinsicElements['group']) => {
   const { actions } = useAnimations(typingAnimation, group);
 
   useEffect(() => {
-    materials.Wolf3D_Outfit_Top.color.set('cyan');
-  }, [materials]);
-
-  useEffect(() => {
     actions?.[ANIMATION.TYPING]?.reset().play();
   }, [actions]);
 
@@ -99,6 +95,10 @@ export const WaldowAvatar = (props: JSX.IntrinsicElements['group']) => {
       ),
     }),
   );
+
+  useEffect(() => {
+    materials.Wolf3D_Outfit_Top.color.set('cyan');
+  }, [materials]);
 
   return (
     <Suspense fallback={'Loading...'}>
