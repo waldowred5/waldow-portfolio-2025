@@ -100,12 +100,13 @@ return;
     light.color.copy(currentLerpedColor.current);
   });
 
-  useEffect(() => {
-    const controls = cameraControls.current;
-    if (!controls) 
-return;
-    controls.setLookAt(0, 0, 5, 0, 0, 0, false);
-    controls.setLookAt(
+  const introFiredRef = useRef(false);
+
+  useFrame(() => {
+    if (introFiredRef.current || !cameraControls.current) return;
+    introFiredRef.current = true;
+    cameraControls.current.setLookAt(-0.5, 0.9, 1.5, 0, 0.9, 0, false);
+    cameraControls.current.setLookAt(
       defaultCameraValues.cameraPosition.x,
       defaultCameraValues.cameraPosition.y,
       defaultCameraValues.cameraPosition.z,
@@ -114,7 +115,7 @@ return;
       0,
       true,
     );
-  }, []);
+  });
 
   const [
     {
@@ -269,7 +270,7 @@ return;
         makeDefault
         enabled={enableCameraControls}
         ref={cameraControls}
-        smoothTime={0.6}
+        smoothTime={2.0}
       />
 
       <group

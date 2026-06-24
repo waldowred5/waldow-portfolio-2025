@@ -1,8 +1,11 @@
+import { useProgress } from '@react-three/drei';
 import { useEffect } from 'react';
 import { button, folder, useControls } from 'leva';
 
 import { Coding } from '@/components/scenes/Coding.tsx';
 import { Hero } from '@/components/scenes/Hero/Hero.tsx';
+import { useCanvasLoaded } from '@/store/useCanvasLoaded.ts';
+import { useCodingSceneReady } from '@/store/useCodingSceneReady.ts';
 import { SCENE, useScene } from '@/store/useScene.ts';
 
 export const SceneManager = () => {
@@ -10,6 +13,17 @@ export const SceneManager = () => {
     currentScene: state.currentScene,
     updateScene: state.updateScene,
   }));
+
+  const isLoaded = useCanvasLoaded((s) => s.isLoaded);
+  const { isReady, setReady } = useCodingSceneReady((s) => ({
+    isReady: s.isReady,
+    setReady: s.setReady,
+  }));
+  const { active } = useProgress();
+
+  useEffect(() => {
+    if (isLoaded && !active && !isReady) setReady();
+  }, [active, isLoaded, isReady, setReady]);
 
   const defaultValues = {
     scene: currentScene,

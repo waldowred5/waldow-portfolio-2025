@@ -4,11 +4,13 @@ Command: npx gltfjsx@6.5.3 ./public/waldow.glb
 */
 
 import { useAnimations, useFBX, useGLTF } from '@react-three/drei';
+import { useLoader } from '@react-three/fiber';
 import { button, folder, useControls } from 'leva';
 import { Suspense, useEffect, useRef } from 'react';
 import type { JSX } from 'react/jsx-runtime';
 import type { Group, MeshStandardMaterial, SkinnedMesh } from 'three';
 import type { GLTF } from 'three-stdlib';
+import { FBXLoader } from 'three-stdlib';
 
 import { Mouse } from './Mouse.tsx';
 
@@ -174,3 +176,4 @@ export const WaldowAvatar = (props: JSX.IntrinsicElements['group']) => {
 };
 
 useGLTF.preload('/models/waldow.glb');
+useLoader.preload(FBXLoader, '/animations/typing.fbx');

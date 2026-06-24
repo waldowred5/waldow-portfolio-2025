@@ -6,6 +6,7 @@ import { RiFullscreenExitLine, RiFullscreenFill } from 'react-icons/ri';
 
 import { useCanvasLoaded } from '@/store/useCanvasLoaded.ts';
 import { SCENE, useScene } from '@/store/useScene.ts';
+import { useCodingSceneReady } from '@/store/useCodingSceneReady.ts';
 import { useTheme } from '@/store/useTheme.ts';
 import { useToggleFullscreen } from '@/store/useToggleFullscreen.ts';
 import { useViewMode, VIEW_MODE } from '@/store/useViewMode.ts';
@@ -22,6 +23,7 @@ export const ActionBar = () => {
   });
 
   const isLoaded = useCanvasLoaded((s) => s.isLoaded);
+  const isCodingReady = useCodingSceneReady((s) => s.isReady);
   const { isFullscreen, toggleFullscreen } = useToggleFullscreen();
   const { updateScene } = useScene((state) => ({
     updateScene: state.updateScene,
@@ -52,10 +54,10 @@ export const ActionBar = () => {
             </div>
 
             <div
-              className={'cursor-pointer'}
-              onMouseEnter={() => setText('MEET THE DEVELOPER')}
+              className={`${isCodingReady ? 'cursor-pointer' : 'cursor-not-allowed opacity-30'}`}
+              onMouseEnter={() => setText(isCodingReady ? 'MEET THE DEVELOPER' : 'LOADING SCENE...')}
             >
-              <Icon onClick={() => updateScene(SCENE.CODING)}>
+              <Icon onClick={isCodingReady ? () => updateScene(SCENE.CODING) : undefined}>
                 <BsPerson />
               </Icon>
             </div>
