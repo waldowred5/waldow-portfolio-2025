@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BsHouseDoor, BsLayersHalf, BsPerson } from 'react-icons/bs';
 import { FaGithub, FaLinkedin } from 'react-icons/fa';
 import { PiPaintBucketFill } from 'react-icons/pi';
@@ -24,6 +24,12 @@ export const ActionBar = () => {
 
   const isLoaded = useCanvasLoaded((s) => s.isLoaded);
   const isCodingReady = useCodingSceneReady((s) => s.isReady);
+
+  useEffect(() => {
+    if (isCodingReady && text === 'LOADING SCENE...') {
+      setText('MEET THE DEVELOPER');
+    }
+  }, [isCodingReady]);
   const { isFullscreen, toggleFullscreen } = useToggleFullscreen();
   const { updateScene } = useScene((state) => ({
     updateScene: state.updateScene,
