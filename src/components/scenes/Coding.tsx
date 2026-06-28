@@ -60,6 +60,7 @@ export const Coding = ({ isActive = true }: Props) => {
 
   const defaultCameraValues = {
     enableCameraControls: true,
+    shoulderPosition: { x: -3, y: 2, z: 17.5 },
   };
 
   useEffect(() => {
@@ -78,7 +79,8 @@ export const Coding = ({ isActive = true }: Props) => {
   useFrame((_, delta) => {
     const light = rectLightRef.current;
     const state = lerpState.current;
-    if (!light) return;
+    if (!light) 
+return;
 
     if (state.elapsed < THEME_TRANSITION_DURATION) {
       state.elapsed = Math.min(
@@ -95,6 +97,7 @@ export const Coding = ({ isActive = true }: Props) => {
   const [
     {
       enableCameraControls,
+      shoulderPosition,
       scenePosition,
       sceneRotation,
       environmentIntensity,
@@ -116,6 +119,10 @@ export const Coding = ({ isActive = true }: Props) => {
         enableCameraControls: {
           value: defaultCameraValues.enableCameraControls,
           label: 'Enable Camera Controls',
+        },
+        shoulderPosition: {
+          value: defaultCameraValues.shoulderPosition,
+          label: 'Shoulder Position',
         },
         logCamera: button(() => {
           const pos = camera.position;
@@ -216,8 +223,7 @@ export const Coding = ({ isActive = true }: Props) => {
             z: defaultPortalValues.portalRotation.z,
           },
           logPortalWorldPos: button(() => {
-            if (!portalRef.current) 
-return;
+            if (!portalRef.current) return;
             const pos = portalRef.current.getWorldPosition(new Vector3());
             console.log(
               `Portal world pos: x=${pos.x.toFixed(3)}, y=${pos.y.toFixed(3)}, z=${pos.z.toFixed(3)}`,
@@ -264,10 +270,21 @@ return;
       worldPos.z,
       false,
     );
+    cameraControls.current.camera.up.set(0, 1, 0);
+    cameraControls.current.setLookAt(
+      shoulderPosition.x,
+      shoulderPosition.y,
+      shoulderPosition.z,
+      worldPos.x,
+      worldPos.y,
+      worldPos.z,
+      true,
+    );
   });
 
   useEffect(() => {
-    if (!portalRef.current || !cameraControls.current) return;
+    if (!portalRef.current || !cameraControls.current) 
+return;
     portalRef.current.updateWorldMatrix(true, false);
     const worldPos = portalRef.current.getWorldPosition(new Vector3());
     const worldQuat = portalRef.current.getWorldQuaternion(new Quaternion());
@@ -322,7 +339,7 @@ return;
         makeDefault={isActive}
         enabled={isActive && enableCameraControls}
         ref={cameraControls}
-        smoothTime={2.0}
+        smoothTime={1.5}
       />
 
       <group
@@ -352,7 +369,16 @@ return;
           position={[deskPosition.x, deskPosition.y, deskPosition.z]}
           rotation={[-Math.PI / 2, 0, 0]}
         >
-          <meshPhongMaterial transparent opacity={0.25} />
+          <meshPhysicalMaterial
+            transparent
+            transmission={0.95}
+            roughness={0.5}
+            metalness={0}
+            ior={0.2}
+            thickness={0.5}
+            reflectivity={0.9}
+            color={'#e0f0ff'}
+          />
         </RoundedBox>
 
         {/* Chair */}
@@ -361,7 +387,16 @@ return;
           radius={0.5}
           position={[chairPosition.x, chairPosition.y, chairPosition.z]}
         >
-          <meshPhongMaterial transparent opacity={0.25} />
+          <meshPhysicalMaterial
+            transparent
+            transmission={0.95}
+            roughness={0.05}
+            metalness={0}
+            ior={1.5}
+            thickness={2}
+            reflectivity={1}
+            color={'#e0f0ff'}
+          />
         </RoundedBox>
 
         <Macbook>
