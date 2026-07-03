@@ -5,8 +5,8 @@ import { PiPaintBucketFill } from 'react-icons/pi';
 import { RiFullscreenExitLine, RiFullscreenFill } from 'react-icons/ri';
 
 import { useCanvasLoaded } from '@/store/useCanvasLoaded.ts';
-import { SCENE, useScene } from '@/store/useScene.ts';
 import { useCodingSceneReady } from '@/store/useCodingSceneReady.ts';
+import { SCENE, useScene } from '@/store/useScene.ts';
 import { useTheme } from '@/store/useTheme.ts';
 import { useToggleFullscreen } from '@/store/useToggleFullscreen.ts';
 import { useViewMode, VIEW_MODE } from '@/store/useViewMode.ts';
@@ -61,9 +61,17 @@ export const ActionBar = () => {
 
             <div
               className={`${isCodingReady ? 'cursor-pointer' : 'cursor-not-allowed opacity-30'}`}
-              onMouseEnter={() => setText(isCodingReady ? 'MEET THE DEVELOPER' : 'LOADING SCENE...')}
+              onMouseEnter={() =>
+                setText(
+                  isCodingReady ? 'MEET THE DEVELOPER' : 'LOADING SCENE...',
+                )
+              }
             >
-              <Icon onClick={isCodingReady ? () => requestScene(SCENE.CODING) : undefined}>
+              <Icon
+                onClick={
+                  isCodingReady ? () => requestScene(SCENE.CODING) : undefined
+                }
+              >
                 <BsPerson />
               </Icon>
             </div>

@@ -1,11 +1,11 @@
 import {
   CameraControls,
+  type CameraControls as ThreeCameraControls,
   Environment,
   Html,
   Line,
   PerspectiveCamera,
   RoundedBox,
-  type CameraControls as ThreeCameraControls,
 } from '@react-three/drei';
 import { useFrame, useThree } from '@react-three/fiber';
 import { button, buttonGroup, folder, useControls } from 'leva';
@@ -15,12 +15,14 @@ import { Color, Quaternion, type RectAreaLight, Vector3 } from 'three';
 
 import { Macbook } from '@/components/models/Macbook.tsx';
 import { WaldowAvatar } from '@/components/models/WaldowAvatar.tsx';
-import { TABLET_BREAKPOINT, THEME_TRANSITION_DURATION } from '@/lib/constants.ts';
+import {
+  TABLET_BREAKPOINT,
+  THEME_TRANSITION_DURATION,
+} from '@/lib/constants.ts';
 import { useAboutMePanel } from '@/store/useAboutMePanel.ts';
 import { useCodingSceneReady } from '@/store/useCodingSceneReady.ts';
 import { useScene } from '@/store/useScene.ts';
 import { type ITheme, THEME_COLORS, useTheme } from '@/store/useTheme.ts';
-import { useWindowSize } from '@/store/useWindowSize.ts';
 
 interface Props {
   isActive?: boolean;
@@ -41,10 +43,14 @@ export const Coding = ({ isActive = true }: Props) => {
   });
   const { camera } = useThree();
   const setPortalReady = useCodingSceneReady((s) => s.setPortalReady);
-  const { showPanel, hidePanel } = useAboutMePanel((s) => ({ showPanel: s.showPanel, hidePanel: s.hidePanel }));
-  const { pendingScene, commitScene } = useScene((s) => ({ pendingScene: s.pendingScene, commitScene: s.commitScene }));
-  const { innerWidth } = useWindowSize((s) => ({ innerWidth: s.innerWidth }));
-  const isDesktop = innerWidth >= TABLET_BREAKPOINT;
+  const { showPanel, hidePanel } = useAboutMePanel((s) => ({
+    showPanel: s.showPanel,
+    hidePanel: s.hidePanel,
+  }));
+  const { pendingScene, commitScene } = useScene((s) => ({
+    pendingScene: s.pendingScene,
+    commitScene: s.commitScene,
+  }));
   const hasShownPanel = useRef(false);
   const prevIsActiveRef = useRef(false);
 
@@ -68,7 +74,7 @@ export const Coding = ({ isActive = true }: Props) => {
   const defaultCameraValues = {
     enableCameraControls: true,
     shoulderPosition: { x: 0, y: 2, z: 17.5 },
-    desktopShoulderPosition: { x: 4, y: 2, z: 17.5 },
+    desktopShoulderPosition: { x: 8, y: 2, z: 17.5 },
   };
 
   useEffect(() => {
@@ -87,7 +93,9 @@ export const Coding = ({ isActive = true }: Props) => {
   useFrame((_, delta) => {
     const light = rectLightRef.current;
     const state = lerpState.current;
-    if (!light) return;
+    if (!light) {
+      return;
+    }
 
     if (state.elapsed < THEME_TRANSITION_DURATION) {
       state.elapsed = Math.min(
@@ -211,7 +219,9 @@ export const Coding = ({ isActive = true }: Props) => {
           portalPosition: { value: defaultPortalValues.portalPosition },
           portalRotation: { value: defaultPortalValues.portalRotation },
           logPortalWorldPos: button(() => {
-            if (!portalRef.current) return;
+            if (!portalRef.current) {
+              return;
+            }
             const pos = portalRef.current.getWorldPosition(new Vector3());
             console.log(
               `Portal world pos: x=${pos.x.toFixed(3)}, y=${pos.y.toFixed(3)}, z=${pos.z.toFixed(3)}`,
@@ -236,66 +246,87 @@ export const Coding = ({ isActive = true }: Props) => {
   useFrame(() => {
     const becameActive = isActive && !prevIsActiveRef.current;
     prevIsActiveRef.current = isActive;
-    if (!becameActive || !cameraControls.current || !portalRef.current) return;
-    const activeShoulderPosition = isDesktop ? desktopShoulderPosition : shoulderPosition;
+    if (!becameActive || !cameraControls.current || !portalRef.current) {
+      return;
+    }
+    const activeShoulderPosition =
+      window.innerWidth >= TABLET_BREAKPOINT
+        ? desktopShoulderPosition
+        : shoulderPosition;
     portalRef.current.updateWorldMatrix(true, false);
     const worldPos = portalRef.current.getWorldPosition(new Vector3());
     const worldQuat = portalRef.current.getWorldQuaternion(new Quaternion());
     const normal = new Vector3(0, 0, 1).applyQuaternion(worldQuat);
     const camPos = worldPos.clone().addScaledVector(normal, cameraDistance);
-    cameraControls.current.camera.up.set(0, 1, 0).applyQuaternion(worldQuat).normalize();
+    cameraControls.current.camera.up
+      .set(0, 1, 0)
+      .applyQuaternion(worldQuat)
+      .normalize();
     cameraControls.current.setLookAt(
-      camPos.x, camPos.y, camPos.z,
-      worldPos.x, worldPos.y, worldPos.z,
+      camPos.x,
+      camPos.y,
+      camPos.z,
+      worldPos.x,
+      worldPos.y,
+      worldPos.z,
       false,
     );
     cameraControls.current.camera.up.set(0, 1, 0);
     cameraControls.current.setLookAt(
-      activeShoulderPosition.x, activeShoulderPosition.y, activeShoulderPosition.z,
-      worldPos.x, worldPos.y, worldPos.z,
+      activeShoulderPosition.x,
+      activeShoulderPosition.y,
+      activeShoulderPosition.z,
+      worldPos.x,
+      worldPos.y,
+      worldPos.z,
       true,
     );
   });
 
   useEffect(() => {
-    if (!portalRef.current || !cameraControls.current) return;
+    if (!portalRef.current || !cameraControls.current) {
+      return;
+    }
     portalRef.current.updateWorldMatrix(true, false);
     const worldPos = portalRef.current.getWorldPosition(new Vector3());
     const worldQuat = portalRef.current.getWorldQuaternion(new Quaternion());
     const normal = new Vector3(0, 0, 1).applyQuaternion(worldQuat);
     const camPos = worldPos.clone().addScaledVector(normal, cameraDistance);
-    cameraControls.current.camera.up.set(0, 1, 0).applyQuaternion(worldQuat).normalize();
+    cameraControls.current.camera.up
+      .set(0, 1, 0)
+      .applyQuaternion(worldQuat)
+      .normalize();
     cameraControls.current.setLookAt(
-      camPos.x, camPos.y, camPos.z,
-      worldPos.x, worldPos.y, worldPos.z,
+      camPos.x,
+      camPos.y,
+      camPos.z,
+      worldPos.x,
+      worldPos.y,
+      worldPos.z,
       true,
     );
   }, [cameraDistance]);
 
   useEffect(() => {
-    if (isActive) {
-      hasShownPanel.current = false;
-      hidePanel();
+    if (!isActive) {
+      return;
     }
-  }, [isActive, hidePanel]);
+    hasShownPanel.current = false;
+    hidePanel();
+    const timer = setTimeout(() => showPanel(), 2500);
+
+    return () => clearTimeout(timer);
+  }, [isActive, hidePanel, showPanel]);
 
   useEffect(() => {
-    const controls = cameraControls.current;
-    if (!controls || !isActive) return;
-
-    const handleRest = () => {
-      if (!hasShownPanel.current && isActive) {
-        hasShownPanel.current = true;
-        setTimeout(() => showPanel(), 1000);
-      }
-    };
-
-    controls.addEventListener('rest', handleRest);
-    return () => controls.removeEventListener('rest', handleRest);
-  }, [isActive, showPanel]);
-
-  useEffect(() => {
-    if (!pendingScene || !isActive || !cameraControls.current || !portalRef.current) return;
+    if (
+      !pendingScene ||
+      !isActive ||
+      !cameraControls.current ||
+      !portalRef.current
+    ) {
+      return;
+    }
 
     hidePanel();
     hasShownPanel.current = false;
@@ -306,15 +337,23 @@ export const Coding = ({ isActive = true }: Props) => {
     const normal = new Vector3(0, 0, 1).applyQuaternion(worldQuat);
     const camPos = worldPos.clone().addScaledVector(normal, cameraDistance);
 
-    cameraControls.current.camera.up.set(0, 1, 0).applyQuaternion(worldQuat).normalize();
+    cameraControls.current.camera.up
+      .set(0, 1, 0)
+      .applyQuaternion(worldQuat)
+      .normalize();
     cameraControls.current.setLookAt(
-      camPos.x, camPos.y, camPos.z,
-      worldPos.x, worldPos.y, worldPos.z,
+      camPos.x,
+      camPos.y,
+      camPos.z,
+      worldPos.x,
+      worldPos.y,
+      worldPos.z,
       true,
     );
     cameraControls.current.camera.up.set(0, 1, 0);
 
     const exitTimer = setTimeout(() => commitScene(), 2000);
+
     return () => clearTimeout(exitTimer);
   }, [pendingScene, isActive, commitScene, hidePanel, cameraDistance]);
 

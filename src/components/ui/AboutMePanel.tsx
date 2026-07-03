@@ -40,7 +40,10 @@ export const AboutMePanel = () => {
         </h1>
         <div
           className={'w-16 h-[1px]'}
-          style={{ backgroundColor: THEME_COLORS[theme].secondary }}
+          style={{
+            backgroundColor: THEME_COLORS[theme].secondary,
+            transition: `background-color ${THEME_TRANSITION_DURATION}s ease-in-out`,
+          }}
         />
         <div
           className={
@@ -73,7 +76,10 @@ export const AboutMePanel = () => {
               className={
                 'border-1 rounded-full px-3 py-1 text-xs text-white/70'
               }
-              style={{ borderColor: THEME_COLORS[theme].secondary }}
+              style={{
+                borderColor: THEME_COLORS[theme].secondary,
+                transition: `border-color ${THEME_TRANSITION_DURATION}s ease-in-out`,
+              }}
             >
               {skill}
             </span>

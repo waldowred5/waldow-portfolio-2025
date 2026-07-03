@@ -23,14 +23,21 @@ export const useScene = createWithEqualityFn<SceneState>((set) => {
     },
     requestScene: (scene) => {
       set((state) => {
-        if (state.currentScene === SCENE.CODING && scene !== state.currentScene) {
+        if (
+          state.currentScene === SCENE.CODING &&
+          scene !== state.currentScene
+        ) {
           return { pendingScene: scene };
         }
+
         return { currentScene: scene };
       });
     },
     commitScene: () => {
-      set((state) => ({ currentScene: state.pendingScene ?? state.currentScene, pendingScene: null }));
+      set((state) => ({
+        currentScene: state.pendingScene ?? state.currentScene,
+        pendingScene: null,
+      }));
     },
   };
 });

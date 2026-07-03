@@ -421,14 +421,16 @@ export const Hero = ({ opacity = 1, isActive = true }: Props) => {
       />
 
       {/* FX */}
-      {isActive && <EffectComposer>
-        <Bloom
-          intensity={bloomDefaultValues.intensity}
-          luminanceThreshold={bloomDefaultValues.luminanceThreshold}
-          luminanceSmoothing={bloomDefaultValues.luminanceSmoothing}
-          mipmapBlur
-        />
-      </EffectComposer>}
+      {isActive && (
+        <EffectComposer>
+          <Bloom
+            intensity={bloomDefaultValues.intensity}
+            luminanceThreshold={bloomDefaultValues.luminanceThreshold}
+            luminanceSmoothing={bloomDefaultValues.luminanceSmoothing}
+            mipmapBlur
+          />
+        </EffectComposer>
+      )}
 
       {/* Sun */}
       <mesh

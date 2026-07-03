@@ -1,6 +1,6 @@
 import { useProgress } from '@react-three/drei';
-import { useEffect } from 'react';
 import { button, folder, useControls } from 'leva';
+import { useEffect } from 'react';
 
 import { Coding } from '@/components/scenes/Coding.tsx';
 import { Hero } from '@/components/scenes/Hero/Hero.tsx';
@@ -22,7 +22,8 @@ export const SceneManager = () => {
   const { active } = useProgress();
 
   useEffect(() => {
-    if (isLoaded && !active && !assetsReady) setAssetsReady();
+    if (isLoaded && !active && !assetsReady) 
+setAssetsReady();
   }, [active, isLoaded, assetsReady, setAssetsReady]);
 
   const defaultValues = {

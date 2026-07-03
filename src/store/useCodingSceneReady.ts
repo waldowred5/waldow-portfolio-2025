@@ -8,16 +8,20 @@ interface ICodingSceneReady {
   setPortalReady: () => void;
 }
 
-export const useCodingSceneReady = createWithEqualityFn<ICodingSceneReady>((set) => ({
-  isReady: false,
-  assetsReady: false,
-  portalReady: false,
-  setAssetsReady: () => set((state) => ({
-    assetsReady: true,
-    isReady: state.portalReady,
-  })),
-  setPortalReady: () => set((state) => ({
-    portalReady: true,
-    isReady: state.assetsReady,
-  })),
-}));
+export const useCodingSceneReady = createWithEqualityFn<ICodingSceneReady>(
+  (set) => ({
+    isReady: false,
+    assetsReady: false,
+    portalReady: false,
+    setAssetsReady: () =>
+      set((state) => ({
+        assetsReady: true,
+        isReady: state.portalReady,
+      })),
+    setPortalReady: () =>
+      set((state) => ({
+        portalReady: true,
+        isReady: state.assetsReady,
+      })),
+  }),
+);

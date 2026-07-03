@@ -22,13 +22,13 @@
   font-display: swap;
 }
 
-@import "tailwindcss";
-@import "tw-animate-css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --font-kanit: "Kanit", sans-serif;
+  --font-kanit: 'Kanit', sans-serif;
   --text-shadow-hero: 1px 1px 4px #000000;
 }
 
@@ -52,7 +52,8 @@
   }
 }
 
-html, body {
+html,
+body {
   overflow: hidden;
 }
 
@@ -170,10 +171,15 @@ body {
   --sidebar-ring: oklch(0.551 0.027 264.364);
 }
 
-
-
 .glow-gradient {
-  background: radial-gradient(circle, rgba(255,255,50,0.95) 0%, rgba(255,225,0,0.82) 22%, rgba(255,25,0,0.55) 46%, rgba(210,35,0,0.28) 66%, transparent 82%);
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 50, 0.95) 0%,
+    rgba(255, 225, 0, 0.82) 22%,
+    rgba(255, 25, 0, 0.55) 46%,
+    rgba(210, 35, 0, 0.28) 66%,
+    transparent 82%
+  );
 }
 
 @layer base {

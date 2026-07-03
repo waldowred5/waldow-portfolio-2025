@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
+import { useEffect } from 'react';
 
 import { Hero } from '@/components/scenes/Hero/Hero.tsx';
 import { Background } from '@/components/ui/Background.tsx';
@@ -14,6 +14,7 @@ export const HeroPortal = () => {
     };
 
     window.addEventListener('message', handler);
+
     return () => window.removeEventListener('message', handler);
   }, []);
 
