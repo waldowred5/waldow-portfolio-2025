@@ -73,8 +73,9 @@ export const Coding = ({ isActive = true }: Props) => {
 
   const defaultCameraValues = {
     enableCameraControls: true,
-    shoulderPosition: { x: 0, y: 2, z: 17.5 },
-    desktopShoulderPosition: { x: 8, y: 2, z: 17.5 },
+    shoulderPosition: { x: -2, y: 2, z: 15 },
+    desktopShoulderPosition: { x: -2, y: 2, z: 15 },
+    desktopLookAtOffset: { x: 10, y: -3, z: 0 },
   };
 
   useEffect(() => {
@@ -114,6 +115,7 @@ export const Coding = ({ isActive = true }: Props) => {
       enableCameraControls,
       shoulderPosition,
       desktopShoulderPosition,
+      desktopLookAtOffset,
       scenePosition,
       sceneRotation,
       environmentIntensity,
@@ -143,6 +145,10 @@ export const Coding = ({ isActive = true }: Props) => {
         desktopShoulderPosition: {
           value: defaultCameraValues.desktopShoulderPosition,
           label: 'Desktop Shoulder Position',
+        },
+        desktopLookAtOffset: {
+          value: defaultCameraValues.desktopLookAtOffset,
+          label: 'Desktop LookAt Offset',
         },
         logCamera: button(() => {
           const pos = camera.position;
@@ -249,10 +255,10 @@ export const Coding = ({ isActive = true }: Props) => {
     if (!becameActive || !cameraControls.current || !portalRef.current) {
       return;
     }
-    const activeShoulderPosition =
-      window.innerWidth >= TABLET_BREAKPOINT
-        ? desktopShoulderPosition
-        : shoulderPosition;
+    const isDesktop = window.innerWidth >= TABLET_BREAKPOINT;
+    const activeShoulderPosition = isDesktop
+      ? desktopShoulderPosition
+      : shoulderPosition;
     portalRef.current.updateWorldMatrix(true, false);
     const worldPos = portalRef.current.getWorldPosition(new Vector3());
     const worldQuat = portalRef.current.getWorldQuaternion(new Quaternion());
@@ -272,13 +278,14 @@ export const Coding = ({ isActive = true }: Props) => {
       false,
     );
     cameraControls.current.camera.up.set(0, 1, 0);
+    const offset = isDesktop ? desktopLookAtOffset : { x: 0, y: 0, z: 0 };
     cameraControls.current.setLookAt(
       activeShoulderPosition.x,
       activeShoulderPosition.y,
       activeShoulderPosition.z,
-      worldPos.x,
-      worldPos.y,
-      worldPos.z,
+      worldPos.x + offset.x,
+      worldPos.y + offset.y,
+      worldPos.z + offset.z,
       true,
     );
   });
@@ -357,6 +364,10 @@ export const Coding = ({ isActive = true }: Props) => {
     return () => clearTimeout(exitTimer);
   }, [pendingScene, isActive, commitScene, hidePanel, cameraDistance]);
 
+  const meshAttenuationColor = new Color(
+    THEME_COLORS[theme].secondary,
+  ).multiplyScalar(0.2);
+
   const {
     transmission: meshTransmission,
     roughness: meshRoughness,
@@ -364,7 +375,6 @@ export const Coding = ({ isActive = true }: Props) => {
     ior: meshIor,
     clearcoat: meshClearcoat,
     attenuationDistance: meshAttenuationDistance,
-    attenuationColor: meshAttenuationColor,
     color: meshColor,
   } = useControls('Coding Scene', {
     'Transmissive Mesh': folder(
@@ -377,10 +387,10 @@ export const Coding = ({ isActive = true }: Props) => {
           resolution: { value: 2048, min: 256, max: 2048, step: 256 },
         }),
         surface: folder({
-          transmission: { value: 1, min: 0, max: 1 },
+          transmission: { value: 0.85, min: 0, max: 1 },
           roughness: { value: 0.0, min: 0, max: 1, step: 0.01 },
           thickness: { value: 3.5, min: 0, max: 10, step: 0.01 },
-          ior: { value: 1.5, min: 1, max: 5, step: 0.01 },
+          ior: { value: 3.5, min: 1, max: 5, step: 0.01 },
           clearcoat: { value: 1, min: 0, max: 1 },
         }),
         distortion: folder({
@@ -391,10 +401,8 @@ export const Coding = ({ isActive = true }: Props) => {
           temporalDistortion: { value: 0.5, min: 0, max: 1, step: 0.01 },
         }),
         color: folder({
-          attenuationDistance: { value: 0.5, min: 0, max: 10, step: 0.01 },
-          attenuationColor: '#ffffff',
-          color: '#c9ffa1',
-          bg: '#839681',
+          attenuationDistance: { value: 4, min: 0, max: 10, step: 0.01 },
+          color: '#222222',
         }),
       },
       { collapsed: true },

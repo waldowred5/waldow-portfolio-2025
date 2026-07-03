@@ -20,7 +20,7 @@ Use the following additional content to update teh about me content. It should t
   - Switched careers by completing a coding bootcamp after discovering and falling in love with coding
   - Worked at a superannuation admin software startup (Grow Inc) followed by software consultancy (Lexicon Digital / Endava) then moved to the UK
   where I now work at another software startup building Risk/Governance/Compliance software (RiskSmart)
-  - I collect hobbies like Pokemon: Water skiing, snow skiing, snowboarding, racing motorbikes`;
+  - I collect hobbies like Pokemon: Water skiing, snow skiing, snowboarding, racing motorbikes, electric longboarding, board gaming, painting, piano, drums (I used to play in a heavy metal band), video gaming`;
 
 export const AboutMePanel = () => {
   const { isVisible } = useAboutMePanel((s) => ({ isVisible: s.isVisible }));
