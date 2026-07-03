@@ -42,7 +42,7 @@ export const ActionBar = () => {
   return (
     <div className={'flex justify-center'}>
       <div
-        className={'z-10 fixed top-3 md:top-4 md:right-4 flex flex-col gap-y-1'}
+        className={'z-10 fixed bottom-3 md:top-4 md:bottom-auto md:right-4 flex flex-col-reverse md:flex-col gap-y-1'}
       >
         <div
           className={

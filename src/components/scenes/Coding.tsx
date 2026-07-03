@@ -53,6 +53,8 @@ export const Coding = ({ isActive = true }: Props) => {
   }));
   const hasShownPanel = useRef(false);
   const prevIsActiveRef = useRef(false);
+  const isActiveRef = useRef(isActive);
+  const positionCameraRef = useRef<() => void>(() => {});
 
   const defaultMacbookValues = {
     scenePosition: { x: 0, y: -0.8, z: 1 },
@@ -75,7 +77,8 @@ export const Coding = ({ isActive = true }: Props) => {
     enableCameraControls: true,
     shoulderPosition: { x: -2, y: 2, z: 15 },
     desktopShoulderPosition: { x: -2, y: 2, z: 15 },
-    desktopLookAtOffset: { x: 10, y: -3, z: 0 },
+    lookAtOffset: { x: 2, y: -3, z: 0 },
+    desktopLookAtOffset: { x: window.innerWidth * 0.006, y: -3, z: 0 },
   };
 
   useEffect(() => {
@@ -115,6 +118,7 @@ export const Coding = ({ isActive = true }: Props) => {
       enableCameraControls,
       shoulderPosition,
       desktopShoulderPosition,
+      lookAtOffset,
       desktopLookAtOffset,
       scenePosition,
       sceneRotation,
@@ -145,6 +149,10 @@ export const Coding = ({ isActive = true }: Props) => {
         desktopShoulderPosition: {
           value: defaultCameraValues.desktopShoulderPosition,
           label: 'Desktop Shoulder Position',
+        },
+        lookAtOffset: {
+          value: defaultCameraValues.lookAtOffset,
+          label: 'LookAt Offset',
         },
         desktopLookAtOffset: {
           value: defaultCameraValues.desktopLookAtOffset,
@@ -249,36 +257,24 @@ export const Coding = ({ isActive = true }: Props) => {
     { collapsed: true },
   );
 
-  useFrame(() => {
-    const becameActive = isActive && !prevIsActiveRef.current;
-    prevIsActiveRef.current = isActive;
-    if (!becameActive || !cameraControls.current || !portalRef.current) {
-      return;
-    }
+  isActiveRef.current = isActive;
+  positionCameraRef.current = (isResize = false) => {
+    if (!cameraControls.current || !portalRef.current) return;
     const isDesktop = window.innerWidth >= TABLET_BREAKPOINT;
-    const activeShoulderPosition = isDesktop
-      ? desktopShoulderPosition
-      : shoulderPosition;
+    const activeShoulderPosition = isDesktop ? desktopShoulderPosition : shoulderPosition;
     portalRef.current.updateWorldMatrix(true, false);
     const worldPos = portalRef.current.getWorldPosition(new Vector3());
-    const worldQuat = portalRef.current.getWorldQuaternion(new Quaternion());
-    const normal = new Vector3(0, 0, 1).applyQuaternion(worldQuat);
-    const camPos = worldPos.clone().addScaledVector(normal, cameraDistance);
-    cameraControls.current.camera.up
-      .set(0, 1, 0)
-      .applyQuaternion(worldQuat)
-      .normalize();
-    cameraControls.current.setLookAt(
-      camPos.x,
-      camPos.y,
-      camPos.z,
-      worldPos.x,
-      worldPos.y,
-      worldPos.z,
-      false,
-    );
-    cameraControls.current.camera.up.set(0, 1, 0);
-    const offset = isDesktop ? desktopLookAtOffset : { x: 0, y: 0, z: 0 };
+    if (!isResize) {
+      const worldQuat = portalRef.current.getWorldQuaternion(new Quaternion());
+      const normal = new Vector3(0, 0, 1).applyQuaternion(worldQuat);
+      const camPos = worldPos.clone().addScaledVector(normal, cameraDistance);
+      cameraControls.current.camera.up.set(0, 1, 0).applyQuaternion(worldQuat).normalize();
+      cameraControls.current.setLookAt(camPos.x, camPos.y, camPos.z, worldPos.x, worldPos.y, worldPos.z, false);
+      cameraControls.current.camera.up.set(0, 1, 0);
+    }
+    const offset = isDesktop
+      ? { x: window.innerWidth * 0.006, y: desktopLookAtOffset.y, z: desktopLookAtOffset.z }
+      : lookAtOffset;
     cameraControls.current.setLookAt(
       activeShoulderPosition.x,
       activeShoulderPosition.y,
@@ -286,8 +282,31 @@ export const Coding = ({ isActive = true }: Props) => {
       worldPos.x + offset.x,
       worldPos.y + offset.y,
       worldPos.z + offset.z,
-      true,
+      !isResize,
     );
+  };
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    const handleResize = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        set({ desktopLookAtOffset: { x: window.innerWidth * 0.006, y: -3, z: 0 } });
+        if (isActiveRef.current) positionCameraRef.current(true);
+      }, 150);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(timer);
+    };
+  }, [set]);
+
+  useFrame(() => {
+    const becameActive = isActive && !prevIsActiveRef.current;
+    prevIsActiveRef.current = isActive;
+    if (!becameActive) return;
+    positionCameraRef.current();
   });
 
   useEffect(() => {
@@ -320,7 +339,8 @@ export const Coding = ({ isActive = true }: Props) => {
     }
     hasShownPanel.current = false;
     hidePanel();
-    const timer = setTimeout(() => showPanel(), 2500);
+    const isMobile = window.innerWidth < TABLET_BREAKPOINT;
+    const timer = setTimeout(() => showPanel(), isMobile ? 4500 : 2500);
 
     return () => clearTimeout(timer);
   }, [isActive, hidePanel, showPanel]);
