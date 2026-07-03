@@ -31,8 +31,8 @@ export const ActionBar = () => {
     }
   }, [isCodingReady]);
   const { isFullscreen, toggleFullscreen } = useToggleFullscreen();
-  const { updateScene } = useScene((state) => ({
-    updateScene: state.updateScene,
+  const { requestScene } = useScene((state) => ({
+    requestScene: state.requestScene,
   }));
   const { viewMode, toggleViewMode } = useViewMode((state) => ({
     viewMode: state.viewMode,
@@ -54,7 +54,7 @@ export const ActionBar = () => {
               className={'cursor-pointer'}
               onMouseEnter={() => setText('HOME')}
             >
-              <Icon onClick={() => updateScene(SCENE.HERO)}>
+              <Icon onClick={() => requestScene(SCENE.HERO)}>
                 <BsHouseDoor />
               </Icon>
             </div>
@@ -63,7 +63,7 @@ export const ActionBar = () => {
               className={`${isCodingReady ? 'cursor-pointer' : 'cursor-not-allowed opacity-30'}`}
               onMouseEnter={() => setText(isCodingReady ? 'MEET THE DEVELOPER' : 'LOADING SCENE...')}
             >
-              <Icon onClick={isCodingReady ? () => updateScene(SCENE.CODING) : undefined}>
+              <Icon onClick={isCodingReady ? () => requestScene(SCENE.CODING) : undefined}>
                 <BsPerson />
               </Icon>
             </div>
