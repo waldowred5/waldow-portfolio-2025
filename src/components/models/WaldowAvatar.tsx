@@ -25,6 +25,7 @@ import {
   applyWireframeShader,
   createWireframeUniforms,
 } from '@/lib/wireframeShader.ts';
+import { usePerformanceTier } from '@/store/usePerformanceTier.ts';
 import { THEME_COLORS, useTheme } from '@/store/useTheme.ts';
 
 import { Mouse } from './Mouse.tsx';
@@ -60,6 +61,8 @@ type GLTFResult = GLTF & {
 const ANIMATION = {
   TYPING: 'TYPING',
 };
+
+const WIREFRAME_MESHES = new Set(['Wolf3D_Outfit_Top', 'Wolf3D_Outfit_Bottom']);
 
 const DISSOLVE_VERTEX_COMMON = /* glsl */ `
   varying vec3 vDissolveWorldPos;
@@ -141,23 +144,33 @@ const applyDissolveShader = (
   mat.needsUpdate = true;
 };
 
-export const WaldowAvatar = (props: JSX.IntrinsicElements['group']) => {
+type WaldowAvatarProps = JSX.IntrinsicElements['group'] & {
+  isActive?: boolean;
+};
+
+export const WaldowAvatar = ({ isActive = true, ...props }: WaldowAvatarProps) => {
   // @ts-expect-error ...
   const group = useRef<Group>();
   // @ts-expect-error GLTFResult type mismatch with useGLTF return
   const { nodes, materials } = useGLTF('/models/waldow.glb') as GLTFResult;
-  const { animations: typingAnimation } = useFBX('/animations/typing.fbx');
 
-  typingAnimation[0].name = ANIMATION.TYPING;
-  typingAnimation[0].tracks = typingAnimation[0].tracks.filter(
-    (track) => !track.name.startsWith('Armature.'),
-  );
+  const { animations: typingAnimation } = useFBX('/animations/typing.fbx');
+  const animSetupDoneRef = useRef(false);
+  if (!animSetupDoneRef.current) {
+    animSetupDoneRef.current = true;
+    typingAnimation[0].name = ANIMATION.TYPING;
+    typingAnimation[0].tracks = typingAnimation[0].tracks.filter(
+      (track) => !track.name.startsWith('Armature.'),
+    );
+  }
 
   const { actions } = useAnimations(typingAnimation, group);
 
   useEffect(() => {
     actions?.[ANIMATION.TYPING]?.reset().play();
   }, [actions]);
+
+  const isLowPerf = usePerformanceTier((s) => s.isLowPerf);
 
   const defaultValues = {
     position: { x: 1, y: -5, z: 4.6 },
@@ -221,21 +234,21 @@ export const WaldowAvatar = (props: JSX.IntrinsicElements['group']) => {
   const wireframeUniformsRef = useRef(createWireframeUniforms());
   const shadersAppliedRef = useRef(false);
 
+  // Only hoodie (Wolf3D_Outfit_Top) and pants (Wolf3D_Outfit_Bottom) need
+  // barycentric coords for wireframe. Others use geometry as-is.
   const convertedGeometries = useMemo(
     () => ({
-      Wolf3D_Hair: addBarycentricCoords(nodes.Wolf3D_Hair.geometry),
+      Wolf3D_Hair: nodes.Wolf3D_Hair.geometry,
       Wolf3D_Outfit_Top: addBarycentricCoords(nodes.Wolf3D_Outfit_Top.geometry),
       Wolf3D_Outfit_Bottom: addBarycentricCoords(
         nodes.Wolf3D_Outfit_Bottom.geometry,
       ),
-      Wolf3D_Outfit_Footwear: addBarycentricCoords(
-        nodes.Wolf3D_Outfit_Footwear.geometry,
-      ),
-      Wolf3D_Body: addBarycentricCoords(nodes.Wolf3D_Body.geometry),
-      EyeLeft: addBarycentricCoords(nodes.EyeLeft.geometry),
-      EyeRight: addBarycentricCoords(nodes.EyeRight.geometry),
-      Wolf3D_Head: addBarycentricCoords(nodes.Wolf3D_Head.geometry),
-      Wolf3D_Teeth: addBarycentricCoords(nodes.Wolf3D_Teeth.geometry),
+      Wolf3D_Outfit_Footwear: nodes.Wolf3D_Outfit_Footwear.geometry,
+      Wolf3D_Body: nodes.Wolf3D_Body.geometry,
+      EyeLeft: nodes.EyeLeft.geometry,
+      EyeRight: nodes.EyeRight.geometry,
+      Wolf3D_Head: nodes.Wolf3D_Head.geometry,
+      Wolf3D_Teeth: nodes.Wolf3D_Teeth.geometry,
     }),
     [nodes],
   );
@@ -248,16 +261,30 @@ export const WaldowAvatar = (props: JSX.IntrinsicElements['group']) => {
     });
   }, []);
 
+  // Stagger shader compilation across frames to avoid single-frame GPU spike.
+  // Wireframe shader only on hoodie and pants. On low-perf, skip dissolve and
+  // use opacity-based fade instead.
   useEffect(() => {
     if (shadersAppliedRef.current) {
       return;
     }
     shadersAppliedRef.current = true;
     const dissolveUniforms = dissolveUniformsRef.current;
-    Object.values(materials).forEach((mat) => {
-      applyDissolveShader(mat, dissolveUniforms);
-      applyWireframeShader(mat, wireframeUniformsRef.current);
+
+    Object.entries(materials).forEach(([key, mat], i) => {
+      setTimeout(() => {
+        if (isLowPerf) {
+          mat.transparent = true;
+        } else {
+          applyDissolveShader(mat, dissolveUniforms);
+        }
+        if (WIREFRAME_MESHES.has(key)) {
+          applyWireframeShader(mat, wireframeUniformsRef.current);
+        }
+        mat.needsUpdate = true;
+      }, i * 50);
     });
+
     materials.Wolf3D_Outfit_Top.color.set('cyan');
   }, [materials]);
 
@@ -269,7 +296,7 @@ export const WaldowAvatar = (props: JSX.IntrinsicElements['group']) => {
   const avatarTransitionStartRef = useRef<number | null>(null);
 
   useFrame(({ clock }) => {
-    if (!group.current) {
+    if (!isActive || !group.current) {
       return;
     }
 
@@ -303,7 +330,14 @@ export const WaldowAvatar = (props: JSX.IntrinsicElements['group']) => {
       progress = avatarIsVisibleRef.current ? 1 : 0;
     }
 
-    uniforms.uDissolveProgress.value = progress;
+    if (isLowPerf) {
+      Object.values(materials).forEach((mat) => {
+        mat.opacity = progress;
+        mat.transparent = progress < 1;
+      });
+    } else {
+      uniforms.uDissolveProgress.value = progress;
+    }
   });
 
   return (

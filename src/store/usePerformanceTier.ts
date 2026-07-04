@@ -5,9 +5,14 @@ interface IPerformanceTier {
   setIsLowPerf: (value: boolean) => void;
 }
 
+const detectMobile = () =>
+  typeof navigator !== 'undefined' &&
+  (navigator.maxTouchPoints > 1 ||
+    /iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
+
 export const usePerformanceTier = createWithEqualityFn<IPerformanceTier>(
   (set) => ({
-    isLowPerf: false,
+    isLowPerf: detectMobile(),
     setIsLowPerf: (isLowPerf) => set({ isLowPerf }),
   }),
 );

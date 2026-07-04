@@ -4,6 +4,7 @@ import { Perf } from 'r3f-perf';
 import { useCallback } from 'react';
 
 import { useCanvasLoaded } from '@/store/useCanvasLoaded.ts';
+import { usePerformanceTier } from '@/store/usePerformanceTier.ts';
 
 import { KeyboardInputManager } from './helpers/KeyboardInputManager.tsx';
 import { SceneManager } from './SceneManager.tsx';
@@ -13,6 +14,7 @@ export const FiberCanvas = () => {
     setCanvasReady: s.setCanvasReady,
     isGlowFading: s.isGlowFading,
   }));
+  const isLowPerf = usePerformanceTier((s) => s.isLowPerf);
 
   const handleCanvasCreated = useCallback(() => {
     requestAnimationFrame(() => requestAnimationFrame(() => setCanvasReady()));
@@ -57,7 +59,7 @@ export const FiberCanvas = () => {
           <Canvas
             legacy={true}
             className={'touch-none'}
-            dpr={[1, 2]}
+            dpr={isLowPerf ? 1 : [1, 2]}
             camera={{
               fov,
               near: 0.01,

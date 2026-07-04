@@ -22,6 +22,7 @@ import {
 } from '@/lib/constants.ts';
 import { useAboutMePanel } from '@/store/useAboutMePanel.ts';
 import { useCodingSceneReady } from '@/store/useCodingSceneReady.ts';
+import { usePerformanceTier } from '@/store/usePerformanceTier.ts';
 import { useScene } from '@/store/useScene.ts';
 import { THEME_COLORS, useTheme } from '@/store/useTheme.ts';
 import { useViewMode } from '@/store/useViewMode.ts';
@@ -47,6 +48,7 @@ export const Coding = ({ isActive = true }: Props) => {
   });
   const { camera } = useThree();
   const setPortalReady = useCodingSceneReady((s) => s.setPortalReady);
+  const isLowPerf = usePerformanceTier((s) => s.isLowPerf);
   const { showPanel, hidePanel } = useAboutMePanel((s) => ({
     showPanel: s.showPanel,
     hidePanel: s.hidePanel,
@@ -106,6 +108,7 @@ export const Coding = ({ isActive = true }: Props) => {
   }, [viewMode]);
 
   useFrame((_, delta) => {
+    if (!isActive) return;
     const light = rectLightRef.current;
     const state = lerpState.current;
     if (!light) {
@@ -341,6 +344,7 @@ export const Coding = ({ isActive = true }: Props) => {
   useFrame(() => {
     const becameActive = isActive && !prevIsActiveRef.current;
     prevIsActiveRef.current = isActive;
+    if (!isActive) return;
     if (!becameActive) {
       return;
     }
@@ -491,26 +495,26 @@ export const Coding = ({ isActive = true }: Props) => {
           position={[0, 0.55, -1.15]}
         />
 
-        <WaldowAvatar />
+        <WaldowAvatar isActive={isActive} />
 
         <CodingDesk
           position={[deskPosition.x, deskPosition.y, deskPosition.z]}
-          transmission={meshTransmission}
+          transmission={isLowPerf ? 0 : meshTransmission}
           roughness={meshRoughness}
           thickness={meshThickness}
           ior={meshIor}
-          clearcoat={meshClearcoat}
+          clearcoat={isLowPerf ? 0 : meshClearcoat}
           attenuationDistance={meshAttenuationDistance}
           color={meshColor}
         />
 
         <CodingChair
           position={[chairPosition.x, chairPosition.y, chairPosition.z]}
-          transmission={meshTransmission}
+          transmission={isLowPerf ? 0 : meshTransmission}
           roughness={meshRoughness}
           thickness={meshThickness}
           ior={meshIor}
-          clearcoat={meshClearcoat}
+          clearcoat={isLowPerf ? 0 : meshClearcoat}
           attenuationDistance={meshAttenuationDistance}
           color={meshColor}
         />
