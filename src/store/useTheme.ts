@@ -57,10 +57,11 @@ export const useTheme = createWithEqualityFn<ITheme>((set) => {
     // Actions
     toggleTheme: () => {
       set((state) => {
-        const theme = (state.theme =
+        const theme = (state.theme = (
           state.theme < Object.values(THEME).length - 1
             ? state.theme + 1
-            : THEME.ELECTRIC_BLUE);
+            : THEME.ELECTRIC_BLUE
+        ) as THEME);
 
         return {
           ...state,

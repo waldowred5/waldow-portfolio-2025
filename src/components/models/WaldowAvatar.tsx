@@ -170,7 +170,9 @@ export const WaldowAvatar = ({
   ...props
 }: WaldowAvatarProps) => {
   const group = useRef<Group | null>(null);
-  const { nodes, materials } = useGLTF('/models/waldow.glb') as unknown as GLTFResult;
+  const { nodes, materials } = useGLTF(
+    '/models/waldow.glb',
+  ) as unknown as GLTFResult;
 
   const { animations: typingAnimation } = useFBX('/animations/typing.fbx');
   const animSetupDoneRef = useRef(false);

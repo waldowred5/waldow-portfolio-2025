@@ -3,7 +3,7 @@ import { memo, useEffect, useMemo, useRef } from 'react';
 
 import { THEME_TRANSITION_DURATION } from '@/lib/constants.ts';
 import { cn, convertToHex } from '@/lib/utils.ts';
-import { THEME_COLORS, useTheme } from '@/store/useTheme.ts';
+import { type THEME, THEME_COLORS, useTheme } from '@/store/useTheme.ts';
 
 const paths = [
   'M-380 -189C-380 -189 -312 216 152 343C616 470 684 875 684 875',
@@ -72,7 +72,7 @@ export const BackgroundBeams = memo(({ className }: { className?: string }) => {
   );
 
   useEffect(() => {
-    const applyColors = (theme: number) => {
+    const applyColors = (theme: THEME) => {
       const el = containerRef.current;
       if (!el) {
         return;
