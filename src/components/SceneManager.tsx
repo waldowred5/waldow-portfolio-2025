@@ -40,8 +40,7 @@ export const SceneManager = () => {
       Scene: folder(
         {
           'Reset Scene Defaults': button(() => {
-            // @ts-expect-error investigate this
-            set(defaultValues);
+            (set as (v: Record<string, unknown>) => void)(defaultValues);
             updateScene(defaultValues.scene);
           }),
           scene: {
@@ -60,8 +59,7 @@ export const SceneManager = () => {
   );
 
   useEffect(() => {
-    // @ts-expect-error investigate this
-    set({ scene: currentScene });
+    (set as (v: Record<string, unknown>) => void)({ scene: currentScene });
   }, [currentScene, set]);
 
   const isHero = currentScene === SCENE.HERO;

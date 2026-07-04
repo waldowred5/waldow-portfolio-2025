@@ -61,7 +61,7 @@ export const Coding = ({ isActive = true }: Props) => {
   const hasShownPanel = useRef(false);
   const prevIsActiveRef = useRef(false);
   const isActiveRef = useRef(isActive);
-  const positionCameraRef = useRef<() => void>(() => {});
+  const positionCameraRef = useRef<(isResize?: boolean) => void>(() => {});
 
   const defaultMacbookValues = {
     scenePosition: { x: 0, y: -0.8, z: 1 },
@@ -333,7 +333,6 @@ export const Coding = ({ isActive = true }: Props) => {
           desktopLookAtOffset: { x: window.innerWidth * 0.006, y: -3, z: 0 },
         });
         if (isActiveRef.current) {
-          // @ts-expect-error investigate this
           positionCameraRef.current(true);
         }
       }, 150);

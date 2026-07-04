@@ -1,13 +1,14 @@
 import { createWithEqualityFn } from 'zustand/traditional';
 
-// @ts-expect-error Move this to a separate file later
-export enum THEME {
-  ELECTRIC_BLUE,
-  FIRE,
-  MONOCHROME,
-  CUTE,
-  GREEN,
-}
+export const THEME = {
+  ELECTRIC_BLUE: 0,
+  FIRE: 1,
+  MONOCHROME: 2,
+  CUTE: 3,
+  GREEN: 4,
+} as const;
+
+export type THEME = (typeof THEME)[keyof typeof THEME];
 
 export type ColorInput = [number, number, number];
 
@@ -57,7 +58,7 @@ export const useTheme = createWithEqualityFn<ITheme>((set) => {
     toggleTheme: () => {
       set((state) => {
         const theme = (state.theme =
-          state.theme < Object.values(THEME).length / 2 - 1
+          state.theme < Object.values(THEME).length - 1
             ? state.theme + 1
             : THEME.ELECTRIC_BLUE);
 

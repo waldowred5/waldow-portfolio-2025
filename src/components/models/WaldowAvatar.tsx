@@ -169,10 +169,8 @@ export const WaldowAvatar = ({
   enableThemeCrossDissolve = false,
   ...props
 }: WaldowAvatarProps) => {
-  // @ts-expect-error ...
-  const group = useRef<Group>();
-  // @ts-expect-error GLTFResult type mismatch with useGLTF return
-  const { nodes, materials } = useGLTF('/models/waldow.glb') as GLTFResult;
+  const group = useRef<Group | null>(null);
+  const { nodes, materials } = useGLTF('/models/waldow.glb') as unknown as GLTFResult;
 
   const { animations: typingAnimation } = useFBX('/animations/typing.fbx');
   const animSetupDoneRef = useRef(false);
@@ -261,12 +259,10 @@ export const WaldowAvatar = ({
 
   const wireframeUniformsRef = useRef(createWireframeUniforms());
   const shadersAppliedRef = useRef(false);
-  // @ts-expect-error partial key map
   const prevMaterialsRef = useRef<Partial<
     Record<keyof typeof materials, MeshStandardMaterial>
   > | null>(null);
-  // @ts-expect-error ...
-  const prevMeshGroupRef = useRef<Group>(null);
+  const prevMeshGroupRef = useRef<Group | null>(null);
 
   // Theme cross-dissolve state (all refs to avoid React re-renders in useFrame)
   const isThemeTransitioningRef = useRef(false);
@@ -359,8 +355,7 @@ export const WaldowAvatar = ({
               applyWireframeShader(clone, wireframeUniformsRef.current);
             }
             clone.needsUpdate = true;
-            // @ts-expect-error dynamic key
-            prevMats[key] = clone;
+            prevMats[key as keyof typeof materials] = clone;
 
             const meshNames = MATERIAL_TO_PREV_MESH_NAMES[key] ?? [];
             prevMeshGroupRef.current?.traverse((obj) => {
