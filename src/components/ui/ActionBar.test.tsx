@@ -85,7 +85,7 @@ describe('ActionBar', () => {
 
   it('shows fullscreen hover label', () => {
     const { container, getByText } = render(<ActionBar />);
-    const fullscreenDiv = container.querySelectorAll('.cursor-pointer')[0];
+    const fullscreenDiv = container.querySelectorAll('.cursor-pointer')[1];
     fireEvent.mouseEnter(fullscreenDiv);
     expect(getByText('ENTER FULL SCREEN')).toBeInTheDocument();
   });
@@ -105,14 +105,14 @@ describe('ActionBar', () => {
 
   it('shows linkedin hover label', () => {
     const { container, getByText } = render(<ActionBar />);
-    const linkedinDiv = container.querySelectorAll('.cursor-pointer')[1];
+    const linkedinDiv = container.querySelectorAll('.cursor-pointer')[2];
     fireEvent.mouseEnter(linkedinDiv);
     expect(getByText('STALK MY CAREER →')).toBeInTheDocument();
   });
 
   it('shows github hover label', () => {
     const { container, getByText } = render(<ActionBar />);
-    const githubDiv = container.querySelectorAll('.cursor-pointer')[2];
+    const githubDiv = container.querySelectorAll('.cursor-pointer')[3];
     fireEvent.mouseEnter(githubDiv);
     expect(getByText('STEAL MY CODE →')).toBeInTheDocument();
   });

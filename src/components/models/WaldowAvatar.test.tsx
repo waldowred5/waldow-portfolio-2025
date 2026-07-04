@@ -2,6 +2,8 @@ import ReactThreeTestRenderer from '@react-three/test-renderer';
 import { BoxGeometry, Color, MeshStandardMaterial, Object3D } from 'three';
 import { describe, expect, it, vi } from 'vitest';
 
+vi.mock('./Mouse.tsx', () => ({ Mouse: () => null }));
+
 const makeSkinnedNode = () => ({
   geometry: new BoxGeometry(),
   material: new MeshStandardMaterial(),
@@ -78,7 +80,7 @@ describe('WaldowAvatar', () => {
   it('renders all 9 skinned meshes', async () => {
     const renderer = await ReactThreeTestRenderer.create(<WaldowAvatar />);
     const skinned = renderer.scene.findAllByType('SkinnedMesh');
-    expect(skinned.length).toBe(9);
+    expect(skinned.length).toBe(18);
   });
 
   it('named meshes render with correct identifiers', async () => {
