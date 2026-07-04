@@ -375,8 +375,7 @@ export const WaldowAvatar = ({
     });
 
     materials.Wolf3D_Outfit_Top.color.set('cyan');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [materials]);
+  }, [materials, isLowPerf]);
 
   useWireframeProgress(wireframeUniformsRef.current);
 

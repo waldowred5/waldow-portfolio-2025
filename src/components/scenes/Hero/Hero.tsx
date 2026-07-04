@@ -296,6 +296,8 @@ export const Hero = ({ opacity = 1, isActive = true }: Props) => {
     });
   }, []);
 
+  const initialOpacity = useRef(opacity);
+
   const sunMaterial = useMemo(() => {
     const initialTheme = useTheme.getState().theme;
 
@@ -306,7 +308,7 @@ export const Hero = ({ opacity = 1, isActive = true }: Props) => {
       uniforms: {
         uColor: { value: new Color(...THEME_COLORS[initialTheme].tertiary) },
         uOldColor: { value: new Color(...THEME_COLORS[initialTheme].tertiary) },
-        uOpacity: { value: opacity },
+        uOpacity: { value: initialOpacity.current },
         uWireframeProgress: { value: 0 },
         uThemeDissolveProgress: { value: 0 },
         uNoiseSeed: { value: 42.0 },
@@ -317,7 +319,6 @@ export const Hero = ({ opacity = 1, isActive = true }: Props) => {
         },
       },
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const transitionStartRef = useRef<number | null>(null);
