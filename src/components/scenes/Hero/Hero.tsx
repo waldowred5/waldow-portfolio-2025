@@ -345,36 +345,26 @@ export const Hero = ({ opacity = 1, isActive = true }: Props) => {
       prevThemeRef.current = currentTheme;
       const newColors = THEME_COLORS[currentTheme];
 
-      if (usePerformanceTier.getState().isLowPerf) {
-        waterMaterial.uniforms.uDepthColor.value.set(newColors.secondary);
-        waterMaterial.uniforms.uSurfaceColor.value.set(...newColors.primary);
-        waterMaterial.uniforms.uEdgeColor.value.set(...newColors.tertiary);
-        sunMaterial.uniforms.uColor.value.set(...newColors.tertiary);
-        sunMaterial.uniforms.uThemeEdgeColor.value.set(...newColors.tertiary);
-        waterMaterial.uniforms.uThemeDissolveProgress.value = 1;
-        sunMaterial.uniforms.uThemeDissolveProgress.value = 1;
-      } else {
-        waterMaterial.uniforms.uOldDepthColor.value.copy(
-          waterMaterial.uniforms.uDepthColor.value,
-        );
-        waterMaterial.uniforms.uOldSurfaceColor.value.copy(
-          waterMaterial.uniforms.uSurfaceColor.value,
-        );
-        sunMaterial.uniforms.uOldColor.value.copy(
-          sunMaterial.uniforms.uColor.value,
-        );
-        waterMaterial.uniforms.uDepthColor.value.set(newColors.secondary);
-        waterMaterial.uniforms.uSurfaceColor.value.set(...newColors.primary);
-        waterMaterial.uniforms.uEdgeColor.value.set(...newColors.tertiary);
-        sunMaterial.uniforms.uColor.value.set(...newColors.tertiary);
-        sunMaterial.uniforms.uThemeEdgeColor.value.set(...newColors.tertiary);
-        waterMaterial.uniforms.uThemeDissolveProgress.value = 0;
-        sunMaterial.uniforms.uThemeDissolveProgress.value = 0;
-        const themeSeed = Math.random() * 100;
-        waterMaterial.uniforms.uNoiseSeed.value = themeSeed;
-        sunMaterial.uniforms.uNoiseSeed.value = themeSeed;
-        themeTransitionStartRef.current = elapsed;
-      }
+      waterMaterial.uniforms.uOldDepthColor.value.copy(
+        waterMaterial.uniforms.uDepthColor.value,
+      );
+      waterMaterial.uniforms.uOldSurfaceColor.value.copy(
+        waterMaterial.uniforms.uSurfaceColor.value,
+      );
+      sunMaterial.uniforms.uOldColor.value.copy(
+        sunMaterial.uniforms.uColor.value,
+      );
+      waterMaterial.uniforms.uDepthColor.value.set(newColors.secondary);
+      waterMaterial.uniforms.uSurfaceColor.value.set(...newColors.primary);
+      waterMaterial.uniforms.uEdgeColor.value.set(...newColors.tertiary);
+      sunMaterial.uniforms.uColor.value.set(...newColors.tertiary);
+      sunMaterial.uniforms.uThemeEdgeColor.value.set(...newColors.tertiary);
+      waterMaterial.uniforms.uThemeDissolveProgress.value = 0;
+      sunMaterial.uniforms.uThemeDissolveProgress.value = 0;
+      const themeSeed = Math.random() * 100;
+      waterMaterial.uniforms.uNoiseSeed.value = themeSeed;
+      sunMaterial.uniforms.uNoiseSeed.value = themeSeed;
+      themeTransitionStartRef.current = elapsed;
     }
 
     const toWireframe = currentViewMode === VIEW_MODE.WIREFRAME;
