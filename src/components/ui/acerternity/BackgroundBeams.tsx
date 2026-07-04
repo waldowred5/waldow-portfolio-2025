@@ -77,7 +77,6 @@ export const BackgroundBeams = memo(({ className }: { className?: string }) => {
       )}
     >
       <svg
-        key={theme}
         className={'pointer-events-none absolute z-0 h-full w-full'}
         width={'100%'}
         height={'100%'}
