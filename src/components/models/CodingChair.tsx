@@ -1,6 +1,7 @@
 import { RoundedBox } from '@react-three/drei';
 import { useEffect, useRef } from 'react';
-import type { Color, Mesh, MeshPhysicalMaterial } from 'three';
+import type { Mesh, MeshPhysicalMaterial } from 'three';
+import { Color } from 'three';
 
 import { useWireframeProgress } from '@/hooks/useWireframeProgress.ts';
 import {
@@ -8,6 +9,7 @@ import {
   applyWireframeShader,
   createWireframeUniforms,
 } from '@/lib/wireframeShader.ts';
+import { THEME_COLORS, useTheme } from '@/store/useTheme.ts';
 
 type Props = {
   position: [number, number, number];
@@ -17,7 +19,6 @@ type Props = {
   ior: number;
   clearcoat: number;
   attenuationDistance: number;
-  attenuationColor: Color;
   color: string;
 };
 
@@ -29,12 +30,16 @@ export const CodingChair = ({
   ior,
   clearcoat,
   attenuationDistance,
-  attenuationColor,
   color,
 }: Props) => {
   const meshRef = useRef<Mesh>(null);
   const materialRef = useRef<MeshPhysicalMaterial>(null);
   const wireframeUniforms = useRef(createWireframeUniforms());
+  const attenuationColorRef = useRef(
+    new Color(THEME_COLORS[useTheme.getState().theme].secondary).multiplyScalar(
+      0.2,
+    ),
+  );
 
   useEffect(() => {
     if (!meshRef.current || !materialRef.current) {
@@ -43,6 +48,14 @@ export const CodingChair = ({
     meshRef.current.geometry = addBarycentricCoords(meshRef.current.geometry);
     applyWireframeShader(materialRef.current, wireframeUniforms.current);
     materialRef.current.needsUpdate = true;
+  }, []);
+
+  useEffect(() => {
+    return useTheme.subscribe((state) => {
+      materialRef.current?.attenuationColor
+        .set(THEME_COLORS[state.theme].secondary)
+        .multiplyScalar(0.2);
+    });
   }, []);
 
   useWireframeProgress(wireframeUniforms.current);
@@ -63,7 +76,7 @@ export const CodingChair = ({
         ior={ior}
         clearcoat={clearcoat}
         attenuationDistance={attenuationDistance}
-        attenuationColor={attenuationColor}
+        attenuationColor={attenuationColorRef.current}
         color={color}
       />
     </RoundedBox>

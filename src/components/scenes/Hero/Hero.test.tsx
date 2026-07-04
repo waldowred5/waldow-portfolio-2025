@@ -31,6 +31,7 @@ vi.mock('@react-three/postprocessing', () => ({
 
 vi.mock('@react-three/drei', () => ({
   Html: () => null,
+  PerspectiveCamera: () => null,
 }));
 
 vi.mock('@/store/useMousePosition.ts', () => ({

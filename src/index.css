@@ -1,3 +1,15 @@
+@property --beam-primary {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: #00a5b8;
+}
+
+@property --beam-secondary {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: #4b0085;
+}
+
 @font-face {
   font-family: 'Kanit';
   src: url('/fonts/Kanit-ExtraLight.ttf') format('truetype');

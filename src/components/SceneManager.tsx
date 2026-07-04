@@ -4,11 +4,14 @@ import { useEffect } from 'react';
 
 import { Coding } from '@/components/scenes/Coding.tsx';
 import { Hero } from '@/components/scenes/Hero/Hero.tsx';
+import { useAdaptiveQuality } from '@/hooks/useAdaptiveQuality.ts';
 import { useCanvasLoaded } from '@/store/useCanvasLoaded.ts';
 import { useCodingSceneReady } from '@/store/useCodingSceneReady.ts';
 import { SCENE, useScene } from '@/store/useScene.ts';
 
 export const SceneManager = () => {
+  useAdaptiveQuality();
+
   const { currentScene, updateScene } = useScene((state) => ({
     currentScene: state.currentScene,
     updateScene: state.updateScene,
@@ -37,8 +40,7 @@ export const SceneManager = () => {
       Scene: folder(
         {
           'Reset Scene Defaults': button(() => {
-            // @ts-expect-error investigate this
-            set(defaultValues);
+            (set as (v: Record<string, unknown>) => void)(defaultValues);
             updateScene(defaultValues.scene);
           }),
           scene: {
@@ -57,8 +59,7 @@ export const SceneManager = () => {
   );
 
   useEffect(() => {
-    // @ts-expect-error investigate this
-    set({ scene: currentScene });
+    (set as (v: Record<string, unknown>) => void)({ scene: currentScene });
   }, [currentScene, set]);
 
   const isHero = currentScene === SCENE.HERO;

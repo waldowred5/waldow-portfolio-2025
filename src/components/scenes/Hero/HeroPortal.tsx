@@ -26,6 +26,7 @@ export const HeroPortal = () => {
     <div className={'fixed flex w-full h-lvh'}>
       <Background />
       <Canvas
+        dpr={[1, 2]}
         camera={{
           fov: 75,
           near: 0.01,

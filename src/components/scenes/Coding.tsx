@@ -22,8 +22,9 @@ import {
 } from '@/lib/constants.ts';
 import { useAboutMePanel } from '@/store/useAboutMePanel.ts';
 import { useCodingSceneReady } from '@/store/useCodingSceneReady.ts';
+import { usePerformanceTier } from '@/store/usePerformanceTier.ts';
 import { useScene } from '@/store/useScene.ts';
-import { type ITheme, THEME_COLORS, useTheme } from '@/store/useTheme.ts';
+import { THEME_COLORS, useTheme } from '@/store/useTheme.ts';
 import { useViewMode } from '@/store/useViewMode.ts';
 
 interface Props {
@@ -31,20 +32,23 @@ interface Props {
 }
 
 export const Coding = ({ isActive = true }: Props) => {
-  const { theme } = useTheme((state: ITheme) => ({ theme: state.theme }));
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const cameraControls = useRef<ThreeCameraControls>(null);
   const portalRef = useRef<Group>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const rectLightRef = useRef<RectAreaLight>(null);
-  const currentLerpedColor = useRef(new Color(THEME_COLORS[theme].secondary));
+  const initialTheme = useTheme.getState().theme;
+  const currentLerpedColor = useRef(
+    new Color(THEME_COLORS[initialTheme].secondary),
+  );
   const lerpState = useRef({
-    fromColor: new Color(THEME_COLORS[theme].secondary),
-    toColor: new Color(THEME_COLORS[theme].secondary),
+    fromColor: new Color(THEME_COLORS[initialTheme].secondary),
+    toColor: new Color(THEME_COLORS[initialTheme].secondary),
     elapsed: THEME_TRANSITION_DURATION,
   });
   const { camera } = useThree();
   const setPortalReady = useCodingSceneReady((s) => s.setPortalReady);
+  const isLowPerf = usePerformanceTier((s) => s.isLowPerf);
   const { showPanel, hidePanel } = useAboutMePanel((s) => ({
     showPanel: s.showPanel,
     hidePanel: s.hidePanel,
@@ -57,7 +61,7 @@ export const Coding = ({ isActive = true }: Props) => {
   const hasShownPanel = useRef(false);
   const prevIsActiveRef = useRef(false);
   const isActiveRef = useRef(isActive);
-  const positionCameraRef = useRef<() => void>(() => {});
+  const positionCameraRef = useRef<(isResize?: boolean) => void>(() => {});
 
   const defaultMacbookValues = {
     scenePosition: { x: 0, y: -0.8, z: 1 },
@@ -85,11 +89,19 @@ export const Coding = ({ isActive = true }: Props) => {
   };
 
   useEffect(() => {
-    iframeRef.current?.contentWindow?.postMessage(
-      { type: 'THEME_CHANGE', theme },
-      '*',
-    );
-  }, [theme]);
+    return useTheme.subscribe((state) => {
+      // Deferred so the iframe's JS work doesn't compete with the React theme update
+      setTimeout(() => {
+        iframeRef.current?.contentWindow?.postMessage(
+          { type: 'THEME_CHANGE', theme: state.theme },
+          '*',
+        );
+      }, 100);
+      lerpState.current.fromColor.copy(currentLerpedColor.current);
+      lerpState.current.toColor.set(THEME_COLORS[state.theme].secondary);
+      lerpState.current.elapsed = 0;
+    });
+  }, []);
 
   useEffect(() => {
     iframeRef.current?.contentWindow?.postMessage(
@@ -98,13 +110,10 @@ export const Coding = ({ isActive = true }: Props) => {
     );
   }, [viewMode]);
 
-  useEffect(() => {
-    lerpState.current.fromColor.copy(currentLerpedColor.current);
-    lerpState.current.toColor.set(THEME_COLORS[theme].secondary);
-    lerpState.current.elapsed = 0;
-  }, [theme]);
-
   useFrame((_, delta) => {
+    if (!isActive) {
+      return;
+    }
     const light = rectLightRef.current;
     const state = lerpState.current;
     if (!light) {
@@ -324,7 +333,6 @@ export const Coding = ({ isActive = true }: Props) => {
           desktopLookAtOffset: { x: window.innerWidth * 0.006, y: -3, z: 0 },
         });
         if (isActiveRef.current) {
-          // @ts-expect-error investigate this
           positionCameraRef.current(true);
         }
       }, 150);
@@ -340,6 +348,9 @@ export const Coding = ({ isActive = true }: Props) => {
   useFrame(() => {
     const becameActive = isActive && !prevIsActiveRef.current;
     prevIsActiveRef.current = isActive;
+    if (!isActive) {
+      return;
+    }
     if (!becameActive) {
       return;
     }
@@ -421,10 +432,6 @@ export const Coding = ({ isActive = true }: Props) => {
     return () => clearTimeout(exitTimer);
   }, [pendingScene, isActive, commitScene, hidePanel, cameraDistance]);
 
-  const meshAttenuationColor = new Color(
-    THEME_COLORS[theme].secondary,
-  ).multiplyScalar(0.2);
-
   const {
     transmission: meshTransmission,
     roughness: meshRoughness,
@@ -494,29 +501,27 @@ export const Coding = ({ isActive = true }: Props) => {
           position={[0, 0.55, -1.15]}
         />
 
-        <WaldowAvatar />
+        <WaldowAvatar isActive={isActive} />
 
         <CodingDesk
           position={[deskPosition.x, deskPosition.y, deskPosition.z]}
-          transmission={meshTransmission}
+          transmission={isLowPerf ? 0 : meshTransmission}
           roughness={meshRoughness}
           thickness={meshThickness}
           ior={meshIor}
-          clearcoat={meshClearcoat}
+          clearcoat={isLowPerf ? 0 : meshClearcoat}
           attenuationDistance={meshAttenuationDistance}
-          attenuationColor={meshAttenuationColor}
           color={meshColor}
         />
 
         <CodingChair
           position={[chairPosition.x, chairPosition.y, chairPosition.z]}
-          transmission={meshTransmission}
+          transmission={isLowPerf ? 0 : meshTransmission}
           roughness={meshRoughness}
           thickness={meshThickness}
           ior={meshIor}
-          clearcoat={meshClearcoat}
+          clearcoat={isLowPerf ? 0 : meshClearcoat}
           attenuationDistance={meshAttenuationDistance}
-          attenuationColor={meshAttenuationColor}
           color={meshColor}
         />
 

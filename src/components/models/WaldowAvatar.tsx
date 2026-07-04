@@ -25,6 +25,7 @@ import {
   applyWireframeShader,
   createWireframeUniforms,
 } from '@/lib/wireframeShader.ts';
+import { usePerformanceTier } from '@/store/usePerformanceTier.ts';
 import { THEME_COLORS, useTheme } from '@/store/useTheme.ts';
 
 import { Mouse } from './Mouse.tsx';
@@ -57,8 +58,25 @@ type GLTFResult = GLTF & {
   };
 };
 
-const ANIMATION = {
-  TYPING: 'TYPING',
+const ANIMATION = { TYPING: 'TYPING' };
+
+// Hoodie, pants, sneakers get barycentric coords + wireframe shader
+const WIREFRAME_MESHES = new Set([
+  'Wolf3D_Outfit_Top',
+  'Wolf3D_Outfit_Bottom',
+  'Wolf3D_Outfit_Footwear',
+]);
+
+// Maps GLTF material key → prev mesh names in the cross-dissolve group
+const MATERIAL_TO_PREV_MESH_NAMES: Record<string, string[]> = {
+  Wolf3D_Hair: ['prev_Wolf3D_Hair'],
+  Wolf3D_Outfit_Top: ['prev_Wolf3D_Outfit_Top'],
+  Wolf3D_Outfit_Bottom: ['prev_Wolf3D_Outfit_Bottom'],
+  Wolf3D_Outfit_Footwear: ['prev_Wolf3D_Outfit_Footwear'],
+  Wolf3D_Body: ['prev_Wolf3D_Body'],
+  Wolf3D_Eye: ['prev_EyeLeft', 'prev_EyeRight'],
+  Wolf3D_Skin: ['prev_Wolf3D_Head'],
+  Wolf3D_Teeth: ['prev_Wolf3D_Teeth'],
 };
 
 const DISSOLVE_VERTEX_COMMON = /* glsl */ `
@@ -141,23 +159,38 @@ const applyDissolveShader = (
   mat.needsUpdate = true;
 };
 
-export const WaldowAvatar = (props: JSX.IntrinsicElements['group']) => {
-  // @ts-expect-error ...
-  const group = useRef<Group>();
-  // @ts-expect-error GLTFResult type mismatch with useGLTF return
-  const { nodes, materials } = useGLTF('/models/waldow.glb') as GLTFResult;
-  const { animations: typingAnimation } = useFBX('/animations/typing.fbx');
+type WaldowAvatarProps = JSX.IntrinsicElements['group'] & {
+  isActive?: boolean;
+  enableThemeCrossDissolve?: boolean;
+};
 
-  typingAnimation[0].name = ANIMATION.TYPING;
-  typingAnimation[0].tracks = typingAnimation[0].tracks.filter(
-    (track) => !track.name.startsWith('Armature.'),
-  );
+export const WaldowAvatar = ({
+  isActive = true,
+  enableThemeCrossDissolve = false,
+  ...props
+}: WaldowAvatarProps) => {
+  const group = useRef<Group | null>(null);
+  const { nodes, materials } = useGLTF(
+    '/models/waldow.glb',
+  ) as unknown as GLTFResult;
+
+  const { animations: typingAnimation } = useFBX('/animations/typing.fbx');
+  const animSetupDoneRef = useRef(false);
+  if (!animSetupDoneRef.current) {
+    animSetupDoneRef.current = true;
+    typingAnimation[0].name = ANIMATION.TYPING;
+    typingAnimation[0].tracks = typingAnimation[0].tracks.filter(
+      (track) => !track.name.startsWith('Armature.'),
+    );
+  }
 
   const { actions } = useAnimations(typingAnimation, group);
 
   useEffect(() => {
     actions?.[ANIMATION.TYPING]?.reset().play();
   }, [actions]);
+
+  const isLowPerf = usePerformanceTier((s) => s.isLowPerf);
 
   const defaultValues = {
     position: { x: 1, y: -5, z: 4.6 },
@@ -209,21 +242,39 @@ export const WaldowAvatar = (props: JSX.IntrinsicElements['group']) => {
     ),
   }));
 
-  const theme = useTheme((s) => s.theme);
-
   const dissolveUniformsRef = useRef({
     uDissolveProgress: { value: 0.0 },
     uNoiseSeed: { value: 42.0 },
     uDissolveEdge: { value: defaultValues.dissolveEdge },
-    uDissolveEdgeColor: { value: new Color(THEME_COLORS[theme].secondary) },
+    uDissolveEdgeColor: {
+      value: new Color(THEME_COLORS[useTheme.getState().theme].secondary),
+    },
+  });
+
+  // Separate uniforms for the cross-dissolve "old theme" overlay mesh set
+  const prevDissolveUniformsRef = useRef({
+    uDissolveProgress: { value: 0.0 },
+    uNoiseSeed: { value: 0.0 },
+    uDissolveEdge: { value: defaultValues.dissolveEdge },
+    uDissolveEdgeColor: { value: new Color() },
   });
 
   const wireframeUniformsRef = useRef(createWireframeUniforms());
   const shadersAppliedRef = useRef(false);
+  const prevMaterialsRef = useRef<Partial<
+    Record<keyof typeof materials, MeshStandardMaterial>
+  > | null>(null);
+  const prevMeshGroupRef = useRef<Group | null>(null);
 
+  // Theme cross-dissolve state (all refs to avoid React re-renders in useFrame)
+  const isThemeTransitioningRef = useRef(false);
+  const themeTransitionStartRef = useRef<number | null>(null);
+  const themeTransitionFromRef = useRef(0.0);
+
+  // Hoodie, pants, sneakers need barycentric coords for wireframe shader
   const convertedGeometries = useMemo(
     () => ({
-      Wolf3D_Hair: addBarycentricCoords(nodes.Wolf3D_Hair.geometry),
+      Wolf3D_Hair: nodes.Wolf3D_Hair.geometry,
       Wolf3D_Outfit_Top: addBarycentricCoords(nodes.Wolf3D_Outfit_Top.geometry),
       Wolf3D_Outfit_Bottom: addBarycentricCoords(
         nodes.Wolf3D_Outfit_Bottom.geometry,
@@ -231,33 +282,97 @@ export const WaldowAvatar = (props: JSX.IntrinsicElements['group']) => {
       Wolf3D_Outfit_Footwear: addBarycentricCoords(
         nodes.Wolf3D_Outfit_Footwear.geometry,
       ),
-      Wolf3D_Body: addBarycentricCoords(nodes.Wolf3D_Body.geometry),
-      EyeLeft: addBarycentricCoords(nodes.EyeLeft.geometry),
-      EyeRight: addBarycentricCoords(nodes.EyeRight.geometry),
-      Wolf3D_Head: addBarycentricCoords(nodes.Wolf3D_Head.geometry),
-      Wolf3D_Teeth: addBarycentricCoords(nodes.Wolf3D_Teeth.geometry),
+      Wolf3D_Body: nodes.Wolf3D_Body.geometry,
+      EyeLeft: nodes.EyeLeft.geometry,
+      EyeRight: nodes.EyeRight.geometry,
+      Wolf3D_Head: nodes.Wolf3D_Head.geometry,
+      Wolf3D_Teeth: nodes.Wolf3D_Teeth.geometry,
     }),
     [nodes],
   );
 
+  // Theme subscription: on high-perf with cross-dissolve enabled, trigger overlay anim. Always update edge color.
   useEffect(() => {
-    dissolveUniformsRef.current.uDissolveEdgeColor.value.set(
-      THEME_COLORS[theme].secondary,
-    );
-  }, [theme]);
+    return useTheme.subscribe((state) => {
+      const prevMats = prevMaterialsRef.current;
+      const numMats = Object.keys(materials).length;
+      const prevMatsReady =
+        enableThemeCrossDissolve &&
+        !isLowPerf &&
+        prevMats !== null &&
+        Object.keys(prevMats).length >= numMats &&
+        prevMeshGroupRef.current !== null;
 
+      if (prevMatsReady) {
+        prevDissolveUniformsRef.current.uDissolveEdgeColor.value.copy(
+          dissolveUniformsRef.current.uDissolveEdgeColor.value,
+        );
+        const fromProgress =
+          dissolveUniformsRef.current.uDissolveProgress.value;
+        prevDissolveUniformsRef.current.uDissolveProgress.value = fromProgress;
+        prevDissolveUniformsRef.current.uNoiseSeed.value = Math.random() * 100;
+        prevDissolveUniformsRef.current.uDissolveEdge.value =
+          dissolveUniformsRef.current.uDissolveEdge.value;
+
+        themeTransitionFromRef.current = fromProgress;
+        isThemeTransitioningRef.current = true;
+        themeTransitionStartRef.current = null;
+        prevMeshGroupRef.current!.visible = true;
+      }
+
+      dissolveUniformsRef.current.uDissolveEdgeColor.value.set(
+        THEME_COLORS[state.theme].secondary,
+      );
+    });
+  }, [materials, isLowPerf, enableThemeCrossDissolve]);
+
+  // Stagger shader compilation. On high-perf also create prev material set for cross-dissolve.
   useEffect(() => {
     if (shadersAppliedRef.current) {
       return;
     }
     shadersAppliedRef.current = true;
     const dissolveUniforms = dissolveUniformsRef.current;
-    Object.values(materials).forEach((mat) => {
-      applyDissolveShader(mat, dissolveUniforms);
-      applyWireframeShader(mat, wireframeUniformsRef.current);
+    const numMats = Object.keys(materials).length;
+    const prevMats: Partial<
+      Record<keyof typeof materials, MeshStandardMaterial>
+    > = {};
+    prevMaterialsRef.current = prevMats;
+
+    Object.entries(materials).forEach(([key, mat], i) => {
+      setTimeout(() => {
+        applyDissolveShader(mat, dissolveUniforms);
+        if (WIREFRAME_MESHES.has(key)) {
+          applyWireframeShader(mat, wireframeUniformsRef.current);
+        }
+        mat.needsUpdate = true;
+      }, i * 50);
+
+      if (!isLowPerf) {
+        setTimeout(
+          () => {
+            const clone = mat.clone();
+            applyDissolveShader(clone, prevDissolveUniformsRef.current);
+            if (WIREFRAME_MESHES.has(key)) {
+              applyWireframeShader(clone, wireframeUniformsRef.current);
+            }
+            clone.needsUpdate = true;
+            prevMats[key as keyof typeof materials] = clone;
+
+            const meshNames = MATERIAL_TO_PREV_MESH_NAMES[key] ?? [];
+            prevMeshGroupRef.current?.traverse((obj) => {
+              if (meshNames.includes(obj.name) && 'material' in obj) {
+                (obj as SkinnedMesh).material = clone;
+              }
+            });
+          },
+          (numMats + i) * 50,
+        );
+      }
     });
+
     materials.Wolf3D_Outfit_Top.color.set('cyan');
-  }, [materials]);
+  }, [materials, isLowPerf]);
 
   useWireframeProgress(wireframeUniformsRef.current);
 
@@ -267,7 +382,7 @@ export const WaldowAvatar = (props: JSX.IntrinsicElements['group']) => {
   const avatarTransitionStartRef = useRef<number | null>(null);
 
   useFrame(({ clock }) => {
-    if (!group.current) {
+    if (!isActive || !group.current) {
       return;
     }
 
@@ -302,6 +417,26 @@ export const WaldowAvatar = (props: JSX.IntrinsicElements['group']) => {
     }
 
     uniforms.uDissolveProgress.value = progress;
+
+    // Animate the prev (old theme) mesh overlay dissolving out
+    if (isThemeTransitioningRef.current && prevMeshGroupRef.current) {
+      if (themeTransitionStartRef.current === null) {
+        themeTransitionStartRef.current = elapsed;
+      }
+      const t = Math.min(
+        (elapsed - themeTransitionStartRef.current) / THEME_TRANSITION_DURATION,
+        1,
+      );
+      prevDissolveUniformsRef.current.uDissolveProgress.value =
+        themeTransitionFromRef.current * (1 - t);
+
+      if (t >= 1) {
+        prevDissolveUniformsRef.current.uDissolveProgress.value = 0;
+        isThemeTransitioningRef.current = false;
+        themeTransitionStartRef.current = null;
+        prevMeshGroupRef.current.visible = false;
+      }
+    }
   });
 
   return (
@@ -314,6 +449,8 @@ export const WaldowAvatar = (props: JSX.IntrinsicElements['group']) => {
           position={[position.x, position.y, position.z]}
         >
           <primitive object={nodes.Hips} />
+
+          {/* Main meshes — current theme, camera-distance dissolve */}
           <skinnedMesh
             geometry={convertedGeometries.Wolf3D_Hair}
             material={materials.Wolf3D_Hair}
@@ -371,6 +508,73 @@ export const WaldowAvatar = (props: JSX.IntrinsicElements['group']) => {
             morphTargetDictionary={nodes.Wolf3D_Teeth.morphTargetDictionary}
             morphTargetInfluences={nodes.Wolf3D_Teeth.morphTargetInfluences}
           />
+
+          {/* Old-theme overlay — dissolves out on theme change (desktop only).
+              Starts invisible; materials swapped imperatively when prev mats are ready. */}
+          <group ref={prevMeshGroupRef} visible={false}>
+            <skinnedMesh
+              name={'prev_Wolf3D_Hair'}
+              geometry={convertedGeometries.Wolf3D_Hair}
+              material={materials.Wolf3D_Hair}
+              skeleton={nodes.Wolf3D_Hair.skeleton}
+            />
+            <skinnedMesh
+              name={'prev_Wolf3D_Outfit_Top'}
+              geometry={convertedGeometries.Wolf3D_Outfit_Top}
+              material={materials.Wolf3D_Outfit_Top}
+              skeleton={nodes.Wolf3D_Outfit_Top.skeleton}
+            />
+            <skinnedMesh
+              name={'prev_Wolf3D_Outfit_Bottom'}
+              geometry={convertedGeometries.Wolf3D_Outfit_Bottom}
+              material={materials.Wolf3D_Outfit_Bottom}
+              skeleton={nodes.Wolf3D_Outfit_Bottom.skeleton}
+            />
+            <skinnedMesh
+              name={'prev_Wolf3D_Outfit_Footwear'}
+              geometry={convertedGeometries.Wolf3D_Outfit_Footwear}
+              material={materials.Wolf3D_Outfit_Footwear}
+              skeleton={nodes.Wolf3D_Outfit_Footwear.skeleton}
+            />
+            <skinnedMesh
+              name={'prev_Wolf3D_Body'}
+              geometry={convertedGeometries.Wolf3D_Body}
+              material={materials.Wolf3D_Body}
+              skeleton={nodes.Wolf3D_Body.skeleton}
+            />
+            <skinnedMesh
+              name={'prev_EyeLeft'}
+              geometry={convertedGeometries.EyeLeft}
+              material={materials.Wolf3D_Eye}
+              skeleton={nodes.EyeLeft.skeleton}
+              morphTargetDictionary={nodes.EyeLeft.morphTargetDictionary}
+              morphTargetInfluences={nodes.EyeLeft.morphTargetInfluences}
+            />
+            <skinnedMesh
+              name={'prev_EyeRight'}
+              geometry={convertedGeometries.EyeRight}
+              material={materials.Wolf3D_Eye}
+              skeleton={nodes.EyeRight.skeleton}
+              morphTargetDictionary={nodes.EyeRight.morphTargetDictionary}
+              morphTargetInfluences={nodes.EyeRight.morphTargetInfluences}
+            />
+            <skinnedMesh
+              name={'prev_Wolf3D_Head'}
+              geometry={convertedGeometries.Wolf3D_Head}
+              material={materials.Wolf3D_Skin}
+              skeleton={nodes.Wolf3D_Head.skeleton}
+              morphTargetDictionary={nodes.Wolf3D_Head.morphTargetDictionary}
+              morphTargetInfluences={nodes.Wolf3D_Head.morphTargetInfluences}
+            />
+            <skinnedMesh
+              name={'prev_Wolf3D_Teeth'}
+              geometry={convertedGeometries.Wolf3D_Teeth}
+              material={materials.Wolf3D_Teeth}
+              skeleton={nodes.Wolf3D_Teeth.skeleton}
+              morphTargetDictionary={nodes.Wolf3D_Teeth.morphTargetDictionary}
+              morphTargetInfluences={nodes.Wolf3D_Teeth.morphTargetInfluences}
+            />
+          </group>
         </group>
       </group>
     </Suspense>
