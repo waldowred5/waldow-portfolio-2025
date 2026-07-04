@@ -209,13 +209,13 @@ export const WaldowAvatar = (props: JSX.IntrinsicElements['group']) => {
     ),
   }));
 
-  const theme = useTheme((s) => s.theme);
-
   const dissolveUniformsRef = useRef({
     uDissolveProgress: { value: 0.0 },
     uNoiseSeed: { value: 42.0 },
     uDissolveEdge: { value: defaultValues.dissolveEdge },
-    uDissolveEdgeColor: { value: new Color(THEME_COLORS[theme].secondary) },
+    uDissolveEdgeColor: {
+      value: new Color(THEME_COLORS[useTheme.getState().theme].secondary),
+    },
   });
 
   const wireframeUniformsRef = useRef(createWireframeUniforms());
@@ -241,10 +241,12 @@ export const WaldowAvatar = (props: JSX.IntrinsicElements['group']) => {
   );
 
   useEffect(() => {
-    dissolveUniformsRef.current.uDissolveEdgeColor.value.set(
-      THEME_COLORS[theme].secondary,
-    );
-  }, [theme]);
+    return useTheme.subscribe((state) => {
+      dissolveUniformsRef.current.uDissolveEdgeColor.value.set(
+        THEME_COLORS[state.theme].secondary,
+      );
+    });
+  }, []);
 
   useEffect(() => {
     if (shadersAppliedRef.current) {

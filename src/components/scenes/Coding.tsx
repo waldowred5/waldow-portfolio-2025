@@ -23,7 +23,7 @@ import {
 import { useAboutMePanel } from '@/store/useAboutMePanel.ts';
 import { useCodingSceneReady } from '@/store/useCodingSceneReady.ts';
 import { useScene } from '@/store/useScene.ts';
-import { type ITheme, THEME_COLORS, useTheme } from '@/store/useTheme.ts';
+import { THEME_COLORS, useTheme } from '@/store/useTheme.ts';
 import { useViewMode } from '@/store/useViewMode.ts';
 
 interface Props {
@@ -31,16 +31,18 @@ interface Props {
 }
 
 export const Coding = ({ isActive = true }: Props) => {
-  const { theme } = useTheme((state: ITheme) => ({ theme: state.theme }));
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const cameraControls = useRef<ThreeCameraControls>(null);
   const portalRef = useRef<Group>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const rectLightRef = useRef<RectAreaLight>(null);
-  const currentLerpedColor = useRef(new Color(THEME_COLORS[theme].secondary));
+  const initialTheme = useTheme.getState().theme;
+  const currentLerpedColor = useRef(
+    new Color(THEME_COLORS[initialTheme].secondary),
+  );
   const lerpState = useRef({
-    fromColor: new Color(THEME_COLORS[theme].secondary),
-    toColor: new Color(THEME_COLORS[theme].secondary),
+    fromColor: new Color(THEME_COLORS[initialTheme].secondary),
+    toColor: new Color(THEME_COLORS[initialTheme].secondary),
     elapsed: THEME_TRANSITION_DURATION,
   });
   const { camera } = useThree();
@@ -85,11 +87,16 @@ export const Coding = ({ isActive = true }: Props) => {
   };
 
   useEffect(() => {
-    iframeRef.current?.contentWindow?.postMessage(
-      { type: 'THEME_CHANGE', theme },
-      '*',
-    );
-  }, [theme]);
+    return useTheme.subscribe((state) => {
+      iframeRef.current?.contentWindow?.postMessage(
+        { type: 'THEME_CHANGE', theme: state.theme },
+        '*',
+      );
+      lerpState.current.fromColor.copy(currentLerpedColor.current);
+      lerpState.current.toColor.set(THEME_COLORS[state.theme].secondary);
+      lerpState.current.elapsed = 0;
+    });
+  }, []);
 
   useEffect(() => {
     iframeRef.current?.contentWindow?.postMessage(
@@ -97,12 +104,6 @@ export const Coding = ({ isActive = true }: Props) => {
       '*',
     );
   }, [viewMode]);
-
-  useEffect(() => {
-    lerpState.current.fromColor.copy(currentLerpedColor.current);
-    lerpState.current.toColor.set(THEME_COLORS[theme].secondary);
-    lerpState.current.elapsed = 0;
-  }, [theme]);
 
   useFrame((_, delta) => {
     const light = rectLightRef.current;
@@ -421,10 +422,6 @@ export const Coding = ({ isActive = true }: Props) => {
     return () => clearTimeout(exitTimer);
   }, [pendingScene, isActive, commitScene, hidePanel, cameraDistance]);
 
-  const meshAttenuationColor = new Color(
-    THEME_COLORS[theme].secondary,
-  ).multiplyScalar(0.2);
-
   const {
     transmission: meshTransmission,
     roughness: meshRoughness,
@@ -504,7 +501,6 @@ export const Coding = ({ isActive = true }: Props) => {
           ior={meshIor}
           clearcoat={meshClearcoat}
           attenuationDistance={meshAttenuationDistance}
-          attenuationColor={meshAttenuationColor}
           color={meshColor}
         />
 
@@ -516,7 +512,6 @@ export const Coding = ({ isActive = true }: Props) => {
           ior={meshIor}
           clearcoat={meshClearcoat}
           attenuationDistance={meshAttenuationDistance}
-          attenuationColor={meshAttenuationColor}
           color={meshColor}
         />
 

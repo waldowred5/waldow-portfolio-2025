@@ -19,7 +19,6 @@ import {
 } from '@/lib/constants.ts';
 import { useMousePosition } from '@/store/useMousePosition.ts';
 import { usePerformanceTier } from '@/store/usePerformanceTier.ts';
-import type { ITheme } from '@/store/useTheme.ts';
 import { THEME_COLORS, useTheme } from '@/store/useTheme.ts';
 import { useViewMode, VIEW_MODE } from '@/store/useViewMode.ts';
 import { useWindowSize } from '@/store/useWindowSize.ts';
@@ -95,12 +94,6 @@ interface Props {
 }
 
 export const Hero = ({ opacity = 1, isActive = true }: Props) => {
-  const { theme } = useTheme((state: ITheme) => {
-    return {
-      theme: state.theme,
-    };
-  });
-
   const isLowPerf = usePerformanceTier((s) => s.isLowPerf);
 
   const { innerWidth } = useWindowSize((state) => {
@@ -263,79 +256,74 @@ export const Hero = ({ opacity = 1, isActive = true }: Props) => {
     return geo;
   }, [isLowPerf]);
 
-  const waterMaterial = useMemo(
-    () =>
-      new ShaderMaterial({
-        vertexShader: waterVertexShader,
-        fragmentShader: waterFragmentShader,
-        transparent: true,
-        opacity: 0,
-        uniforms: {
-          // Time
-          uTime: { value: 0 },
+  const waterMaterial = useMemo(() => {
+    const initialTheme = useTheme.getState().theme;
 
-          // Big Wave Elevation
-          uBigWavesElevation: { value: 0.2 },
-          uBigWavesFrequency: { value: new Vector2(1.0, 1.15) },
-          uBigWavesSpeed: { value: 0.6 },
-
-          // Small Wave Elevation
-          uSmallWavesElevation: { value: 0.125 },
-          uSmallWavesFrequency: { value: 2.0 },
-          uSmallWavesSpeed: { value: 0.2 },
-          uSmallWavesIterations: { value: 4.0 },
-
-          // Transition dissolve
-          uWireframeProgress: { value: 0 },
-          uThemeDissolveProgress: { value: 0 },
-          uNoiseSeed: { value: 42.0 },
-          uEdge: { value: 0.08 },
-          uEdgeColor: { value: new Color(...THEME_COLORS[theme].tertiary) },
-
-          // Color
-          uColorOffset: { value: 0.08 },
-          uColorMultiplier: { value: 4.8 },
-          uDepthColor: { value: new Color(THEME_COLORS[theme].secondary) },
-          uSurfaceColor: { value: new Color(...THEME_COLORS[theme].primary) },
-          uOldDepthColor: { value: new Color(THEME_COLORS[theme].secondary) },
-          uOldSurfaceColor: {
-            value: new Color(...THEME_COLORS[theme].primary),
-          },
+    return new ShaderMaterial({
+      vertexShader: waterVertexShader,
+      fragmentShader: waterFragmentShader,
+      transparent: true,
+      opacity: 0,
+      uniforms: {
+        uTime: { value: 0 },
+        uBigWavesElevation: { value: 0.2 },
+        uBigWavesFrequency: { value: new Vector2(1.0, 1.15) },
+        uBigWavesSpeed: { value: 0.6 },
+        uSmallWavesElevation: { value: 0.125 },
+        uSmallWavesFrequency: { value: 2.0 },
+        uSmallWavesSpeed: { value: 0.2 },
+        uSmallWavesIterations: { value: 4.0 },
+        uWireframeProgress: { value: 0 },
+        uThemeDissolveProgress: { value: 0 },
+        uNoiseSeed: { value: 42.0 },
+        uEdge: { value: 0.08 },
+        uEdgeColor: {
+          value: new Color(...THEME_COLORS[initialTheme].tertiary),
         },
-      }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- theme color and opacity updates handled via uniform mutation in useFrame
-    [],
-  );
-
-  const sunMaterial = useMemo(
-    () =>
-      new ShaderMaterial({
-        vertexShader: sunVertexShader,
-        fragmentShader: sunFragmentShader,
-        transparent: true,
-        uniforms: {
-          uColor: { value: new Color(...THEME_COLORS[theme].tertiary) },
-          uOldColor: { value: new Color(...THEME_COLORS[theme].tertiary) },
-          uOpacity: { value: opacity },
-          uWireframeProgress: { value: 0 },
-          uThemeDissolveProgress: { value: 0 },
-          uNoiseSeed: { value: 42.0 },
-          uEdge: { value: 0.1 },
-          uEdgeColor: { value: new Color(2.0, 2.0, 2.0) },
-          uThemeEdgeColor: {
-            value: new Color(...THEME_COLORS[theme].tertiary),
-          },
+        uColorOffset: { value: 0.08 },
+        uColorMultiplier: { value: 4.8 },
+        uDepthColor: { value: new Color(THEME_COLORS[initialTheme].secondary) },
+        uSurfaceColor: {
+          value: new Color(...THEME_COLORS[initialTheme].primary),
         },
-      }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- theme color and opacity updates handled via uniform mutation in useFrame
-    [],
-  );
+        uOldDepthColor: {
+          value: new Color(THEME_COLORS[initialTheme].secondary),
+        },
+        uOldSurfaceColor: {
+          value: new Color(...THEME_COLORS[initialTheme].primary),
+        },
+      },
+    });
+  }, []);
+
+  const sunMaterial = useMemo(() => {
+    const initialTheme = useTheme.getState().theme;
+
+    return new ShaderMaterial({
+      vertexShader: sunVertexShader,
+      fragmentShader: sunFragmentShader,
+      transparent: true,
+      uniforms: {
+        uColor: { value: new Color(...THEME_COLORS[initialTheme].tertiary) },
+        uOldColor: { value: new Color(...THEME_COLORS[initialTheme].tertiary) },
+        uOpacity: { value: opacity },
+        uWireframeProgress: { value: 0 },
+        uThemeDissolveProgress: { value: 0 },
+        uNoiseSeed: { value: 42.0 },
+        uEdge: { value: 0.1 },
+        uEdgeColor: { value: new Color(2.0, 2.0, 2.0) },
+        uThemeEdgeColor: {
+          value: new Color(...THEME_COLORS[initialTheme].tertiary),
+        },
+      },
+    });
+  }, []);
 
   const transitionStartRef = useRef<number | null>(null);
   const prevViewModeRef = useRef(viewMode);
 
   const themeTransitionStartRef = useRef<number | null>(null);
-  const prevThemeRef = useRef(theme);
+  const prevThemeRef = useRef(useTheme.getState().theme);
 
   const TRANSITION_DURATION = THEME_TRANSITION_DURATION;
 
@@ -436,13 +424,17 @@ export const Hero = ({ opacity = 1, isActive = true }: Props) => {
       />
 
       {/* FX */}
-      {isActive && !isLowPerf && (
+      {isActive && (
         <EffectComposer>
           <Bloom
-            intensity={bloomDefaultValues.intensity}
-            luminanceThreshold={bloomDefaultValues.luminanceThreshold}
+            intensity={isLowPerf ? 0.5 : bloomDefaultValues.intensity}
+            luminanceThreshold={
+              isLowPerf ? 0.8 : bloomDefaultValues.luminanceThreshold
+            }
             luminanceSmoothing={bloomDefaultValues.luminanceSmoothing}
             mipmapBlur
+            resolutionX={isLowPerf ? 256 : undefined}
+            resolutionY={isLowPerf ? 256 : undefined}
           />
         </EffectComposer>
       )}

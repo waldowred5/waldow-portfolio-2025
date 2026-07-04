@@ -13,7 +13,9 @@ export const useAdaptiveQuality = () => {
   const windowStartRef = useRef<number | null>(null);
 
   useFrame(({ clock }) => {
-    if (usePerformanceTier.getState().isLowPerf) return;
+    if (usePerformanceTier.getState().isLowPerf) {
+      return;
+    }
 
     const now = clock.getElapsedTime();
 
@@ -21,6 +23,7 @@ export const useAdaptiveQuality = () => {
       if (now >= WARMUP_SECONDS) {
         windowStartRef.current = now;
       }
+
       return;
     }
 

@@ -26,7 +26,10 @@ export const FiberCanvas = () => {
     'Settings',
     () => ({
       'Reset Settings': button(() =>
-        set({ fov: defaultCameraValues.fov, statsDebugPanelEnabled: import.meta.env.DEV }),
+        set({
+          fov: defaultCameraValues.fov,
+          statsDebugPanelEnabled: import.meta.env.DEV,
+        }),
       ),
       statsDebugPanelEnabled: {
         value: import.meta.env.DEV,

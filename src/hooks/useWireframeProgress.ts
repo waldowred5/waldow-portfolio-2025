@@ -13,6 +13,7 @@ export const useWireframeProgress = (uniforms: WireframeUniforms) => {
   useFrame(({ clock }) => {
     if (usePerformanceTier.getState().isLowPerf) {
       uniforms.uWireframeProgress.value = 0;
+
       return;
     }
 
