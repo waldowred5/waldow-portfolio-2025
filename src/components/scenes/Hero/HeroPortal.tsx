@@ -4,12 +4,16 @@ import { useEffect } from 'react';
 import { Hero } from '@/components/scenes/Hero/Hero.tsx';
 import { Background } from '@/components/ui/Background.tsx';
 import { useTheme } from '@/store/useTheme.ts';
+import { useViewMode } from '@/store/useViewMode.ts';
 
 export const HeroPortal = () => {
   useEffect(() => {
     const handler = (event: MessageEvent) => {
       if (event.data?.type === 'THEME_CHANGE') {
         useTheme.setState({ theme: event.data.theme });
+      }
+      if (event.data?.type === 'VIEW_MODE_CHANGE') {
+        useViewMode.setState({ viewMode: event.data.viewMode });
       }
     };
 

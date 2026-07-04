@@ -8,13 +8,32 @@ Title: macbook pro M3 16 inch 2024
 */
 
 import { useGLTF } from '@react-three/drei';
-import { useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import type { JSX } from 'react/jsx-runtime';
 import type { Group } from 'three';
+
+import { useWireframeProgress } from '@/hooks/useWireframeProgress.ts';
+import {
+  addBarycentricCoords,
+  applyWireframeShader,
+  createWireframeUniforms,
+} from '@/lib/wireframeShader.ts';
 
 export const Macbook = (props: JSX.IntrinsicElements['group']) => {
   const group = useRef<Group>(null);
   const { nodes, materials } = useGLTF('/models/macbook.glb');
+  const wireframeUniforms = useRef(createWireframeUniforms());
+
+  const bodyGeometry = useMemo(
+    () => addBarycentricCoords(nodes.Object_10.geometry),
+    [nodes],
+  );
+
+  useEffect(() => {
+    applyWireframeShader(materials.AibnXCKcAbewWhH, wireframeUniforms.current);
+  }, [materials]);
+
+  useWireframeProgress(wireframeUniforms.current);
 
   return (
     <group ref={group} {...props} dispose={null}>
@@ -22,7 +41,7 @@ export const Macbook = (props: JSX.IntrinsicElements['group']) => {
       <group position={[0, 0.52, 0]} scale={[0.1, 0.1, 0.1]}>
         <group rotation={[Math.PI / 2, 0, 0]}>
           <mesh
-            geometry={nodes.Object_10.geometry}
+            geometry={bodyGeometry}
             material={materials.AibnXCKcAbewWhH}
           />
           <mesh

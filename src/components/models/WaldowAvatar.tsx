@@ -6,7 +6,7 @@ Command: npx gltfjsx@6.5.3 ./public/waldow.glb
 import { useAnimations, useFBX, useGLTF } from '@react-three/drei';
 import { useFrame, useLoader, useThree } from '@react-three/fiber';
 import { button, folder, useControls } from 'leva';
-import { Suspense, useEffect, useRef } from 'react';
+import { Suspense, useEffect, useMemo, useRef } from 'react';
 import type { JSX } from 'react/jsx-runtime';
 import {
   Color,
@@ -18,7 +18,13 @@ import {
 import type { GLTF } from 'three-stdlib';
 import { FBXLoader } from 'three-stdlib';
 
+import { useWireframeProgress } from '@/hooks/useWireframeProgress.ts';
 import { THEME_TRANSITION_DURATION } from '@/lib/constants.ts';
+import {
+  addBarycentricCoords,
+  applyWireframeShader,
+  createWireframeUniforms,
+} from '@/lib/wireframeShader.ts';
 import { THEME_COLORS, useTheme } from '@/store/useTheme.ts';
 
 import { Mouse } from './Mouse.tsx';
@@ -128,6 +134,7 @@ const applyDissolveShader = (
         '#include <emissivemap_fragment>',
         `#include <emissivemap_fragment>
         float dissolveEdgeFactor = smoothstep(uDissolveProgress - uDissolveEdge, uDissolveProgress, dissolveN);
+        dissolveEdgeFactor *= 1.0 - step(1.0, uDissolveProgress);
         totalEmissiveRadiance += uDissolveEdgeColor * dissolveEdgeFactor;`,
       );
   };
@@ -157,7 +164,7 @@ export const WaldowAvatar = (props: JSX.IntrinsicElements['group']) => {
     rotation: { x: -Math.PI / 2, y: 0, z: Math.PI },
     scale: 7.8,
     avatarOpacityThreshold: 12,
-    dissolveEdge: 0.009,
+    dissolveEdge: 0.05,
   };
 
   const [
@@ -192,7 +199,7 @@ export const WaldowAvatar = (props: JSX.IntrinsicElements['group']) => {
         dissolveEdge: {
           value: defaultValues.dissolveEdge,
           min: 0,
-          max: 0.5,
+          max: 1.0,
           step: 0.01,
           label: 'Dissolve Edge Width',
         },
@@ -211,17 +218,46 @@ export const WaldowAvatar = (props: JSX.IntrinsicElements['group']) => {
     uDissolveEdgeColor: { value: new Color(THEME_COLORS[theme].secondary) },
   });
 
+  const wireframeUniformsRef = useRef(createWireframeUniforms());
+  const shadersAppliedRef = useRef(false);
+
+  const convertedGeometries = useMemo(
+    () => ({
+      Wolf3D_Hair: addBarycentricCoords(nodes.Wolf3D_Hair.geometry),
+      Wolf3D_Outfit_Top: addBarycentricCoords(nodes.Wolf3D_Outfit_Top.geometry),
+      Wolf3D_Outfit_Bottom: addBarycentricCoords(
+        nodes.Wolf3D_Outfit_Bottom.geometry,
+      ),
+      Wolf3D_Outfit_Footwear: addBarycentricCoords(
+        nodes.Wolf3D_Outfit_Footwear.geometry,
+      ),
+      Wolf3D_Body: addBarycentricCoords(nodes.Wolf3D_Body.geometry),
+      EyeLeft: addBarycentricCoords(nodes.EyeLeft.geometry),
+      EyeRight: addBarycentricCoords(nodes.EyeRight.geometry),
+      Wolf3D_Head: addBarycentricCoords(nodes.Wolf3D_Head.geometry),
+      Wolf3D_Teeth: addBarycentricCoords(nodes.Wolf3D_Teeth.geometry),
+    }),
+    [nodes],
+  );
+
   useEffect(() => {
-    dissolveUniformsRef.current.uDissolveEdgeColor.value.set(THEME_COLORS[theme].secondary);
+    dissolveUniformsRef.current.uDissolveEdgeColor.value.set(
+      THEME_COLORS[theme].secondary,
+    );
   }, [theme]);
 
   useEffect(() => {
-    const uniforms = dissolveUniformsRef.current;
-    Object.values(materials).forEach((mat) =>
-      applyDissolveShader(mat, uniforms),
-    );
+    if (shadersAppliedRef.current) return;
+    shadersAppliedRef.current = true;
+    const dissolveUniforms = dissolveUniformsRef.current;
+    Object.values(materials).forEach((mat) => {
+      applyDissolveShader(mat, dissolveUniforms);
+      applyWireframeShader(mat, wireframeUniformsRef.current);
+    });
     materials.Wolf3D_Outfit_Top.color.set('cyan');
   }, [materials]);
+
+  useWireframeProgress(wireframeUniformsRef.current);
 
   const { camera } = useThree();
   const avatarWorldPos = useRef(new Vector3());
@@ -229,7 +265,8 @@ export const WaldowAvatar = (props: JSX.IntrinsicElements['group']) => {
   const avatarTransitionStartRef = useRef<number | null>(null);
 
   useFrame(({ clock }) => {
-    if (!group.current) return;
+    if (!group.current) 
+return;
 
     const elapsed = clock.getElapsedTime();
     const uniforms = dissolveUniformsRef.current;
@@ -275,33 +312,33 @@ export const WaldowAvatar = (props: JSX.IntrinsicElements['group']) => {
         >
           <primitive object={nodes.Hips} />
           <skinnedMesh
-            geometry={nodes.Wolf3D_Hair.geometry}
+            geometry={convertedGeometries.Wolf3D_Hair}
             material={materials.Wolf3D_Hair}
             skeleton={nodes.Wolf3D_Hair.skeleton}
           />
           <skinnedMesh
-            geometry={nodes.Wolf3D_Outfit_Top.geometry}
+            geometry={convertedGeometries.Wolf3D_Outfit_Top}
             material={materials.Wolf3D_Outfit_Top}
             skeleton={nodes.Wolf3D_Outfit_Top.skeleton}
           />
           <skinnedMesh
-            geometry={nodes.Wolf3D_Outfit_Bottom.geometry}
+            geometry={convertedGeometries.Wolf3D_Outfit_Bottom}
             material={materials.Wolf3D_Outfit_Bottom}
             skeleton={nodes.Wolf3D_Outfit_Bottom.skeleton}
           />
           <skinnedMesh
-            geometry={nodes.Wolf3D_Outfit_Footwear.geometry}
+            geometry={convertedGeometries.Wolf3D_Outfit_Footwear}
             material={materials.Wolf3D_Outfit_Footwear}
             skeleton={nodes.Wolf3D_Outfit_Footwear.skeleton}
           />
           <skinnedMesh
-            geometry={nodes.Wolf3D_Body.geometry}
+            geometry={convertedGeometries.Wolf3D_Body}
             material={materials.Wolf3D_Body}
             skeleton={nodes.Wolf3D_Body.skeleton}
           />
           <skinnedMesh
             name={'EyeLeft'}
-            geometry={nodes.EyeLeft.geometry}
+            geometry={convertedGeometries.EyeLeft}
             material={materials.Wolf3D_Eye}
             skeleton={nodes.EyeLeft.skeleton}
             morphTargetDictionary={nodes.EyeLeft.morphTargetDictionary}
@@ -309,7 +346,7 @@ export const WaldowAvatar = (props: JSX.IntrinsicElements['group']) => {
           />
           <skinnedMesh
             name={'EyeRight'}
-            geometry={nodes.EyeRight.geometry}
+            geometry={convertedGeometries.EyeRight}
             material={materials.Wolf3D_Eye}
             skeleton={nodes.EyeRight.skeleton}
             morphTargetDictionary={nodes.EyeRight.morphTargetDictionary}
@@ -317,7 +354,7 @@ export const WaldowAvatar = (props: JSX.IntrinsicElements['group']) => {
           />
           <skinnedMesh
             name={'Wolf3D_Head'}
-            geometry={nodes.Wolf3D_Head.geometry}
+            geometry={convertedGeometries.Wolf3D_Head}
             material={materials.Wolf3D_Skin}
             skeleton={nodes.Wolf3D_Head.skeleton}
             morphTargetDictionary={nodes.Wolf3D_Head.morphTargetDictionary}
@@ -325,7 +362,7 @@ export const WaldowAvatar = (props: JSX.IntrinsicElements['group']) => {
           />
           <skinnedMesh
             name={'Wolf3D_Teeth'}
-            geometry={nodes.Wolf3D_Teeth.geometry}
+            geometry={convertedGeometries.Wolf3D_Teeth}
             material={materials.Wolf3D_Teeth}
             skeleton={nodes.Wolf3D_Teeth.skeleton}
             morphTargetDictionary={nodes.Wolf3D_Teeth.morphTargetDictionary}

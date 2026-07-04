@@ -10,10 +10,17 @@ Title: Computer Mouse
 import { useGLTF } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import { button, folder, useControls } from 'leva';
-import { useEffect, useLayoutEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import type { JSX } from 'react/jsx-runtime';
 import type { Group, Mesh, MeshStandardMaterial, Object3D } from 'three';
 import * as THREE from 'three';
+
+import { useWireframeProgress } from '@/hooks/useWireframeProgress.ts';
+import {
+  addBarycentricCoords,
+  applyWireframeShader,
+  createWireframeUniforms,
+} from '@/lib/wireframeShader.ts';
 import type { GLTF } from 'three-stdlib';
 
 type MouseGLTF = GLTF & {
@@ -33,6 +40,19 @@ export const Mouse = ({ hips, ...props }: MouseProps) => {
   const { nodes, materials } = useGLTF(
     '/models/computer_mouse.glb',
   ) as MouseGLTF;
+
+  const wireframeUniforms = useRef(createWireframeUniforms());
+
+  const mouseGeometry = useMemo(
+    () => addBarycentricCoords(nodes.pCube3_lambert1_0.geometry),
+    [nodes],
+  );
+
+  useEffect(() => {
+    applyWireframeShader(materials.lambert1, wireframeUniforms.current);
+  }, [materials]);
+
+  useWireframeProgress(wireframeUniforms.current);
 
   const groupRef = useRef<Group>(null);
   const handBoneRef = useRef<Object3D | null>(null);
@@ -143,7 +163,7 @@ export const Mouse = ({ hips, ...props }: MouseProps) => {
   return (
     <group {...props} ref={groupRef} scale={mouseScale} dispose={null}>
       <mesh
-        geometry={nodes.pCube3_lambert1_0.geometry}
+        geometry={mouseGeometry}
         material={materials.lambert1}
       />
     </group>

@@ -5,7 +5,6 @@ import {
   Html,
   Line,
   PerspectiveCamera,
-  RoundedBox,
 } from '@react-three/drei';
 import { useFrame, useThree } from '@react-three/fiber';
 import { button, buttonGroup, folder, useControls } from 'leva';
@@ -13,6 +12,8 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 import type { Group } from 'three';
 import { Color, Quaternion, type RectAreaLight, Vector3 } from 'three';
 
+import { CodingChair } from '@/components/models/CodingChair.tsx';
+import { CodingDesk } from '@/components/models/CodingDesk.tsx';
 import { Macbook } from '@/components/models/Macbook.tsx';
 import { WaldowAvatar } from '@/components/models/WaldowAvatar.tsx';
 import {
@@ -23,6 +24,7 @@ import { useAboutMePanel } from '@/store/useAboutMePanel.ts';
 import { useCodingSceneReady } from '@/store/useCodingSceneReady.ts';
 import { useScene } from '@/store/useScene.ts';
 import { type ITheme, THEME_COLORS, useTheme } from '@/store/useTheme.ts';
+import { useViewMode } from '@/store/useViewMode.ts';
 
 interface Props {
   isActive?: boolean;
@@ -51,6 +53,7 @@ export const Coding = ({ isActive = true }: Props) => {
     pendingScene: s.pendingScene,
     commitScene: s.commitScene,
   }));
+  const viewMode = useViewMode((s) => s.viewMode);
   const hasShownPanel = useRef(false);
   const prevIsActiveRef = useRef(false);
   const isActiveRef = useRef(isActive);
@@ -87,6 +90,13 @@ export const Coding = ({ isActive = true }: Props) => {
       '*',
     );
   }, [theme]);
+
+  useEffect(() => {
+    iframeRef.current?.contentWindow?.postMessage(
+      { type: 'VIEW_MODE_CHANGE', viewMode },
+      '*',
+    );
+  }, [viewMode]);
 
   useEffect(() => {
     lerpState.current.fromColor.copy(currentLerpedColor.current);
@@ -459,44 +469,29 @@ export const Coding = ({ isActive = true }: Props) => {
 
         <WaldowAvatar />
 
-        {/* Desk */}
-        <RoundedBox
-          args={[8, 4, 0.1]}
-          radius={0.1}
+        <CodingDesk
           position={[deskPosition.x, deskPosition.y, deskPosition.z]}
-          rotation={[-Math.PI / 2, 0, 0]}
-        >
-          <meshPhysicalMaterial
-            transparent
-            transmission={meshTransmission}
-            roughness={meshRoughness}
-            thickness={meshThickness}
-            ior={meshIor}
-            clearcoat={meshClearcoat}
-            attenuationDistance={meshAttenuationDistance}
-            attenuationColor={meshAttenuationColor}
-            color={meshColor}
-          />
-        </RoundedBox>
+          transmission={meshTransmission}
+          roughness={meshRoughness}
+          thickness={meshThickness}
+          ior={meshIor}
+          clearcoat={meshClearcoat}
+          attenuationDistance={meshAttenuationDistance}
+          attenuationColor={meshAttenuationColor}
+          color={meshColor}
+        />
 
-        {/* Chair */}
-        <RoundedBox
-          args={[3.5, 3.5, 3.5]}
-          radius={0.5}
+        <CodingChair
           position={[chairPosition.x, chairPosition.y, chairPosition.z]}
-        >
-          <meshPhysicalMaterial
-            transparent
-            transmission={meshTransmission}
-            roughness={meshRoughness}
-            thickness={meshThickness}
-            ior={meshIor}
-            clearcoat={meshClearcoat}
-            attenuationDistance={meshAttenuationDistance}
-            attenuationColor={meshAttenuationColor}
-            color={meshColor}
-          />
-        </RoundedBox>
+          transmission={meshTransmission}
+          roughness={meshRoughness}
+          thickness={meshThickness}
+          ior={meshIor}
+          clearcoat={meshClearcoat}
+          attenuationDistance={meshAttenuationDistance}
+          attenuationColor={meshAttenuationColor}
+          color={meshColor}
+        />
 
         <Macbook>
           <group
