@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { FiberCanvas } from '@/components/FiberCanvas.tsx';
 import { EventManager } from '@/components/helpers/EventManager.tsx';
 import { LevaPanel } from '@/components/helpers/LevaPanel.tsx';
+import { AboutMePanel } from '@/components/ui/AboutMePanel.tsx';
 import { ActionBar } from '@/components/ui/ActionBar.tsx';
 import { Background } from '@/components/ui/Background.tsx';
 import { Hero2DFallback } from '@/components/ui/Hero2DFallback.tsx';
@@ -32,6 +33,7 @@ export const App = () => {
         <Hero2DFallback />
         <FiberCanvas />
         <ActionBar />
+        <AboutMePanel />
       </div>
     </>
   );

@@ -1,47 +1,74 @@
 import {
-  type CameraControls as ThreeCameraControls,
-  RoundedBox,
-} from '@react-three/drei';
-import {
   CameraControls,
+  type CameraControls as ThreeCameraControls,
   Environment,
   Html,
+  Line,
   PerspectiveCamera,
 } from '@react-three/drei';
-import { useThree } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import { button, buttonGroup, folder, useControls } from 'leva';
 import { Suspense, useEffect, useRef, useState } from 'react';
+import type { Group } from 'three';
+import { Color, Quaternion, type RectAreaLight, Vector3 } from 'three';
 
+import { CodingChair } from '@/components/models/CodingChair.tsx';
+import { CodingDesk } from '@/components/models/CodingDesk.tsx';
 import { Macbook } from '@/components/models/Macbook.tsx';
 import { WaldowAvatar } from '@/components/models/WaldowAvatar.tsx';
+import {
+  TABLET_BREAKPOINT,
+  THEME_TRANSITION_DURATION,
+} from '@/lib/constants.ts';
+import { useAboutMePanel } from '@/store/useAboutMePanel.ts';
+import { useCodingSceneReady } from '@/store/useCodingSceneReady.ts';
+import { useScene } from '@/store/useScene.ts';
+import { type ITheme, THEME_COLORS, useTheme } from '@/store/useTheme.ts';
+import { useViewMode } from '@/store/useViewMode.ts';
 
-export const Coding = () => {
+interface Props {
+  isActive?: boolean;
+}
+
+export const Coding = ({ isActive = true }: Props) => {
+  const { theme } = useTheme((state: ITheme) => ({ theme: state.theme }));
   const [iframeLoaded, setIframeLoaded] = useState(false);
-  const [occlusionMode, setOcclusionMode] = useState<boolean | 'blending'>(
-    false,
-  );
   const cameraControls = useRef<ThreeCameraControls>(null);
+  const portalRef = useRef<Group>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const rectLightRef = useRef<RectAreaLight>(null);
+  const currentLerpedColor = useRef(new Color(THEME_COLORS[theme].secondary));
+  const lerpState = useRef({
+    fromColor: new Color(THEME_COLORS[theme].secondary),
+    toColor: new Color(THEME_COLORS[theme].secondary),
+    elapsed: THEME_TRANSITION_DURATION,
+  });
   const { camera } = useThree();
-
-  useEffect(() => {
-    if (iframeLoaded) {
-      // If the iframe is loaded, set occlusion mode to 'blending'
-      setOcclusionMode('blending');
-    } else {
-      // If the iframe is not loaded, disable occlusion
-      setOcclusionMode(false);
-    }
-  }, [iframeLoaded]);
+  const setPortalReady = useCodingSceneReady((s) => s.setPortalReady);
+  const { showPanel, hidePanel } = useAboutMePanel((s) => ({
+    showPanel: s.showPanel,
+    hidePanel: s.hidePanel,
+  }));
+  const { pendingScene, commitScene } = useScene((s) => ({
+    pendingScene: s.pendingScene,
+    commitScene: s.commitScene,
+  }));
+  const viewMode = useViewMode((s) => s.viewMode);
+  const hasShownPanel = useRef(false);
+  const prevIsActiveRef = useRef(false);
+  const isActiveRef = useRef(isActive);
+  const positionCameraRef = useRef<() => void>(() => {});
 
   const defaultMacbookValues = {
     scenePosition: { x: 0, y: -0.8, z: 1 },
     sceneRotation: { x: 0.34, y: 0.42, z: 0 },
+    environmentIntensity: 0.5,
   };
 
   const defaultPortalValues = {
-    portalSizeFactor: 1.14,
-    portalPosition: { x: 0, y: 1.56, z: -1.36 },
-    portalRotation: { x: -0.26, y: 0, z: 0 },
+    portalSizeFactor: 1.35,
+    portalPosition: { x: 0, y: 1.69, z: -1.69 },
+    portalRotation: { x: -0.35, y: 0, z: 0 },
   };
 
   const defaultDeskValues = {
@@ -50,24 +77,70 @@ export const Coding = () => {
   };
 
   const defaultCameraValues = {
-    enableCameraControls: true,
-    cameraPosition: {
-      x: -1.5,
-      y: 3.5,
-      z: 16,
-    },
+    enableCameraControls: false,
+    shoulderPosition: { x: -2, y: 2, z: 15 },
+    desktopShoulderPosition: { x: -2, y: 2, z: 15 },
+    lookAtOffset: { x: 2, y: -3, z: 0 },
+    desktopLookAtOffset: { x: window.innerWidth * 0.006, y: -3, z: 0 },
   };
+
+  useEffect(() => {
+    iframeRef.current?.contentWindow?.postMessage(
+      { type: 'THEME_CHANGE', theme },
+      '*',
+    );
+  }, [theme]);
+
+  useEffect(() => {
+    iframeRef.current?.contentWindow?.postMessage(
+      { type: 'VIEW_MODE_CHANGE', viewMode },
+      '*',
+    );
+  }, [viewMode]);
+
+  useEffect(() => {
+    lerpState.current.fromColor.copy(currentLerpedColor.current);
+    lerpState.current.toColor.set(THEME_COLORS[theme].secondary);
+    lerpState.current.elapsed = 0;
+  }, [theme]);
+
+  useFrame((_, delta) => {
+    const light = rectLightRef.current;
+    const state = lerpState.current;
+    if (!light) {
+      return;
+    }
+
+    if (state.elapsed < THEME_TRANSITION_DURATION) {
+      state.elapsed = Math.min(
+        state.elapsed + delta,
+        THEME_TRANSITION_DURATION,
+      );
+      const t = state.elapsed / THEME_TRANSITION_DURATION;
+      currentLerpedColor.current.copy(state.fromColor).lerp(state.toColor, t);
+    }
+
+    light.color.copy(currentLerpedColor.current);
+  });
 
   const [
     {
       enableCameraControls,
+      shoulderPosition,
+      desktopShoulderPosition,
+      lookAtOffset,
+      desktopLookAtOffset,
       scenePosition,
       sceneRotation,
+      environmentIntensity,
       deskPosition,
       chairPosition,
       portalSizeFactor,
       portalPosition,
       portalRotation,
+      showPortalNormal,
+      showPortalHorizontal,
+      cameraDistance,
     },
     set,
   ] = useControls(
@@ -79,9 +152,37 @@ export const Coding = () => {
           value: defaultCameraValues.enableCameraControls,
           label: 'Enable Camera Controls',
         },
+        shoulderPosition: {
+          value: defaultCameraValues.shoulderPosition,
+          label: 'Shoulder Position',
+        },
+        desktopShoulderPosition: {
+          value: defaultCameraValues.desktopShoulderPosition,
+          label: 'Desktop Shoulder Position',
+        },
+        lookAtOffset: {
+          value: defaultCameraValues.lookAtOffset,
+          label: 'LookAt Offset',
+        },
+        desktopLookAtOffset: {
+          value: defaultCameraValues.desktopLookAtOffset,
+          label: 'Desktop LookAt Offset',
+        },
         logCamera: button(() => {
-          console.log('Camera pos:', camera.position);
-          console.log('Camera Controls:', cameraControls.current);
+          const pos = camera.position;
+          console.log(
+            `Camera pos: x=${pos.x.toFixed(2)}, y=${pos.y.toFixed(2)}, z=${pos.z.toFixed(2)}`,
+          );
+          if (cameraControls.current) {
+            const target = cameraControls.current.getTarget({
+              x: 0,
+              y: 0,
+              z: 0,
+            } as Vector3);
+            console.log(
+              `Camera target: x=${target.x.toFixed(2)}, y=${target.y.toFixed(2)}, z=${target.z.toFixed(2)}`,
+            );
+          }
         }),
         truckGrp: buttonGroup({
           label: 'truck',
@@ -110,32 +211,26 @@ export const Coding = () => {
       scene: folder(
         {
           'Reset Macbook Defaults': button(() => set(defaultMacbookValues)),
-          scenePosition: {
-            x: defaultMacbookValues.scenePosition.x,
-            y: defaultMacbookValues.scenePosition.y,
-            z: defaultMacbookValues.scenePosition.z,
-          },
-          sceneRotation: {
-            x: defaultMacbookValues.sceneRotation.x,
-            y: defaultMacbookValues.sceneRotation.y,
-            z: defaultMacbookValues.sceneRotation.z,
+          scenePosition: { value: defaultMacbookValues.scenePosition },
+          sceneRotation: { value: defaultMacbookValues.sceneRotation },
+          environmentIntensity: {
+            value: defaultMacbookValues.environmentIntensity,
+            min: 0,
+            max: 0.03,
+            step: 0.01,
+            label: 'Environment Intensity',
           },
         },
-        { collapsed: false },
+        { collapsed: true },
       ),
-      desk: folder({
-        'Reset Desk Defaults': button(() => set(defaultDeskValues)),
-        deskPosition: {
-          x: defaultDeskValues.deskPosition.x,
-          y: defaultDeskValues.deskPosition.y,
-          z: defaultDeskValues.deskPosition.z,
+      desk: folder(
+        {
+          'Reset Desk Defaults': button(() => set(defaultDeskValues)),
+          deskPosition: { value: defaultDeskValues.deskPosition },
+          chairPosition: { value: defaultDeskValues.chairPosition },
         },
-        chairPosition: {
-          x: defaultDeskValues.chairPosition.x,
-          y: defaultDeskValues.chairPosition.y,
-          z: defaultDeskValues.chairPosition.z,
-        },
-      }),
+        { collapsed: true },
+      ),
       portal: folder(
         {
           'Reset Portal Defaults': button(() => set(defaultPortalValues)),
@@ -145,15 +240,25 @@ export const Coding = () => {
             max: 3,
             step: 0.01,
           },
-          portalPosition: {
-            x: defaultPortalValues.portalPosition.x,
-            y: defaultPortalValues.portalPosition.y,
-            z: defaultPortalValues.portalPosition.z,
-          },
-          portalRotation: {
-            x: defaultPortalValues.portalRotation.x,
-            y: defaultPortalValues.portalRotation.y,
-            z: defaultPortalValues.portalRotation.z,
+          portalPosition: { value: defaultPortalValues.portalPosition },
+          portalRotation: { value: defaultPortalValues.portalRotation },
+          logPortalWorldPos: button(() => {
+            if (!portalRef.current) {
+              return;
+            }
+            const pos = portalRef.current.getWorldPosition(new Vector3());
+            console.log(
+              `Portal world pos: x=${pos.x.toFixed(3)}, y=${pos.y.toFixed(3)}, z=${pos.z.toFixed(3)}`,
+            );
+          }),
+          showPortalNormal: { value: false, label: 'Show Portal Axis' },
+          showPortalHorizontal: { value: false, label: 'Show Horizontal Axis' },
+          cameraDistance: {
+            value: 2,
+            min: 0,
+            max: 20,
+            step: 0.05,
+            label: 'Camera Distance',
           },
         },
         { collapsed: true },
@@ -162,97 +267,302 @@ export const Coding = () => {
     { collapsed: true },
   );
 
-  useControls('Coding Scene', {
-    'Transmissive Mesh': folder({
-      meshPhysicalMaterial: false,
-      transmissionSampler: false,
-      backside: false,
-      samples: { value: 10, min: 1, max: 32, step: 1 },
-      resolution: { value: 2048, min: 256, max: 2048, step: 256 },
-      transmission: { value: 1, min: 0, max: 1 },
-      roughness: { value: 0.0, min: 0, max: 1, step: 0.01 },
-      thickness: { value: 3.5, min: 0, max: 10, step: 0.01 },
-      ior: { value: 1.5, min: 1, max: 5, step: 0.01 },
-      chromaticAberration: { value: 0.06, min: 0, max: 1 },
-      anisotropy: { value: 0.1, min: 0, max: 1, step: 0.01 },
-      distortion: { value: 0.0, min: 0, max: 1, step: 0.01 },
-      distortionScale: { value: 0.3, min: 0.01, max: 1, step: 0.01 },
-      temporalDistortion: { value: 0.5, min: 0, max: 1, step: 0.01 },
-      clearcoat: { value: 1, min: 0, max: 1 },
-      attenuationDistance: { value: 0.5, min: 0, max: 10, step: 0.01 },
-      attenuationColor: '#ffffff',
-      color: '#c9ffa1',
-      bg: '#839681',
-    }),
+  isActiveRef.current = isActive;
+  positionCameraRef.current = (isResize = false) => {
+    if (!cameraControls.current || !portalRef.current) {
+      return;
+    }
+    const isDesktop = window.innerWidth >= TABLET_BREAKPOINT;
+    const activeShoulderPosition = isDesktop
+      ? desktopShoulderPosition
+      : shoulderPosition;
+    portalRef.current.updateWorldMatrix(true, false);
+    const worldPos = portalRef.current.getWorldPosition(new Vector3());
+    if (!isResize) {
+      const worldQuat = portalRef.current.getWorldQuaternion(new Quaternion());
+      const normal = new Vector3(0, 0, 1).applyQuaternion(worldQuat);
+      const camPos = worldPos.clone().addScaledVector(normal, cameraDistance);
+      cameraControls.current.camera.up
+        .set(0, 1, 0)
+        .applyQuaternion(worldQuat)
+        .normalize();
+      cameraControls.current.setLookAt(
+        camPos.x,
+        camPos.y,
+        camPos.z,
+        worldPos.x,
+        worldPos.y,
+        worldPos.z,
+        false,
+      );
+      cameraControls.current.camera.up.set(0, 1, 0);
+    }
+    const offset = isDesktop
+      ? {
+          x: window.innerWidth * 0.006,
+          y: desktopLookAtOffset.y,
+          z: desktopLookAtOffset.z,
+        }
+      : lookAtOffset;
+    cameraControls.current.setLookAt(
+      activeShoulderPosition.x,
+      activeShoulderPosition.y,
+      activeShoulderPosition.z,
+      worldPos.x + offset.x,
+      worldPos.y + offset.y,
+      worldPos.z + offset.z,
+      !isResize,
+    );
+  };
+
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    const handleResize = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        set({
+          desktopLookAtOffset: { x: window.innerWidth * 0.006, y: -3, z: 0 },
+        });
+        if (isActiveRef.current) {
+          // @ts-expect-error investigate this
+          positionCameraRef.current(true);
+        }
+      }, 150);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(timer);
+    };
+  }, [set]);
+
+  useFrame(() => {
+    const becameActive = isActive && !prevIsActiveRef.current;
+    prevIsActiveRef.current = isActive;
+    if (!becameActive) {
+      return;
+    }
+    positionCameraRef.current();
+  });
+
+  useEffect(() => {
+    if (!portalRef.current || !cameraControls.current) {
+      return;
+    }
+    portalRef.current.updateWorldMatrix(true, false);
+    const worldPos = portalRef.current.getWorldPosition(new Vector3());
+    const worldQuat = portalRef.current.getWorldQuaternion(new Quaternion());
+    const normal = new Vector3(0, 0, 1).applyQuaternion(worldQuat);
+    const camPos = worldPos.clone().addScaledVector(normal, cameraDistance);
+    cameraControls.current.camera.up
+      .set(0, 1, 0)
+      .applyQuaternion(worldQuat)
+      .normalize();
+    cameraControls.current.setLookAt(
+      camPos.x,
+      camPos.y,
+      camPos.z,
+      worldPos.x,
+      worldPos.y,
+      worldPos.z,
+      true,
+    );
+  }, [cameraDistance]);
+
+  useEffect(() => {
+    if (!isActive) {
+      return;
+    }
+    hasShownPanel.current = false;
+    hidePanel();
+    const isMobile = window.innerWidth < TABLET_BREAKPOINT;
+    const timer = setTimeout(() => showPanel(), isMobile ? 4500 : 2500);
+
+    return () => clearTimeout(timer);
+  }, [isActive, hidePanel, showPanel]);
+
+  useEffect(() => {
+    if (
+      !pendingScene ||
+      !isActive ||
+      !cameraControls.current ||
+      !portalRef.current
+    ) {
+      return;
+    }
+
+    hidePanel();
+    hasShownPanel.current = false;
+
+    portalRef.current.updateWorldMatrix(true, false);
+    const worldPos = portalRef.current.getWorldPosition(new Vector3());
+    const worldQuat = portalRef.current.getWorldQuaternion(new Quaternion());
+    const normal = new Vector3(0, 0, 1).applyQuaternion(worldQuat);
+    const camPos = worldPos.clone().addScaledVector(normal, cameraDistance);
+
+    cameraControls.current.camera.up
+      .set(0, 1, 0)
+      .applyQuaternion(worldQuat)
+      .normalize();
+    cameraControls.current.setLookAt(
+      camPos.x,
+      camPos.y,
+      camPos.z,
+      worldPos.x,
+      worldPos.y,
+      worldPos.z,
+      true,
+    );
+    cameraControls.current.camera.up.set(0, 1, 0);
+
+    const exitTimer = setTimeout(() => commitScene(), 2000);
+
+    return () => clearTimeout(exitTimer);
+  }, [pendingScene, isActive, commitScene, hidePanel, cameraDistance]);
+
+  const meshAttenuationColor = new Color(
+    THEME_COLORS[theme].secondary,
+  ).multiplyScalar(0.2);
+
+  const {
+    transmission: meshTransmission,
+    roughness: meshRoughness,
+    thickness: meshThickness,
+    ior: meshIor,
+    clearcoat: meshClearcoat,
+    attenuationDistance: meshAttenuationDistance,
+    color: meshColor,
+  } = useControls('Coding Scene', {
+    'Transmissive Mesh': folder(
+      {
+        options: folder({
+          meshPhysicalMaterial: false,
+          transmissionSampler: false,
+          backside: false,
+          samples: { value: 10, min: 1, max: 32, step: 1 },
+          resolution: { value: 2048, min: 256, max: 2048, step: 256 },
+        }),
+        surface: folder({
+          transmission: { value: 0.85, min: 0, max: 1 },
+          roughness: { value: 0.0, min: 0, max: 1, step: 0.01 },
+          thickness: { value: 3.5, min: 0, max: 10, step: 0.01 },
+          ior: { value: 3.5, min: 1, max: 5, step: 0.01 },
+          clearcoat: { value: 1, min: 0, max: 1 },
+        }),
+        distortion: folder({
+          chromaticAberration: { value: 0.06, min: 0, max: 1 },
+          anisotropy: { value: 0.1, min: 0, max: 1, step: 0.01 },
+          distortion: { value: 0.0, min: 0, max: 1, step: 0.01 },
+          distortionScale: { value: 0.3, min: 0.01, max: 1, step: 0.01 },
+          temporalDistortion: { value: 0.5, min: 0, max: 1, step: 0.01 },
+        }),
+        color: folder({
+          attenuationDistance: { value: 4, min: 0, max: 10, step: 0.01 },
+          color: '#222222',
+        }),
+      },
+      { collapsed: true },
+    ),
   });
 
   return (
     <Suspense>
-      <PerspectiveCamera
-        makeDefault
-        position={[
-          defaultCameraValues.cameraPosition.x,
-          defaultCameraValues.cameraPosition.y,
-          defaultCameraValues.cameraPosition.z,
-        ]}
-      />
+      <PerspectiveCamera makeDefault={isActive} />
       <CameraControls
-        makeDefault
-        enabled={enableCameraControls}
+        makeDefault={isActive}
+        enabled={isActive && enableCameraControls}
         ref={cameraControls}
+        smoothTime={1.5}
       />
 
       <group
         position={[scenePosition.x, scenePosition.y, scenePosition.z]}
         rotation={[sceneRotation.x, sceneRotation.y, sceneRotation.z]}
       >
-        <Environment preset={'city'} />
-        <ambientLight intensity={0.5} />
+        <Environment
+          preset={'city'}
+          environmentIntensity={environmentIntensity}
+        />
+        <ambientLight intensity={isActive ? 0.2 : 0} />
         <rectAreaLight
+          ref={rectLightRef}
           width={2.5}
           height={1.65}
-          intensity={65}
-          color={'#ff6900'}
+          intensity={isActive ? 165 : 0}
           rotation={[-0.1, Math.PI, 0]}
           position={[0, 0.55, -1.15]}
         />
 
         <WaldowAvatar />
 
-        {/* Desk */}
-        <RoundedBox
-          args={[8, 4, 0.1]}
-          radius={0.1}
+        <CodingDesk
           position={[deskPosition.x, deskPosition.y, deskPosition.z]}
-          rotation={[-Math.PI / 2, 0, 0]}
-        >
-          <meshPhongMaterial transparent opacity={0.25} />
-          {/*<MeshTransmissionMaterial {...config} />*/}
-        </RoundedBox>
+          transmission={meshTransmission}
+          roughness={meshRoughness}
+          thickness={meshThickness}
+          ior={meshIor}
+          clearcoat={meshClearcoat}
+          attenuationDistance={meshAttenuationDistance}
+          attenuationColor={meshAttenuationColor}
+          color={meshColor}
+        />
 
-        {/* Chair */}
-        <RoundedBox
-          args={[3.5, 3.5, 3.5]}
-          radius={0.5}
+        <CodingChair
           position={[chairPosition.x, chairPosition.y, chairPosition.z]}
-        >
-          <meshPhongMaterial transparent opacity={0.25} />
-          {/*<MeshTransmissionMaterial {...config} />*/}
-        </RoundedBox>
+          transmission={meshTransmission}
+          roughness={meshRoughness}
+          thickness={meshThickness}
+          ior={meshIor}
+          clearcoat={meshClearcoat}
+          attenuationDistance={meshAttenuationDistance}
+          attenuationColor={meshAttenuationColor}
+          color={meshColor}
+        />
 
         <Macbook>
+          <group
+            ref={portalRef}
+            position={[portalPosition.x, portalPosition.y, portalPosition.z]}
+            rotation={[portalRotation.x, portalRotation.y, portalRotation.z]}
+          >
+            {showPortalNormal && (
+              <Line
+                points={[
+                  [0, 0, -10],
+                  [0, 0, 10],
+                ]}
+                color={'yellow'}
+                lineWidth={1}
+              />
+            )}
+            {showPortalHorizontal && (
+              <Line
+                points={[
+                  [-10, 0, 0],
+                  [10, 0, 0],
+                ]}
+                color={'cyan'}
+                lineWidth={1}
+              />
+            )}
+          </group>
           <Html
             transform
-            occlude={occlusionMode}
+            occlude={iframeLoaded && isActive ? 'blending' : false}
             wrapperClass={'htmlScreen'}
             distanceFactor={portalSizeFactor}
             position={[portalPosition.x, portalPosition.y, portalPosition.z]}
             rotation={[portalRotation.x, portalRotation.y, portalRotation.z]}
           >
             <iframe
+              ref={iframeRef}
               src={'/portal'}
-              className={'w-[1024px] h-[670px] rounded-[20px] border-none'}
-              onLoad={() => setIframeLoaded(true)}
+              className={`w-[1024px] h-[670px] rounded-[20px] border-none${isActive ? '' : ' opacity-0 pointer-events-none'}`}
+              onLoad={() => {
+                setIframeLoaded(true);
+                setPortalReady();
+              }}
             />
           </Html>
         </Macbook>

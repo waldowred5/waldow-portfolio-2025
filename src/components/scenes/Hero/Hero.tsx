@@ -1,4 +1,4 @@
-import { Html } from '@react-three/drei';
+import { Html, PerspectiveCamera } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import { Bloom, EffectComposer } from '@react-three/postprocessing';
 import { button, folder, useControls } from 'leva';
@@ -13,7 +13,10 @@ import {
 } from 'three';
 
 import { HeroText } from '@/components/ui/HeroText.tsx';
-import { TABLET_BREAKPOINT } from '@/lib/constants.ts';
+import {
+  TABLET_BREAKPOINT,
+  THEME_TRANSITION_DURATION,
+} from '@/lib/constants.ts';
 import { useMousePosition } from '@/store/useMousePosition.ts';
 import type { ITheme } from '@/store/useTheme.ts';
 import { THEME_COLORS, useTheme } from '@/store/useTheme.ts';
@@ -87,9 +90,10 @@ const sunFragmentShader = /* glsl */ `
 
 interface Props {
   opacity?: number;
+  isActive?: boolean;
 }
 
-export const Hero = ({ opacity = 1 }: Props) => {
+export const Hero = ({ opacity = 1, isActive = true }: Props) => {
   const { theme } = useTheme((state: ITheme) => {
     return {
       theme: state.theme,
@@ -328,7 +332,7 @@ export const Hero = ({ opacity = 1 }: Props) => {
   const themeTransitionStartRef = useRef<number | null>(null);
   const prevThemeRef = useRef(theme);
 
-  const TRANSITION_DURATION = 0.9;
+  const TRANSITION_DURATION = THEME_TRANSITION_DURATION;
 
   useFrame(({ clock }) => {
     // Read state directly from store to avoid stale closure captures
@@ -408,15 +412,25 @@ export const Hero = ({ opacity = 1 }: Props) => {
 
   return (
     <>
+      <PerspectiveCamera
+        makeDefault={isActive}
+        fov={75}
+        near={0.01}
+        far={100}
+        position={[0, 0, 5]}
+      />
+
       {/* FX */}
-      <EffectComposer>
-        <Bloom
-          intensity={bloomDefaultValues.intensity}
-          luminanceThreshold={bloomDefaultValues.luminanceThreshold}
-          luminanceSmoothing={bloomDefaultValues.luminanceSmoothing}
-          mipmapBlur
-        />
-      </EffectComposer>
+      {isActive && (
+        <EffectComposer>
+          <Bloom
+            intensity={bloomDefaultValues.intensity}
+            luminanceThreshold={bloomDefaultValues.luminanceThreshold}
+            luminanceSmoothing={bloomDefaultValues.luminanceSmoothing}
+            mipmapBlur
+          />
+        </EffectComposer>
+      )}
 
       {/* Sun */}
       <mesh
@@ -445,16 +459,18 @@ export const Hero = ({ opacity = 1 }: Props) => {
       </mesh>
 
       {/* Title */}
-      <Html
-        center
-        position={[
-          sunPosition.x + (mousePosition.x / -sunXPositionMouseXFactor) * 0.1,
-          sunPosition.y + mousePosition.y / sunYPositionMouseYFactor,
-          htmlPosition.z,
-        ]}
-      >
-        <HeroText />
-      </Html>
+      {isActive && (
+        <Html
+          center
+          position={[
+            sunPosition.x + (mousePosition.x / -sunXPositionMouseXFactor) * 0.1,
+            sunPosition.y + mousePosition.y / sunYPositionMouseYFactor,
+            htmlPosition.z,
+          ]}
+        >
+          <HeroText />
+        </Html>
+      )}
     </>
   );
 };

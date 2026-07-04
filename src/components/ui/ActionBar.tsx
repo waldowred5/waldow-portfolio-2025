@@ -1,10 +1,12 @@
-import { useState } from 'react';
-import { BsLayersHalf } from 'react-icons/bs';
+import { useEffect, useState } from 'react';
+import { BsHouseDoor, BsLayersHalf, BsPerson } from 'react-icons/bs';
 import { FaGithub, FaLinkedin } from 'react-icons/fa';
 import { PiPaintBucketFill } from 'react-icons/pi';
 import { RiFullscreenExitLine, RiFullscreenFill } from 'react-icons/ri';
 
 import { useCanvasLoaded } from '@/store/useCanvasLoaded.ts';
+import { useCodingSceneReady } from '@/store/useCodingSceneReady.ts';
+import { SCENE, useScene } from '@/store/useScene.ts';
 import { useTheme } from '@/store/useTheme.ts';
 import { useToggleFullscreen } from '@/store/useToggleFullscreen.ts';
 import { useViewMode, VIEW_MODE } from '@/store/useViewMode.ts';
@@ -21,7 +23,18 @@ export const ActionBar = () => {
   });
 
   const isLoaded = useCanvasLoaded((s) => s.isLoaded);
+  const isCodingReady = useCodingSceneReady((s) => s.isReady);
+
+  useEffect(() => {
+    if (isCodingReady && text === 'LOADING SCENE...') {
+      setText('MEET THE DEV');
+    }
+    // eslint-disable-next-line
+  }, [isCodingReady]);
   const { isFullscreen, toggleFullscreen } = useToggleFullscreen();
+  const { requestScene } = useScene((state) => ({
+    requestScene: state.requestScene,
+  }));
   const { viewMode, toggleViewMode } = useViewMode((state) => ({
     viewMode: state.viewMode,
     toggleViewMode: state.toggleViewMode,
@@ -30,7 +43,9 @@ export const ActionBar = () => {
   return (
     <div className={'flex justify-center'}>
       <div
-        className={'z-10 fixed top-3 md:top-4 md:right-4 flex flex-col gap-y-1'}
+        className={
+          'z-10 fixed bottom-3 md:top-4 md:bottom-auto md:right-4 flex flex-col-reverse md:flex-col gap-y-1'
+        }
       >
         <div
           className={
@@ -38,6 +53,32 @@ export const ActionBar = () => {
           }
         >
           <div className={'flex grow-0 px-2'}>
+            <div
+              className={'cursor-pointer'}
+              onMouseEnter={() => setText('HOME')}
+            >
+              <Icon onClick={() => requestScene(SCENE.HERO)}>
+                <BsHouseDoor />
+              </Icon>
+            </div>
+
+            <div
+              className={`${isCodingReady ? 'cursor-pointer' : 'cursor-not-allowed opacity-30'}`}
+              onMouseEnter={() =>
+                setText(isCodingReady ? 'MEET THE DEV' : 'LOADING SCENE...')
+              }
+            >
+              <Icon
+                onClick={
+                  isCodingReady ? () => requestScene(SCENE.CODING) : undefined
+                }
+              >
+                <BsPerson />
+              </Icon>
+            </div>
+
+            <div className={'w-px h-5 bg-white/40 self-center mx-1'} />
+
             <div
               className={'cursor-pointer'}
               onMouseEnter={() =>
@@ -108,7 +149,7 @@ export const ActionBar = () => {
           className={`
             peer-hover/container:backdrop-blur-[10px] peer-hover/container:backdrop-saturate-[15]
             peer-hover/container:bg-black/40 text-transparent peer-hover/container:text-white
-            transition-all duration-300 rounded-md peer-hover/container:border-1 peer-hover/container:border-white 
+            transition-all duration-300 rounded-md peer-hover/container:border-1 peer-hover/container:border-white
             h-5 items-center justify-center flex select-none
             `}
         >

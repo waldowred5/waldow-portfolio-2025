@@ -1,53 +1,77 @@
+import { useProgress } from '@react-three/drei';
 import { button, folder, useControls } from 'leva';
+import { useEffect } from 'react';
 
 import { Coding } from '@/components/scenes/Coding.tsx';
 import { Hero } from '@/components/scenes/Hero/Hero.tsx';
+import { useCanvasLoaded } from '@/store/useCanvasLoaded.ts';
+import { useCodingSceneReady } from '@/store/useCodingSceneReady.ts';
 import { SCENE, useScene } from '@/store/useScene.ts';
 
 export const SceneManager = () => {
-  const { currentScene } = useScene((state) => {
-    return {
-      currentScene: state.currentScene,
-    };
-  });
+  const { currentScene, updateScene } = useScene((state) => ({
+    currentScene: state.currentScene,
+    updateScene: state.updateScene,
+  }));
+
+  const isLoaded = useCanvasLoaded((s) => s.isLoaded);
+  const { assetsReady, setAssetsReady } = useCodingSceneReady((s) => ({
+    assetsReady: s.assetsReady,
+    setAssetsReady: s.setAssetsReady,
+  }));
+  const { active } = useProgress();
+
+  useEffect(() => {
+    if (isLoaded && !active && !assetsReady) {
+      setAssetsReady();
+    }
+  }, [active, isLoaded, assetsReady, setAssetsReady]);
 
   const defaultValues = {
-    opacity: 1,
-    currentScene,
+    scene: currentScene,
   };
 
-  const [{ scene }, set] = useControls(
+  const [, set] = useControls(
     'Scene Manager',
     () => ({
       Scene: folder(
         {
-          'Reset Scene Defaults': button(() => set(defaultValues)),
-          opacity: {
-            value: defaultValues.opacity,
-            step: 0.01,
-            min: 0,
-            max: 1,
-          },
+          'Reset Scene Defaults': button(() => {
+            // @ts-expect-error investigate this
+            set(defaultValues);
+            updateScene(defaultValues.scene);
+          }),
           scene: {
             value: currentScene,
             options: {
               Hero: SCENE.HERO,
               Coding: SCENE.CODING,
             },
+            onChange: (v: string) => updateScene(v),
           },
         },
         { collapsed: false },
       ),
     }),
-    { collapsed: false },
+    { collapsed: true },
   );
 
-  const Scene = {
-    [SCENE.HERO]: Hero,
-    [SCENE.CODING]: Coding,
-  };
+  useEffect(() => {
+    // @ts-expect-error investigate this
+    set({ scene: currentScene });
+  }, [currentScene, set]);
 
-  const Component = Scene[scene] || Scene[SCENE.HERO];
+  const isHero = currentScene === SCENE.HERO;
+  const isCoding = currentScene === SCENE.CODING;
 
-  return <Component />;
+  return (
+    <>
+      <group visible={isHero}>
+        <Hero isActive={isHero} />
+      </group>
+      <group visible={isCoding}>
+        <Coding isActive={isCoding} />
+      </group>
+    </>
+  );
 };

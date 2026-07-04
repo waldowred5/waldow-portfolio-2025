@@ -1,1 +1,2 @@
 export const TABLET_BREAKPOINT = 768;
+export const THEME_TRANSITION_DURATION = 0.9;

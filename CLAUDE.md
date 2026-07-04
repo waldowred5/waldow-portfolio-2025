@@ -1,4 +1,5 @@
 ### Conventions
+
 - When adding comments, only add a concise comment that describes the current behaviour. Do not include historical context.
 - Prefer fat arrow syntax, do not use function keyword
 - Prefer map functions, avoid using naked for loops unless strictly necessary
@@ -8,3 +9,4 @@
 - When making changes to a file, remove any dead code that is discovered
 - When styling jsx tags, prefer using standard tailwind v4 classes and avoid using the style prop unless strictly necessary
 - When writing jsx, adhere to the 'react/jsx-curly-brace-presence' linting rule (e.g. `prop={'some value'}` instead of `prop="some value"`)
+- Don't reference React types like `React.ReactNode`, instead import the `ReactNode` type separately (don't reference UMD global variable)
