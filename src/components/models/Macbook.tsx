@@ -10,7 +10,7 @@ Title: macbook pro M3 16 inch 2024
 import { useGLTF } from '@react-three/drei';
 import { useEffect, useMemo, useRef } from 'react';
 import type { JSX } from 'react/jsx-runtime';
-import type { Group } from 'three';
+import type { BufferGeometry, Group } from 'three';
 
 import { useWireframeProgress } from '@/hooks/useWireframeProgress.ts';
 import {
@@ -24,13 +24,23 @@ export const Macbook = (props: JSX.IntrinsicElements['group']) => {
   const { nodes, materials } = useGLTF('/models/macbook.glb');
   const wireframeUniforms = useRef(createWireframeUniforms());
 
-  const bodyGeometry = useMemo(
-    () => addBarycentricCoords(nodes.Object_10.geometry),
+  const geo = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.entries(nodes)
+          .filter(([, node]) => 'geometry' in node)
+          .map(([key, node]) => [
+            key,
+            addBarycentricCoords(
+              (node as { geometry: BufferGeometry }).geometry,
+            ),
+          ]),
+      ),
     [nodes],
   );
 
   useEffect(() => {
-    applyWireframeShader(materials.AibnXCKcAbewWhH, wireframeUniforms.current);
+    applyWireframeShader(materials.bsEIHfblEXNcUMs, wireframeUniforms.current);
   }, [materials]);
 
   useWireframeProgress(wireframeUniforms.current);
@@ -40,248 +50,113 @@ export const Macbook = (props: JSX.IntrinsicElements['group']) => {
       {props.children}
       <group position={[0, 0.52, 0]} scale={[0.1, 0.1, 0.1]}>
         <group rotation={[Math.PI / 2, 0, 0]}>
+          <mesh geometry={geo.Object_10} material={materials.AibnXCKcAbewWhH} />
+          <mesh geometry={geo.Object_12} material={materials.WeLyzRwUVIhQGgM} />
+          <mesh geometry={geo.Object_14} material={materials.UhoCLqHkvkDmxOA} />
+          <mesh geometry={geo.Object_16} material={materials.zhGRTuGrQoJflBD} />
+          <mesh geometry={geo.Object_18} material={materials.zCLdUynNQOzVMqx} />
+          <mesh geometry={geo.Object_20} material={materials.jwuTsnFxKtBUxpK} />
+          <mesh geometry={geo.Object_22} material={materials.lmWQsEjxpsebDlK} />
+          <mesh geometry={geo.Object_24} material={materials.jwuTsnFxKtBUxpK} />
+          <mesh geometry={geo.Object_26} material={materials.MycfwscjQZRVSoj} />
+          <mesh geometry={geo.Object_28} material={materials.bsmYIMHYRqMuLqz} />
+          <mesh geometry={geo.Object_30} material={materials.LtEafgAVRolQqRw} />
+          <mesh geometry={geo.Object_32} material={materials.iyDJFXmHelnMTbD} />
+          <mesh geometry={geo.Object_34} material={materials.eJObPwhgFzvfaoZ} />
+          <mesh geometry={geo.Object_36} material={materials.jwuTsnFxKtBUxpK} />
+          <mesh geometry={geo.Object_38} material={materials.nDsMUuDKliqGFdU} />
+          <mesh geometry={geo.Object_40} material={materials.LtEafgAVRolQqRw} />
+          <mesh geometry={geo.Object_42} material={materials.CRQixVLpahJzhJc} />
+          <mesh geometry={geo.Object_44} material={materials.IcpudUyxprDYhfw} />
+          <mesh geometry={geo.Object_46} material={materials.jwuTsnFxKtBUxpK} />
+          <mesh geometry={geo.Object_48} material={materials.YYwBgwvcyZVOOAA} />
+          <mesh geometry={geo.Object_50} material={materials.jwuTsnFxKtBUxpK} />
+          <mesh geometry={geo.Object_52} material={materials.jwuTsnFxKtBUxpK} />
+          <mesh geometry={geo.Object_54} material={materials.SLGkCohDDelqXBu} />
+          <mesh geometry={geo.Object_56} material={materials.WDumMKBWVQxmraD} />
+          <mesh geometry={geo.Object_58} material={materials.WnHKXHhScfUbJQi} />
+          <mesh geometry={geo.Object_60} material={materials.jwuTsnFxKtBUxpK} />
+          <mesh geometry={geo.Object_62} material={materials.ZNhRrZtaKWQYAab} />
+          <mesh geometry={geo.Object_64} material={materials.IcpudUyxprDYhfw} />
+          <mesh geometry={geo.Object_66} material={materials.fNHiBfcxHUJCahl} />
+          <mesh geometry={geo.Object_68} material={materials.bsEIHfblEXNcUMs} />
+          <mesh geometry={geo.Object_70} material={materials.CRQixVLpahJzhJc} />
+          <mesh geometry={geo.Object_72} material={materials.SABLxXNNESCdgUy} />
+          <mesh geometry={geo.Object_74} material={materials.LpqXZqhaGCeSzdu} />
+          <mesh geometry={geo.Object_76} material={materials.sIfSZcqgDlKMJPf} />
+          <mesh geometry={geo.Object_78} material={materials.bsmYIMHYRqMuLqz} />
+          <mesh geometry={geo.Object_80} material={materials.jwuTsnFxKtBUxpK} />
+          <mesh geometry={geo.Object_82} material={materials.gMtYExgrEUqPfln} />
+          <mesh geometry={geo.Object_84} material={materials.WnHKXHhScfUbJQi} />
+          <mesh geometry={geo.Object_86} material={materials.nDsMUuDKliqGFdU} />
+          <mesh geometry={geo.Object_88} material={materials.bsEIHfblEXNcUMs} />
+          <mesh geometry={geo.Object_90} material={materials.uInNDOueKeBTGQB} />
+          <mesh geometry={geo.Object_92} material={materials.hmEmmncwVomyUTC} />
+          <mesh geometry={geo.Object_94} material={materials.WeLyzRwUVIhQGgM} />
+          <mesh geometry={geo.Object_96} material={materials.KclpPzxoRwZAoer} />
+          <mesh geometry={geo.Object_99} material={materials.wjAYtisbflXilXi} />
           <mesh
-            geometry={bodyGeometry}
-            material={materials.AibnXCKcAbewWhH}
-          />
-          <mesh
-            geometry={nodes.Object_12.geometry}
-            material={materials.WeLyzRwUVIhQGgM}
-          />
-          <mesh
-            geometry={nodes.Object_14.geometry}
-            material={materials.UhoCLqHkvkDmxOA}
-          />
-          <mesh
-            geometry={nodes.Object_16.geometry}
-            material={materials.zhGRTuGrQoJflBD}
-          />
-          <mesh
-            geometry={nodes.Object_18.geometry}
-            material={materials.zCLdUynNQOzVMqx}
-          />
-          <mesh
-            geometry={nodes.Object_20.geometry}
-            material={materials.jwuTsnFxKtBUxpK}
-          />
-          <mesh
-            geometry={nodes.Object_22.geometry}
-            material={materials.lmWQsEjxpsebDlK}
-          />
-          <mesh
-            geometry={nodes.Object_24.geometry}
-            material={materials.jwuTsnFxKtBUxpK}
-          />
-          <mesh
-            geometry={nodes.Object_26.geometry}
-            material={materials.MycfwscjQZRVSoj}
-          />
-          <mesh
-            geometry={nodes.Object_28.geometry}
-            material={materials.bsmYIMHYRqMuLqz}
-          />
-          <mesh
-            geometry={nodes.Object_30.geometry}
-            material={materials.LtEafgAVRolQqRw}
-          />
-          <mesh
-            geometry={nodes.Object_32.geometry}
-            material={materials.iyDJFXmHelnMTbD}
-          />
-          <mesh
-            geometry={nodes.Object_34.geometry}
-            material={materials.eJObPwhgFzvfaoZ}
-          />
-          <mesh
-            geometry={nodes.Object_36.geometry}
-            material={materials.jwuTsnFxKtBUxpK}
-          />
-          <mesh
-            geometry={nodes.Object_38.geometry}
-            material={materials.nDsMUuDKliqGFdU}
-          />
-          <mesh
-            geometry={nodes.Object_40.geometry}
-            material={materials.LtEafgAVRolQqRw}
-          />
-          <mesh
-            geometry={nodes.Object_42.geometry}
-            material={materials.CRQixVLpahJzhJc}
-          />
-          <mesh
-            geometry={nodes.Object_44.geometry}
-            material={materials.IcpudUyxprDYhfw}
-          />
-          <mesh
-            geometry={nodes.Object_46.geometry}
-            material={materials.jwuTsnFxKtBUxpK}
-          />
-          <mesh
-            geometry={nodes.Object_48.geometry}
-            material={materials.YYwBgwvcyZVOOAA}
-          />
-          <mesh
-            geometry={nodes.Object_50.geometry}
-            material={materials.jwuTsnFxKtBUxpK}
-          />
-          <mesh
-            geometry={nodes.Object_52.geometry}
-            material={materials.jwuTsnFxKtBUxpK}
-          />
-          <mesh
-            geometry={nodes.Object_54.geometry}
-            material={materials.SLGkCohDDelqXBu}
-          />
-          <mesh
-            geometry={nodes.Object_56.geometry}
-            material={materials.WDumMKBWVQxmraD}
-          />
-          <mesh
-            geometry={nodes.Object_58.geometry}
-            material={materials.WnHKXHhScfUbJQi}
-          />
-          <mesh
-            geometry={nodes.Object_60.geometry}
-            material={materials.jwuTsnFxKtBUxpK}
-          />
-          <mesh
-            geometry={nodes.Object_62.geometry}
-            material={materials.ZNhRrZtaKWQYAab}
-          />
-          <mesh
-            geometry={nodes.Object_64.geometry}
-            material={materials.IcpudUyxprDYhfw}
-          />
-          <mesh
-            geometry={nodes.Object_66.geometry}
-            material={materials.fNHiBfcxHUJCahl}
-          />
-          <mesh
-            geometry={nodes.Object_68.geometry}
-            material={materials.bsEIHfblEXNcUMs}
-          />
-          <mesh
-            geometry={nodes.Object_70.geometry}
-            material={materials.CRQixVLpahJzhJc}
-          />
-          <mesh
-            geometry={nodes.Object_72.geometry}
-            material={materials.SABLxXNNESCdgUy}
-          />
-          <mesh
-            geometry={nodes.Object_74.geometry}
-            material={materials.LpqXZqhaGCeSzdu}
-          />
-          <mesh
-            geometry={nodes.Object_76.geometry}
-            material={materials.sIfSZcqgDlKMJPf}
-          />
-          <mesh
-            geometry={nodes.Object_78.geometry}
-            material={materials.bsmYIMHYRqMuLqz}
-          />
-          <mesh
-            geometry={nodes.Object_80.geometry}
-            material={materials.jwuTsnFxKtBUxpK}
-          />
-          <mesh
-            geometry={nodes.Object_82.geometry}
-            material={materials.gMtYExgrEUqPfln}
-          />
-          <mesh
-            geometry={nodes.Object_84.geometry}
-            material={materials.WnHKXHhScfUbJQi}
-          />
-          <mesh
-            geometry={nodes.Object_86.geometry}
-            material={materials.nDsMUuDKliqGFdU}
-          />
-          <mesh
-            geometry={nodes.Object_88.geometry}
-            material={materials.bsEIHfblEXNcUMs}
-          />
-          <mesh
-            geometry={nodes.Object_90.geometry}
-            material={materials.uInNDOueKeBTGQB}
-          />
-          <mesh
-            geometry={nodes.Object_92.geometry}
-            material={materials.hmEmmncwVomyUTC}
-          />
-          <mesh
-            geometry={nodes.Object_94.geometry}
-            material={materials.WeLyzRwUVIhQGgM}
-          />
-          <mesh
-            geometry={nodes.Object_96.geometry}
-            material={materials.KclpPzxoRwZAoer}
-          />
-          <mesh
-            geometry={nodes.Object_99.geometry}
-            material={materials.wjAYtisbflXilXi}
-          />
-          <mesh
-            geometry={nodes.Object_101.geometry}
+            geometry={geo.Object_101}
             material={materials.zobIbiekuagXEVU}
           />
           <mesh
-            geometry={nodes.Object_103.geometry}
+            geometry={geo.Object_103}
             material={materials.RyKTMHTpkkwQkvB}
           />
           <mesh
-            geometry={nodes.Object_105.geometry}
+            geometry={geo.Object_105}
             material={materials.jwuTsnFxKtBUxpK}
           />
           <mesh
-            geometry={nodes.Object_107.geometry}
+            geometry={geo.Object_107}
             material={materials.JvMFZolVCdpPqjj}
           />
           <mesh
-            geometry={nodes.Object_109.geometry}
+            geometry={geo.Object_109}
             material={materials.UBYmHfGRfHbOXyc}
           />
           <mesh
-            geometry={nodes.Object_111.geometry}
+            geometry={geo.Object_111}
             material={materials.uInNDOueKeBTGQB}
           />
           <mesh
-            geometry={nodes.Object_113.geometry}
+            geometry={geo.Object_113}
             material={materials.gOXiFODBFKnUyyU}
           />
           <mesh
-            geometry={nodes.Object_115.geometry}
+            geometry={geo.Object_115}
             material={materials.eBwkWuOBScacrgP}
           />
           <mesh
-            geometry={nodes.Object_117.geometry}
+            geometry={geo.Object_117}
             material={materials.jwuTsnFxKtBUxpK}
           />
           <mesh
-            geometry={nodes.Object_119.geometry}
+            geometry={geo.Object_119}
             material={materials.jwuTsnFxKtBUxpK}
           />
           <mesh
-            geometry={nodes.Object_121.geometry}
+            geometry={geo.Object_121}
             material={materials.nDsMUuDKliqGFdU}
           />
           <mesh
-            geometry={nodes.Object_123.geometry}
+            geometry={geo.Object_123}
             material={materials.sfCQkHOWyrsLmor}
           />
           <mesh
-            geometry={nodes.Object_125.geometry}
+            geometry={geo.Object_125}
             material={materials.CdgEAaPUlrQWQuD}
           />
           <mesh
-            geometry={nodes.Object_127.geometry}
+            geometry={geo.Object_127}
             material={materials.ZCDwChwkbBfITSW}
           />
           <mesh
-            geometry={nodes.Object_129.geometry}
+            geometry={geo.Object_129}
             material={materials.XCYkeTCxqFmKTKe}
           />
           <mesh
-            geometry={nodes.Object_131.geometry}
+            geometry={geo.Object_131}
             material={materials.MycfwscjQZRVSoj}
           />
         </group>

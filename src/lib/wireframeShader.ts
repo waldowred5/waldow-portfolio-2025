@@ -52,11 +52,13 @@ const FRAGMENT_COMMON = /* glsl */ `
 
 const FRAGMENT_DISCARD = /* glsl */ `
   {
-    float wfN = wfNoise(vWfWorldPos * 3.0 + uWireframeNoiseSeed);
-    if (wfN < uWireframeProgress) {
-      float edgeMin = min(vBarycentric.x, min(vBarycentric.y, vBarycentric.z));
-      float lineWidth = fwidth(edgeMin) * 1.5;
-      if (edgeMin >= lineWidth) discard;
+    if (uWireframeProgress > 0.0) {
+      float wfN = wfNoise(vWfWorldPos * 3.0 + uWireframeNoiseSeed);
+      if (wfN < uWireframeProgress) {
+        float edgeMin = min(vBarycentric.x, min(vBarycentric.y, vBarycentric.z));
+        float lineWidth = fwidth(edgeMin) * 1.5;
+        if (edgeMin >= lineWidth) discard;
+      }
     }
   }
 `;
