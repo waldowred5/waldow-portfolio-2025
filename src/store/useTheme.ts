@@ -34,7 +34,7 @@ export const THEME_COLORS = {
     primary: [117 / 255, 49 / 255, 146 / 255] as ColorInput,
     // primary: '#7f3b9c',
     secondary: '#1CBDBD',
-    tertiary: [2.2, 0, 2.2] as ColorInput,
+    tertiary: [3.2, 0, 3.2] as ColorInput,
   },
   [THEME.GREEN]: {
     primary: [0 / 255, 300 / 255, 0 / 255] as ColorInput,

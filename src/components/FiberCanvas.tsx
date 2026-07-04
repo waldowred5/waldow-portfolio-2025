@@ -59,6 +59,7 @@ export const FiberCanvas = () => {
           <Canvas
             legacy={true}
             className={'touch-none'}
+            gl={{ alpha: true }}
             dpr={isLowPerf ? 1 : [1, 2]}
             camera={{
               fov,

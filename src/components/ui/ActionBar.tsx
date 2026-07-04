@@ -80,17 +80,6 @@ export const ActionBar = () => {
             <div className={'w-px h-5 bg-white/40 self-center mx-1'} />
 
             <div
-              className={'cursor-pointer'}
-              onMouseEnter={() =>
-                setText(`${isFullscreen ? 'EXIT' : 'ENTER'} FULL SCREEN`)
-              }
-            >
-              <Icon onClick={toggleFullscreen}>
-                {isFullscreen ? <RiFullscreenExitLine /> : <RiFullscreenFill />}
-              </Icon>
-            </div>
-
-            <div
               className={`${isLoaded ? 'cursor-pointer' : 'cursor-not-allowed opacity-30'}`}
               onMouseEnter={() =>
                 isLoaded &&
@@ -123,6 +112,19 @@ export const ActionBar = () => {
                 <PiPaintBucketFill />
               </Icon>
             </div>
+
+            <div
+              className={'cursor-pointer'}
+              onMouseEnter={() =>
+                setText(`${isFullscreen ? 'EXIT' : 'ENTER'} FULL SCREEN`)
+              }
+            >
+              <Icon onClick={toggleFullscreen}>
+                {isFullscreen ? <RiFullscreenExitLine /> : <RiFullscreenFill />}
+              </Icon>
+            </div>
+
+            <div className={'w-px h-5 bg-white/40 self-center mx-1'} />
 
             <div
               className={'cursor-pointer'}

@@ -242,7 +242,7 @@ export const Hero = ({ opacity = 1, isActive = true }: Props) => {
   }, [isLowPerf]);
 
   const sunGeometry = useMemo(() => {
-    const segments = isLowPerf ? 16 : 64;
+    const segments = isLowPerf ? 32 : 64;
     const geo = new SphereGeometry(1, segments, segments).toNonIndexed();
     const count = geo.attributes.position.count;
     const barycentric = new Float32Array(count * 3);

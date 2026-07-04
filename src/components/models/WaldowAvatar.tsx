@@ -155,9 +155,10 @@ const applyDissolveShader = (
 
 type WaldowAvatarProps = JSX.IntrinsicElements['group'] & {
   isActive?: boolean;
+  enableThemeCrossDissolve?: boolean;
 };
 
-export const WaldowAvatar = ({ isActive = true, ...props }: WaldowAvatarProps) => {
+export const WaldowAvatar = ({ isActive = true, enableThemeCrossDissolve = false, ...props }: WaldowAvatarProps) => {
   // @ts-expect-error ...
   const group = useRef<Group>();
   // @ts-expect-error GLTFResult type mismatch with useGLTF return
@@ -276,12 +277,13 @@ export const WaldowAvatar = ({ isActive = true, ...props }: WaldowAvatarProps) =
     [nodes],
   );
 
-  // Theme subscription: on high-perf, trigger cross-dissolve. Always update edge color.
+  // Theme subscription: on high-perf with cross-dissolve enabled, trigger overlay anim. Always update edge color.
   useEffect(() => {
     return useTheme.subscribe((state) => {
       const prevMats = prevMaterialsRef.current;
       const numMats = Object.keys(materials).length;
       const prevMatsReady =
+        enableThemeCrossDissolve &&
         !isLowPerf &&
         prevMats !== null &&
         Object.keys(prevMats).length >= numMats &&
@@ -307,7 +309,7 @@ export const WaldowAvatar = ({ isActive = true, ...props }: WaldowAvatarProps) =
         THEME_COLORS[state.theme].secondary,
       );
     });
-  }, [materials, isLowPerf]);
+  }, [materials, isLowPerf, enableThemeCrossDissolve]);
 
   // Stagger shader compilation. On high-perf also create prev material set for cross-dissolve.
   useEffect(() => {
@@ -322,11 +324,7 @@ export const WaldowAvatar = ({ isActive = true, ...props }: WaldowAvatarProps) =
 
     Object.entries(materials).forEach(([key, mat], i) => {
       setTimeout(() => {
-        if (isLowPerf) {
-          mat.transparent = true;
-        } else {
-          applyDissolveShader(mat, dissolveUniforms);
-        }
+        applyDissolveShader(mat, dissolveUniforms);
         if (WIREFRAME_MESHES.has(key)) {
           applyWireframeShader(mat, wireframeUniformsRef.current);
         }
@@ -398,14 +396,7 @@ export const WaldowAvatar = ({ isActive = true, ...props }: WaldowAvatarProps) =
       progress = avatarIsVisibleRef.current ? 1 : 0;
     }
 
-    if (isLowPerf) {
-      Object.values(materials).forEach((mat) => {
-        mat.opacity = progress;
-        mat.transparent = progress < 1;
-      });
-    } else {
-      uniforms.uDissolveProgress.value = progress;
-    }
+    uniforms.uDissolveProgress.value = progress;
 
     // Animate the prev (old theme) mesh overlay dissolving out
     if (isThemeTransitioningRef.current && prevMeshGroupRef.current) {
