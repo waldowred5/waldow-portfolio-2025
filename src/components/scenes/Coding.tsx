@@ -90,10 +90,13 @@ export const Coding = ({ isActive = true }: Props) => {
 
   useEffect(() => {
     return useTheme.subscribe((state) => {
-      iframeRef.current?.contentWindow?.postMessage(
-        { type: 'THEME_CHANGE', theme: state.theme },
-        '*',
-      );
+      // Deferred so the iframe's JS work doesn't compete with the React theme update
+      setTimeout(() => {
+        iframeRef.current?.contentWindow?.postMessage(
+          { type: 'THEME_CHANGE', theme: state.theme },
+          '*',
+        );
+      }, 100);
       lerpState.current.fromColor.copy(currentLerpedColor.current);
       lerpState.current.toColor.set(THEME_COLORS[state.theme].secondary);
       lerpState.current.elapsed = 0;
