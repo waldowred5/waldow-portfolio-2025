@@ -77,7 +77,7 @@ export const Coding = ({ isActive = true }: Props) => {
   };
 
   const defaultCameraValues = {
-    enableCameraControls: true,
+    enableCameraControls: false,
     shoulderPosition: { x: -2, y: 2, z: 15 },
     desktopShoulderPosition: { x: -2, y: 2, z: 15 },
     lookAtOffset: { x: 2, y: -3, z: 0 },
@@ -269,21 +269,40 @@ export const Coding = ({ isActive = true }: Props) => {
 
   isActiveRef.current = isActive;
   positionCameraRef.current = (isResize = false) => {
-    if (!cameraControls.current || !portalRef.current) return;
+    if (!cameraControls.current || !portalRef.current) {
+      return;
+    }
     const isDesktop = window.innerWidth >= TABLET_BREAKPOINT;
-    const activeShoulderPosition = isDesktop ? desktopShoulderPosition : shoulderPosition;
+    const activeShoulderPosition = isDesktop
+      ? desktopShoulderPosition
+      : shoulderPosition;
     portalRef.current.updateWorldMatrix(true, false);
     const worldPos = portalRef.current.getWorldPosition(new Vector3());
     if (!isResize) {
       const worldQuat = portalRef.current.getWorldQuaternion(new Quaternion());
       const normal = new Vector3(0, 0, 1).applyQuaternion(worldQuat);
       const camPos = worldPos.clone().addScaledVector(normal, cameraDistance);
-      cameraControls.current.camera.up.set(0, 1, 0).applyQuaternion(worldQuat).normalize();
-      cameraControls.current.setLookAt(camPos.x, camPos.y, camPos.z, worldPos.x, worldPos.y, worldPos.z, false);
+      cameraControls.current.camera.up
+        .set(0, 1, 0)
+        .applyQuaternion(worldQuat)
+        .normalize();
+      cameraControls.current.setLookAt(
+        camPos.x,
+        camPos.y,
+        camPos.z,
+        worldPos.x,
+        worldPos.y,
+        worldPos.z,
+        false,
+      );
       cameraControls.current.camera.up.set(0, 1, 0);
     }
     const offset = isDesktop
-      ? { x: window.innerWidth * 0.006, y: desktopLookAtOffset.y, z: desktopLookAtOffset.z }
+      ? {
+          x: window.innerWidth * 0.006,
+          y: desktopLookAtOffset.y,
+          z: desktopLookAtOffset.z,
+        }
       : lookAtOffset;
     cameraControls.current.setLookAt(
       activeShoulderPosition.x,
@@ -301,11 +320,17 @@ export const Coding = ({ isActive = true }: Props) => {
     const handleResize = () => {
       clearTimeout(timer);
       timer = setTimeout(() => {
-        set({ desktopLookAtOffset: { x: window.innerWidth * 0.006, y: -3, z: 0 } });
-        if (isActiveRef.current) positionCameraRef.current(true);
+        set({
+          desktopLookAtOffset: { x: window.innerWidth * 0.006, y: -3, z: 0 },
+        });
+        if (isActiveRef.current) {
+          // @ts-expect-error investigate this
+          positionCameraRef.current(true);
+        }
       }, 150);
     };
     window.addEventListener('resize', handleResize);
+
     return () => {
       window.removeEventListener('resize', handleResize);
       clearTimeout(timer);
@@ -315,7 +340,9 @@ export const Coding = ({ isActive = true }: Props) => {
   useFrame(() => {
     const becameActive = isActive && !prevIsActiveRef.current;
     prevIsActiveRef.current = isActive;
-    if (!becameActive) return;
+    if (!becameActive) {
+      return;
+    }
     positionCameraRef.current();
   });
 

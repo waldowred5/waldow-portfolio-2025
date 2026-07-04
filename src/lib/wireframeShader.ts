@@ -1,4 +1,5 @@
-import { BufferAttribute, BufferGeometry, type Material } from 'three';
+import type { BufferGeometry } from 'three';
+import { BufferAttribute, type Material } from 'three';
 
 export const addBarycentricCoords = (geo: BufferGeometry): BufferGeometry => {
   const nonIndexed = geo.toNonIndexed();
@@ -10,6 +11,7 @@ export const addBarycentricCoords = (geo: BufferGeometry): BufferGeometry => {
     barycentric[(i + 2) * 3 + 2] = 1;
   }
   nonIndexed.setAttribute('aBarycentric', new BufferAttribute(barycentric, 3));
+
   return nonIndexed;
 };
 
@@ -77,14 +79,17 @@ export const applyWireframeShader = (
   mat: Material,
   uniforms: WireframeUniforms,
 ) => {
-  if ((mat as Material & { __wireframeApplied?: boolean }).__wireframeApplied)
+  if ((mat as Material & { __wireframeApplied?: boolean }).__wireframeApplied) {
     return;
+  }
   (mat as Material & { __wireframeApplied?: boolean }).__wireframeApplied =
     true;
 
   const prev = mat.onBeforeCompile;
   mat.onBeforeCompile = (shader, renderer) => {
-    if (prev) prev(shader, renderer);
+    if (prev) {
+      prev(shader, renderer);
+    }
     Object.assign(shader.uniforms, uniforms);
     shader.vertexShader = shader.vertexShader
       .replace('#include <common>', `#include <common>\n${VERTEX_COMMON}`)

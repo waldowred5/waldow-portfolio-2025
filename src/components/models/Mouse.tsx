@@ -14,6 +14,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import type { JSX } from 'react/jsx-runtime';
 import type { Group, Mesh, MeshStandardMaterial, Object3D } from 'three';
 import * as THREE from 'three';
+import type { GLTF } from 'three-stdlib';
 
 import { useWireframeProgress } from '@/hooks/useWireframeProgress.ts';
 import {
@@ -21,7 +22,6 @@ import {
   applyWireframeShader,
   createWireframeUniforms,
 } from '@/lib/wireframeShader.ts';
-import type { GLTF } from 'three-stdlib';
 
 type MouseGLTF = GLTF & {
   nodes: { pCube3_lambert1_0: Mesh };
@@ -39,7 +39,7 @@ const LERP_FACTOR = 0.15;
 export const Mouse = ({ hips, ...props }: MouseProps) => {
   const { nodes, materials } = useGLTF(
     '/models/computer_mouse.glb',
-  ) as MouseGLTF;
+  ) as unknown as MouseGLTF;
 
   const wireframeUniforms = useRef(createWireframeUniforms());
 
@@ -162,10 +162,7 @@ export const Mouse = ({ hips, ...props }: MouseProps) => {
 
   return (
     <group {...props} ref={groupRef} scale={mouseScale} dispose={null}>
-      <mesh
-        geometry={mouseGeometry}
-        material={materials.lambert1}
-      />
+      <mesh geometry={mouseGeometry} material={materials.lambert1} />
     </group>
   );
 };

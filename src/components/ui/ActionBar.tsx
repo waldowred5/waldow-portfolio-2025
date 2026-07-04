@@ -27,8 +27,9 @@ export const ActionBar = () => {
 
   useEffect(() => {
     if (isCodingReady && text === 'LOADING SCENE...') {
-      setText('MEET THE DEVELOPER');
+      setText('MEET THE DEV');
     }
+    // eslint-disable-next-line
   }, [isCodingReady]);
   const { isFullscreen, toggleFullscreen } = useToggleFullscreen();
   const { requestScene } = useScene((state) => ({
@@ -42,7 +43,9 @@ export const ActionBar = () => {
   return (
     <div className={'flex justify-center'}>
       <div
-        className={'z-10 fixed bottom-3 md:top-4 md:bottom-auto md:right-4 flex flex-col-reverse md:flex-col gap-y-1'}
+        className={
+          'z-10 fixed bottom-3 md:top-4 md:bottom-auto md:right-4 flex flex-col-reverse md:flex-col gap-y-1'
+        }
       >
         <div
           className={
@@ -62,9 +65,7 @@ export const ActionBar = () => {
             <div
               className={`${isCodingReady ? 'cursor-pointer' : 'cursor-not-allowed opacity-30'}`}
               onMouseEnter={() =>
-                setText(
-                  isCodingReady ? 'MEET THE DEVELOPER' : 'LOADING SCENE...',
-                )
+                setText(isCodingReady ? 'MEET THE DEV' : 'LOADING SCENE...')
               }
             >
               <Icon

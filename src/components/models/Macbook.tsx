@@ -32,7 +32,7 @@ export const Macbook = (props: JSX.IntrinsicElements['group']) => {
           .map(([key, node]) => [
             key,
             addBarycentricCoords(
-              (node as { geometry: BufferGeometry }).geometry,
+              (node as unknown as { geometry: BufferGeometry }).geometry,
             ),
           ]),
       ),

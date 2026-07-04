@@ -16,7 +16,13 @@ const SKILLS = [
   'Three.js / R3F',
   'Node.js',
   'PostgreSQL',
+  'GraphQL',
+  'AWS',
   'Docker',
+  'CI/CD',
+  'Datadog',
+  'Claude Code',
+  'Git',
 ];
 
 const iconClass =
@@ -35,7 +41,9 @@ export const AboutMePanel = () => {
   useEffect(() => {
     const mql = window.matchMedia(`(min-width: ${TABLET_BREAKPOINT}px)`);
     const handleChange = (e: MediaQueryListEvent) => {
-      if (e.matches && isCodingScene) showPanel();
+      if (e.matches && isCodingScene) {
+        showPanel();
+      }
     };
     mql.addEventListener('change', handleChange);
 
@@ -79,7 +87,7 @@ export const AboutMePanel = () => {
           className={'overflow-y-auto h-full p-8 md:p-10 flex flex-col gap-6'}
         >
           <h1 className={'text-3xl font-bold text-white font-kanit'}>
-            {'About Me'}
+            {'MEET THE DEV'}
           </h1>
           <div
             className={'w-16 h-[1px]'}
@@ -95,17 +103,30 @@ export const AboutMePanel = () => {
           >
             <p>
               {
-                "Hi, I'm Daniel — a full-stack engineer with a passion for building things that live at the intersection of code and craft. I specialise in TypeScript, React, and 3D web experiences using Three.js and React Three Fiber."
+                // eslint-disable-next-line
+                "Hi, I'm Waldow,"
               }
             </p>
             <p>
               {
-                "I care deeply about performance, animation, and the tactile feel of interfaces. When I'm not pushing pixels, I'm exploring emerging tech, tinkering with shaders, or making side projects that probably don't need to be this complex — but are better for it."
+                // eslint-disable-next-line
+                "I hail from a small farm outside Port Macquarie, moved to Sydney to study Medical Science and then somehow ended up in software sales. I spent years selling for DocuSign, PagerDuty, and Australia Post's small business division. I was good at it, but something was missing."
               }
             </p>
             <p>
               {
-                "Currently open to new opportunities. Let's build something worth looking at."
+                // eslint-disable-next-line
+                "I discovered coding almost by accident and became completely obsessed. After quitting sales I completed a bootcamp and never looked back. Since then I've shipped production software at a superannuation startup (Grow Inc), a software consultancy (Endava) and now build Risk, Governance and Compliance software at RiskSmart in the UK."
+              }
+            </p>
+            <p>
+              {
+                'In my opinion UI/UX, animation and the tactile feel of interfaces present some of the most interesting and satisfying challenges. I specialise in TypeScript and React, and I have a particular love for 3D web experiences using Three.js and React Three Fiber. Side projects that probably did not need to be this complex are kind of my thing.'
+              }
+            </p>
+            <p>
+              {
+                'Outside of work I collect hobbies like Pokemon: water skiing, snowboarding, racing motorbikes, electric longboarding, board gaming, painting, piano, drums (I even used to play in a heavy metal band). If it sounds interesting, I have probably already tried it.'
               }
             </p>
           </div>
@@ -128,6 +149,20 @@ export const AboutMePanel = () => {
               </span>
             ))}
           </div>
+          <p className={'text-white/80 text-lg font-kanit leading-relaxed'}>
+            {'Shoot me a message on '}
+            <a
+              href={'https://www.linkedin.com/in/daniel-waldow/'}
+              target={'_blank'}
+              rel={'noreferrer'}
+              className={
+                'text-white/70 underline hover:text-white transition-colors duration-150'
+              }
+            >
+              {'LinkedIn'}
+            </a>
+            {', lets connect!'}
+          </p>
         </div>
       </div>
     </>

@@ -22,8 +22,9 @@ export const SceneManager = () => {
   const { active } = useProgress();
 
   useEffect(() => {
-    if (isLoaded && !active && !assetsReady) 
-setAssetsReady();
+    if (isLoaded && !active && !assetsReady) {
+      setAssetsReady();
+    }
   }, [active, isLoaded, assetsReady, setAssetsReady]);
 
   const defaultValues = {
@@ -36,6 +37,7 @@ setAssetsReady();
       Scene: folder(
         {
           'Reset Scene Defaults': button(() => {
+            // @ts-expect-error investigate this
             set(defaultValues);
             updateScene(defaultValues.scene);
           }),
@@ -55,8 +57,9 @@ setAssetsReady();
   );
 
   useEffect(() => {
+    // @ts-expect-error investigate this
     set({ scene: currentScene });
-  }, [currentScene]);
+  }, [currentScene, set]);
 
   const isHero = currentScene === SCENE.HERO;
   const isCoding = currentScene === SCENE.CODING;

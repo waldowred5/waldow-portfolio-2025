@@ -247,7 +247,9 @@ export const WaldowAvatar = (props: JSX.IntrinsicElements['group']) => {
   }, [theme]);
 
   useEffect(() => {
-    if (shadersAppliedRef.current) return;
+    if (shadersAppliedRef.current) {
+      return;
+    }
     shadersAppliedRef.current = true;
     const dissolveUniforms = dissolveUniformsRef.current;
     Object.values(materials).forEach((mat) => {
@@ -265,8 +267,9 @@ export const WaldowAvatar = (props: JSX.IntrinsicElements['group']) => {
   const avatarTransitionStartRef = useRef<number | null>(null);
 
   useFrame(({ clock }) => {
-    if (!group.current) 
-return;
+    if (!group.current) {
+      return;
+    }
 
     const elapsed = clock.getElapsedTime();
     const uniforms = dissolveUniformsRef.current;

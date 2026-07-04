@@ -37,7 +37,9 @@ export const CodingDesk = ({
   const wireframeUniforms = useRef(createWireframeUniforms());
 
   useEffect(() => {
-    if (!meshRef.current || !materialRef.current) return;
+    if (!meshRef.current || !materialRef.current) {
+      return;
+    }
     meshRef.current.geometry = addBarycentricCoords(meshRef.current.geometry);
     applyWireframeShader(materialRef.current, wireframeUniforms.current);
     materialRef.current.needsUpdate = true;

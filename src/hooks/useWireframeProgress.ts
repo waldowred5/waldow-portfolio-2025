@@ -3,7 +3,7 @@ import { useRef } from 'react';
 
 import { THEME_TRANSITION_DURATION } from '@/lib/constants.ts';
 import type { WireframeUniforms } from '@/lib/wireframeShader.ts';
-import { VIEW_MODE, useViewMode, type ViewMode } from '@/store/useViewMode.ts';
+import { useViewMode, VIEW_MODE, type ViewMode } from '@/store/useViewMode.ts';
 
 export const useWireframeProgress = (uniforms: WireframeUniforms) => {
   const prevViewModeRef = useRef<ViewMode>(VIEW_MODE.FULL);
@@ -28,7 +28,9 @@ export const useWireframeProgress = (uniforms: WireframeUniforms) => {
         1.0,
       );
       progress = toWireframe ? t : 1.0 - t;
-      if (t >= 1.0) transitionStartRef.current = null;
+      if (t >= 1.0) {
+        transitionStartRef.current = null;
+      }
     }
 
     uniforms.uWireframeProgress.value = progress;
