@@ -9,7 +9,7 @@ import {
 import { useFrame, useThree } from '@react-three/fiber';
 import { button, buttonGroup, folder, useControls } from 'leva';
 import { Suspense, useEffect, useRef, useState } from 'react';
-import type { Group } from 'three';
+import type { Group, Mesh } from 'three';
 import { Color, Quaternion, type RectAreaLight, Vector3 } from 'three';
 
 import { CodingChair } from '@/components/models/CodingChair.tsx';
@@ -31,12 +31,26 @@ interface Props {
   isActive?: boolean;
 }
 
+const getPortalWorldAxes = (portalRef: React.RefObject<Group | null>) => {
+  if (!portalRef.current) return null;
+  portalRef.current.updateWorldMatrix(true, false);
+  const worldPos = portalRef.current.getWorldPosition(new Vector3());
+  const worldQuat = portalRef.current.getWorldQuaternion(new Quaternion());
+  const normal = new Vector3(0, 0, 1).applyQuaternion(worldQuat);
+
+  return { worldPos, worldQuat, normal };
+};
+
 export const Coding = ({ isActive = true }: Props) => {
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const cameraControls = useRef<ThreeCameraControls>(null);
   const portalRef = useRef<Group>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const rectLightRef = useRef<RectAreaLight>(null);
+  const entryMarkerRef = useRef<Mesh>(null);
+  const exitMarkerRef = useRef<Mesh>(null);
+  const entryDistanceRef = useRef(0.5);
+  const exitDistanceRef = useRef(0.2);
   const initialTheme = useTheme.getState().theme;
   const currentLerpedColor = useRef(
     new Color(THEME_COLORS[initialTheme].secondary),
@@ -86,6 +100,9 @@ export const Coding = ({ isActive = true }: Props) => {
     desktopShoulderPosition: { x: -2, y: 2, z: 15 },
     lookAtOffset: { x: 2, y: -3, z: 0 },
     desktopLookAtOffset: { x: window.innerWidth * 0.006, y: -3, z: 0 },
+    entryDistance: 2.3,
+    exitDistance: 0.2,
+    showCameraHelpers: false,
   };
 
   useEffect(() => {
@@ -110,26 +127,6 @@ export const Coding = ({ isActive = true }: Props) => {
     );
   }, [viewMode]);
 
-  useFrame((_, delta) => {
-    if (!isActive) return;
-    const light = rectLightRef.current;
-    const state = lerpState.current;
-    if (!light) {
-      return;
-    }
-
-    if (state.elapsed < THEME_TRANSITION_DURATION) {
-      state.elapsed = Math.min(
-        state.elapsed + delta,
-        THEME_TRANSITION_DURATION,
-      );
-      const t = state.elapsed / THEME_TRANSITION_DURATION;
-      currentLerpedColor.current.copy(state.fromColor).lerp(state.toColor, t);
-    }
-
-    light.color.copy(currentLerpedColor.current);
-  });
-
   const [
     {
       enableCameraControls,
@@ -147,7 +144,9 @@ export const Coding = ({ isActive = true }: Props) => {
       portalRotation,
       showPortalNormal,
       showPortalHorizontal,
-      cameraDistance,
+      entryDistance,
+      exitDistance,
+      showCameraHelpers,
     },
     set,
   ] = useControls(
@@ -175,10 +174,43 @@ export const Coding = ({ isActive = true }: Props) => {
           value: defaultCameraValues.desktopLookAtOffset,
           label: 'Desktop LookAt Offset',
         },
+        entryDistance: {
+          value: defaultCameraValues.entryDistance,
+          min: 0,
+          max: 10,
+          step: 0.05,
+          label: 'Entry Distance',
+        },
+        exitDistance: {
+          value: defaultCameraValues.exitDistance,
+          min: 0,
+          max: 5,
+          step: 0.01,
+          label: 'Exit Distance',
+        },
+        showCameraHelpers: {
+          value: defaultCameraValues.showCameraHelpers,
+          label: 'Show Camera Markers',
+        },
         logCamera: button(() => {
-          const pos = camera.position;
+          const cam = cameraControls.current?.camera;
+          if (!cam) return;
+          const pos = cam.position;
+          const worldPos2 = new Vector3();
+          cam.getWorldPosition(worldPos2);
+          const up = cam.up;
+          const euler = cam.rotation;
           console.log(
-            `Camera pos: x=${pos.x.toFixed(2)}, y=${pos.y.toFixed(2)}, z=${pos.z.toFixed(2)}`,
+            `Camera local pos: x=${pos.x.toFixed(3)}, y=${pos.y.toFixed(3)}, z=${pos.z.toFixed(3)}`,
+          );
+          console.log(
+            `Camera world pos: x=${worldPos2.x.toFixed(3)}, y=${worldPos2.y.toFixed(3)}, z=${worldPos2.z.toFixed(3)}`,
+          );
+          console.log(
+            `Camera up: x=${up.x.toFixed(3)}, y=${up.y.toFixed(3)}, z=${up.z.toFixed(3)}`,
+          );
+          console.log(
+            `Camera euler (XYZ deg): x=${(euler.x * 180 / Math.PI).toFixed(2)}, y=${(euler.y * 180 / Math.PI).toFixed(2)}, z=${(euler.z * 180 / Math.PI).toFixed(2)}`,
           );
           if (cameraControls.current) {
             const target = cameraControls.current.getTarget({
@@ -187,9 +219,89 @@ export const Coding = ({ isActive = true }: Props) => {
               z: 0,
             } as Vector3);
             console.log(
-              `Camera target: x=${target.x.toFixed(2)}, y=${target.y.toFixed(2)}, z=${target.z.toFixed(2)}`,
+              `Camera target: x=${target.x.toFixed(3)}, y=${target.y.toFixed(3)}, z=${target.z.toFixed(3)}`,
             );
           }
+          const axes = getPortalWorldAxes(portalRef);
+          if (axes) {
+            const { worldPos, normal } = axes;
+            const portalUp = new Vector3(0, 1, 0).applyQuaternion(axes.worldQuat);
+            console.log(
+              `Portal world pos: x=${worldPos.x.toFixed(3)}, y=${worldPos.y.toFixed(3)}, z=${worldPos.z.toFixed(3)}`,
+            );
+            console.log(
+              `Portal world normal: x=${normal.x.toFixed(3)}, y=${normal.y.toFixed(3)}, z=${normal.z.toFixed(3)}`,
+            );
+            console.log(
+              `Portal world up: x=${portalUp.x.toFixed(3)}, y=${portalUp.y.toFixed(3)}, z=${portalUp.z.toFixed(3)}`,
+            );
+          }
+        }),
+        'Hard Snap to Entry': button(() => {
+          const axes = getPortalWorldAxes(portalRef);
+          if (!axes || !cameraControls.current) return;
+          const { worldPos, worldQuat, normal } = axes;
+          const camPos = worldPos
+            .clone()
+            .addScaledVector(normal, entryDistanceRef.current);
+          cameraControls.current.camera.up
+            .set(0, 1, 0)
+            .applyQuaternion(worldQuat)
+            .normalize();
+          cameraControls.current.updateCameraUp();
+          cameraControls.current.setLookAt(
+            camPos.x,
+            camPos.y,
+            camPos.z,
+            worldPos.x,
+            worldPos.y,
+            worldPos.z,
+            false,
+          );
+        }),
+        'Snap to Entry': button(() => {
+          const axes = getPortalWorldAxes(portalRef);
+          if (!axes || !cameraControls.current) return;
+          const { worldPos, worldQuat, normal } = axes;
+          const camPos = worldPos
+            .clone()
+            .addScaledVector(normal, entryDistanceRef.current);
+          cameraControls.current.camera.up
+            .set(0, 1, 0)
+            .applyQuaternion(worldQuat)
+            .normalize();
+          cameraControls.current.updateCameraUp();
+          cameraControls.current.setLookAt(
+            camPos.x,
+            camPos.y,
+            camPos.z,
+            worldPos.x,
+            worldPos.y,
+            worldPos.z,
+            true,
+          );
+        }),
+        'Snap to Exit': button(() => {
+          const axes = getPortalWorldAxes(portalRef);
+          if (!axes || !cameraControls.current) return;
+          const { worldPos, worldQuat, normal } = axes;
+          const camPos = worldPos
+            .clone()
+            .addScaledVector(normal, exitDistanceRef.current);
+          cameraControls.current.camera.up
+            .set(0, 1, 0)
+            .applyQuaternion(worldQuat)
+            .normalize();
+          cameraControls.current.updateCameraUp();
+          cameraControls.current.setLookAt(
+            camPos.x,
+            camPos.y,
+            camPos.z,
+            worldPos.x,
+            worldPos.y,
+            worldPos.z,
+            true,
+          );
         }),
         truckGrp: buttonGroup({
           label: 'truck',
@@ -210,8 +322,8 @@ export const Coding = ({ isActive = true }: Props) => {
         zoomGrp: buttonGroup({
           label: 'zoom',
           opts: {
-            '/2': () => cameraControls.current?.zoom(camera.zoom / 2, true),
-            '/-2': () => cameraControls.current?.zoom(-camera.zoom / 2, true),
+            '/2': () => cameraControls.current?.zoom((cameraControls.current?.camera.zoom ?? 1) / 2, true),
+            '/-2': () => cameraControls.current?.zoom(-(cameraControls.current?.camera.zoom ?? 1) / 2, true),
           },
         }),
       }),
@@ -250,23 +362,18 @@ export const Coding = ({ isActive = true }: Props) => {
           portalPosition: { value: defaultPortalValues.portalPosition },
           portalRotation: { value: defaultPortalValues.portalRotation },
           logPortalWorldPos: button(() => {
-            if (!portalRef.current) {
-              return;
-            }
-            const pos = portalRef.current.getWorldPosition(new Vector3());
+            const axes = getPortalWorldAxes(portalRef);
+            if (!axes) return;
+            const { worldPos, normal } = axes;
             console.log(
-              `Portal world pos: x=${pos.x.toFixed(3)}, y=${pos.y.toFixed(3)}, z=${pos.z.toFixed(3)}`,
+              `Portal world pos: x=${worldPos.x.toFixed(3)}, y=${worldPos.y.toFixed(3)}, z=${worldPos.z.toFixed(3)}`,
+            );
+            console.log(
+              `Portal normal: x=${normal.x.toFixed(3)}, y=${normal.y.toFixed(3)}, z=${normal.z.toFixed(3)}`,
             );
           }),
           showPortalNormal: { value: false, label: 'Show Portal Axis' },
           showPortalHorizontal: { value: false, label: 'Show Horizontal Axis' },
-          cameraDistance: {
-            value: 2,
-            min: 0,
-            max: 20,
-            step: 0.05,
-            label: 'Camera Distance',
-          },
         },
         { collapsed: true },
       ),
@@ -275,6 +382,9 @@ export const Coding = ({ isActive = true }: Props) => {
   );
 
   isActiveRef.current = isActive;
+  entryDistanceRef.current = entryDistance;
+  exitDistanceRef.current = exitDistance;
+
   positionCameraRef.current = (isResize = false) => {
     if (!cameraControls.current || !portalRef.current) {
       return;
@@ -283,16 +393,16 @@ export const Coding = ({ isActive = true }: Props) => {
     const activeShoulderPosition = isDesktop
       ? desktopShoulderPosition
       : shoulderPosition;
-    portalRef.current.updateWorldMatrix(true, false);
-    const worldPos = portalRef.current.getWorldPosition(new Vector3());
+    const axes = getPortalWorldAxes(portalRef);
+    if (!axes) return;
+    const { worldPos, worldQuat, normal } = axes;
     if (!isResize) {
-      const worldQuat = portalRef.current.getWorldQuaternion(new Quaternion());
-      const normal = new Vector3(0, 0, 1).applyQuaternion(worldQuat);
-      const camPos = worldPos.clone().addScaledVector(normal, cameraDistance);
+      const camPos = worldPos.clone().addScaledVector(normal, entryDistance);
       cameraControls.current.camera.up
         .set(0, 1, 0)
         .applyQuaternion(worldQuat)
         .normalize();
+      cameraControls.current.updateCameraUp();
       cameraControls.current.setLookAt(
         camPos.x,
         camPos.y,
@@ -302,7 +412,6 @@ export const Coding = ({ isActive = true }: Props) => {
         worldPos.z,
         false,
       );
-      cameraControls.current.camera.up.set(0, 1, 0);
     }
     const offset = isDesktop
       ? {
@@ -311,6 +420,8 @@ export const Coding = ({ isActive = true }: Props) => {
           z: desktopLookAtOffset.z,
         }
       : lookAtOffset;
+    cameraControls.current.camera.up.set(0, 1, 0);
+    cameraControls.current.updateCameraUp();
     cameraControls.current.setLookAt(
       activeShoulderPosition.x,
       activeShoulderPosition.y,
@@ -344,29 +455,52 @@ export const Coding = ({ isActive = true }: Props) => {
     };
   }, [set]);
 
-  useFrame(() => {
+  useFrame((_, delta) => {
     const becameActive = isActive && !prevIsActiveRef.current;
     prevIsActiveRef.current = isActive;
+
     if (!isActive) return;
-    if (!becameActive) {
-      return;
+
+    if (becameActive) {
+      positionCameraRef.current();
     }
-    positionCameraRef.current();
+
+    const light = rectLightRef.current;
+    const state = lerpState.current;
+    if (light && state.elapsed < THEME_TRANSITION_DURATION) {
+      state.elapsed = Math.min(
+        state.elapsed + delta,
+        THEME_TRANSITION_DURATION,
+      );
+      const t = state.elapsed / THEME_TRANSITION_DURATION;
+      currentLerpedColor.current.copy(state.fromColor).lerp(state.toColor, t);
+      light.color.copy(currentLerpedColor.current);
+    }
+
+    if (showCameraHelpers && portalRef.current) {
+      const axes = getPortalWorldAxes(portalRef);
+      if (axes) {
+        const { worldPos, normal } = axes;
+        entryMarkerRef.current?.position.copy(
+          worldPos.clone().addScaledVector(normal, entryDistanceRef.current),
+        );
+        exitMarkerRef.current?.position.copy(
+          worldPos.clone().addScaledVector(normal, exitDistanceRef.current),
+        );
+      }
+    }
   });
 
   useEffect(() => {
-    if (!portalRef.current || !cameraControls.current) {
-      return;
-    }
-    portalRef.current.updateWorldMatrix(true, false);
-    const worldPos = portalRef.current.getWorldPosition(new Vector3());
-    const worldQuat = portalRef.current.getWorldQuaternion(new Quaternion());
-    const normal = new Vector3(0, 0, 1).applyQuaternion(worldQuat);
-    const camPos = worldPos.clone().addScaledVector(normal, cameraDistance);
+    const axes = getPortalWorldAxes(portalRef);
+    if (!axes || !cameraControls.current) return;
+    const { worldPos, worldQuat, normal } = axes;
+    const camPos = worldPos.clone().addScaledVector(normal, entryDistance);
     cameraControls.current.camera.up
       .set(0, 1, 0)
       .applyQuaternion(worldQuat)
       .normalize();
+    cameraControls.current.updateCameraUp();
     cameraControls.current.setLookAt(
       camPos.x,
       camPos.y,
@@ -376,7 +510,7 @@ export const Coding = ({ isActive = true }: Props) => {
       worldPos.z,
       true,
     );
-  }, [cameraDistance]);
+  }, [entryDistance]);
 
   useEffect(() => {
     if (!isActive) {
@@ -403,16 +537,16 @@ export const Coding = ({ isActive = true }: Props) => {
     hidePanel();
     hasShownPanel.current = false;
 
-    portalRef.current.updateWorldMatrix(true, false);
-    const worldPos = portalRef.current.getWorldPosition(new Vector3());
-    const worldQuat = portalRef.current.getWorldQuaternion(new Quaternion());
-    const normal = new Vector3(0, 0, 1).applyQuaternion(worldQuat);
-    const camPos = worldPos.clone().addScaledVector(normal, cameraDistance);
+    const axes = getPortalWorldAxes(portalRef);
+    if (!axes) return;
+    const { worldPos, worldQuat, normal } = axes;
+    const camPos = worldPos.clone().addScaledVector(normal, exitDistance);
 
     cameraControls.current.camera.up
       .set(0, 1, 0)
       .applyQuaternion(worldQuat)
       .normalize();
+    cameraControls.current.updateCameraUp();
     cameraControls.current.setLookAt(
       camPos.x,
       camPos.y,
@@ -422,12 +556,11 @@ export const Coding = ({ isActive = true }: Props) => {
       worldPos.z,
       true,
     );
-    cameraControls.current.camera.up.set(0, 1, 0);
 
     const exitTimer = setTimeout(() => commitScene(), 2000);
 
     return () => clearTimeout(exitTimer);
-  }, [pendingScene, isActive, commitScene, hidePanel, cameraDistance]);
+  }, [pendingScene, isActive, commitScene, hidePanel, exitDistance]);
 
   const {
     transmission: meshTransmission,
@@ -479,6 +612,15 @@ export const Coding = ({ isActive = true }: Props) => {
         ref={cameraControls}
         smoothTime={1.5}
       />
+
+      <mesh ref={entryMarkerRef} visible={showCameraHelpers}>
+        <sphereGeometry args={[0.06, 8, 8]} />
+        <meshBasicMaterial color={'green'} />
+      </mesh>
+      <mesh ref={exitMarkerRef} visible={showCameraHelpers}>
+        <sphereGeometry args={[0.06, 8, 8]} />
+        <meshBasicMaterial color={'red'} />
+      </mesh>
 
       <group
         position={[scenePosition.x, scenePosition.y, scenePosition.z]}

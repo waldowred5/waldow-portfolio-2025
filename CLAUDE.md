@@ -2,6 +2,7 @@
 
 - When adding comments, only add a concise comment that describes the current behaviour. Do not include historical context.
 - Prefer fat arrow syntax, do not use function keyword
+- DO NOT use single line if statements, always create a block
 - Prefer map functions, avoid using naked for loops unless strictly necessary
 - Prefer named exports, avoid default exports
 - Prefer plain colour name refs in Tailwind (e.g. bg-ember not bg-text-[var(--color-ember)])
