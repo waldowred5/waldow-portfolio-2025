@@ -317,6 +317,7 @@ export const Hero = ({ opacity = 1, isActive = true }: Props) => {
         },
       },
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const transitionStartRef = useRef<number | null>(null);

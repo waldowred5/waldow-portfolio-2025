@@ -111,7 +111,9 @@ export const Coding = ({ isActive = true }: Props) => {
   }, [viewMode]);
 
   useFrame((_, delta) => {
-    if (!isActive) return;
+    if (!isActive) {
+      return;
+    }
     const light = rectLightRef.current;
     const state = lerpState.current;
     if (!light) {
@@ -347,7 +349,9 @@ export const Coding = ({ isActive = true }: Props) => {
   useFrame(() => {
     const becameActive = isActive && !prevIsActiveRef.current;
     prevIsActiveRef.current = isActive;
-    if (!isActive) return;
+    if (!isActive) {
+      return;
+    }
     if (!becameActive) {
       return;
     }

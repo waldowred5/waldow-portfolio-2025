@@ -128,14 +128,20 @@ const applyDissolveShader = (
     Object.assign(shader.uniforms, dissolveUniforms);
 
     shader.vertexShader = shader.vertexShader
-      .replace('#include <common>', `#include <common>\n${DISSOLVE_VERTEX_COMMON}`)
+      .replace(
+        '#include <common>',
+        `#include <common>\n${DISSOLVE_VERTEX_COMMON}`,
+      )
       .replace(
         '#include <project_vertex>',
         `#include <project_vertex>\n${DISSOLVE_VERTEX_WORLDPOS}`,
       );
 
     shader.fragmentShader = shader.fragmentShader
-      .replace('#include <common>', `#include <common>\n${DISSOLVE_FRAGMENT_COMMON}`)
+      .replace(
+        '#include <common>',
+        `#include <common>\n${DISSOLVE_FRAGMENT_COMMON}`,
+      )
       .replace(
         '#include <clipping_planes_fragment>',
         `#include <clipping_planes_fragment>
@@ -158,7 +164,11 @@ type WaldowAvatarProps = JSX.IntrinsicElements['group'] & {
   enableThemeCrossDissolve?: boolean;
 };
 
-export const WaldowAvatar = ({ isActive = true, enableThemeCrossDissolve = false, ...props }: WaldowAvatarProps) => {
+export const WaldowAvatar = ({
+  isActive = true,
+  enableThemeCrossDissolve = false,
+  ...props
+}: WaldowAvatarProps) => {
   // @ts-expect-error ...
   const group = useRef<Group>();
   // @ts-expect-error GLTFResult type mismatch with useGLTF return
@@ -252,7 +262,9 @@ export const WaldowAvatar = ({ isActive = true, enableThemeCrossDissolve = false
   const wireframeUniformsRef = useRef(createWireframeUniforms());
   const shadersAppliedRef = useRef(false);
   // @ts-expect-error partial key map
-  const prevMaterialsRef = useRef<Partial<Record<keyof typeof materials, MeshStandardMaterial>> | null>(null);
+  const prevMaterialsRef = useRef<Partial<
+    Record<keyof typeof materials, MeshStandardMaterial>
+  > | null>(null);
   // @ts-expect-error ...
   const prevMeshGroupRef = useRef<Group>(null);
 
@@ -266,8 +278,12 @@ export const WaldowAvatar = ({ isActive = true, enableThemeCrossDissolve = false
     () => ({
       Wolf3D_Hair: nodes.Wolf3D_Hair.geometry,
       Wolf3D_Outfit_Top: addBarycentricCoords(nodes.Wolf3D_Outfit_Top.geometry),
-      Wolf3D_Outfit_Bottom: addBarycentricCoords(nodes.Wolf3D_Outfit_Bottom.geometry),
-      Wolf3D_Outfit_Footwear: addBarycentricCoords(nodes.Wolf3D_Outfit_Footwear.geometry),
+      Wolf3D_Outfit_Bottom: addBarycentricCoords(
+        nodes.Wolf3D_Outfit_Bottom.geometry,
+      ),
+      Wolf3D_Outfit_Footwear: addBarycentricCoords(
+        nodes.Wolf3D_Outfit_Footwear.geometry,
+      ),
       Wolf3D_Body: nodes.Wolf3D_Body.geometry,
       EyeLeft: nodes.EyeLeft.geometry,
       EyeRight: nodes.EyeRight.geometry,
@@ -293,7 +309,8 @@ export const WaldowAvatar = ({ isActive = true, enableThemeCrossDissolve = false
         prevDissolveUniformsRef.current.uDissolveEdgeColor.value.copy(
           dissolveUniformsRef.current.uDissolveEdgeColor.value,
         );
-        const fromProgress = dissolveUniformsRef.current.uDissolveProgress.value;
+        const fromProgress =
+          dissolveUniformsRef.current.uDissolveProgress.value;
         prevDissolveUniformsRef.current.uDissolveProgress.value = fromProgress;
         prevDissolveUniformsRef.current.uNoiseSeed.value = Math.random() * 100;
         prevDissolveUniformsRef.current.uDissolveEdge.value =
@@ -319,7 +336,9 @@ export const WaldowAvatar = ({ isActive = true, enableThemeCrossDissolve = false
     shadersAppliedRef.current = true;
     const dissolveUniforms = dissolveUniformsRef.current;
     const numMats = Object.keys(materials).length;
-    const prevMats: Partial<Record<keyof typeof materials, MeshStandardMaterial>> = {};
+    const prevMats: Partial<
+      Record<keyof typeof materials, MeshStandardMaterial>
+    > = {};
     prevMaterialsRef.current = prevMats;
 
     Object.entries(materials).forEach(([key, mat], i) => {
@@ -332,27 +351,31 @@ export const WaldowAvatar = ({ isActive = true, enableThemeCrossDissolve = false
       }, i * 50);
 
       if (!isLowPerf) {
-        setTimeout(() => {
-          const clone = mat.clone();
-          applyDissolveShader(clone, prevDissolveUniformsRef.current);
-          if (WIREFRAME_MESHES.has(key)) {
-            applyWireframeShader(clone, wireframeUniformsRef.current);
-          }
-          clone.needsUpdate = true;
-          // @ts-expect-error dynamic key
-          prevMats[key] = clone;
-
-          const meshNames = MATERIAL_TO_PREV_MESH_NAMES[key] ?? [];
-          prevMeshGroupRef.current?.traverse((obj) => {
-            if (meshNames.includes(obj.name) && 'material' in obj) {
-              (obj as SkinnedMesh).material = clone;
+        setTimeout(
+          () => {
+            const clone = mat.clone();
+            applyDissolveShader(clone, prevDissolveUniformsRef.current);
+            if (WIREFRAME_MESHES.has(key)) {
+              applyWireframeShader(clone, wireframeUniformsRef.current);
             }
-          });
-        }, (numMats + i) * 50);
+            clone.needsUpdate = true;
+            // @ts-expect-error dynamic key
+            prevMats[key] = clone;
+
+            const meshNames = MATERIAL_TO_PREV_MESH_NAMES[key] ?? [];
+            prevMeshGroupRef.current?.traverse((obj) => {
+              if (meshNames.includes(obj.name) && 'material' in obj) {
+                (obj as SkinnedMesh).material = clone;
+              }
+            });
+          },
+          (numMats + i) * 50,
+        );
       }
     });
 
     materials.Wolf3D_Outfit_Top.color.set('cyan');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [materials]);
 
   useWireframeProgress(wireframeUniformsRef.current);
@@ -385,7 +408,8 @@ export const WaldowAvatar = ({ isActive = true, enableThemeCrossDissolve = false
     let progress: number;
     if (avatarTransitionStartRef.current !== null) {
       const t = Math.min(
-        (elapsed - avatarTransitionStartRef.current) / THEME_TRANSITION_DURATION,
+        (elapsed - avatarTransitionStartRef.current) /
+          THEME_TRANSITION_DURATION,
         1,
       );
       progress = avatarIsVisibleRef.current ? t : 1 - t;

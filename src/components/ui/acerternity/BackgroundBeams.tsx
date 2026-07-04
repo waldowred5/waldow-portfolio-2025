@@ -74,12 +74,18 @@ export const BackgroundBeams = memo(({ className }: { className?: string }) => {
   useEffect(() => {
     const applyColors = (theme: number) => {
       const el = containerRef.current;
-      if (!el) return;
-      el.style.setProperty('--beam-primary', convertToHex(THEME_COLORS[theme].primary));
+      if (!el) {
+        return;
+      }
+      el.style.setProperty(
+        '--beam-primary',
+        convertToHex(THEME_COLORS[theme].primary),
+      );
       el.style.setProperty('--beam-secondary', THEME_COLORS[theme].secondary);
     };
 
     applyColors(useTheme.getState().theme);
+
     return useTheme.subscribe((state) => applyColors(state.theme));
   }, []);
 
@@ -145,16 +151,29 @@ export const BackgroundBeams = memo(({ className }: { className?: string }) => {
             >
               <stop
                 stopOpacity={'0'}
-                style={{ stopColor: 'var(--beam-primary)', transition: stopTransition }}
+                style={{
+                  stopColor: 'var(--beam-primary)',
+                  transition: stopTransition,
+                }}
               />
               <stop
-                style={{ stopColor: 'var(--beam-primary)', transition: stopTransition }}
+                style={{
+                  stopColor: 'var(--beam-primary)',
+                  transition: stopTransition,
+                }}
               />
               <stop
                 offset={'32.5%'}
-                style={{ stopColor: 'var(--beam-secondary)', transition: stopTransition }}
+                style={{
+                  stopColor: 'var(--beam-secondary)',
+                  transition: stopTransition,
+                }}
               />
-              <stop offset={'100%'} stopOpacity={'0'} style={{ stopColor: 'transparent' }} />
+              <stop
+                offset={'100%'}
+                stopOpacity={'0'}
+                style={{ stopColor: 'transparent' }}
+              />
             </motion.linearGradient>
           ))}
 
@@ -164,7 +183,9 @@ export const BackgroundBeams = memo(({ className }: { className?: string }) => {
             cy={'0'}
             r={'1'}
             gradientUnits={'userSpaceOnUse'}
-            gradientTransform={'translate(352 34) rotate(90) scale(555 1560.62)'}
+            gradientTransform={
+              'translate(352 34) rotate(90) scale(555 1560.62)'
+            }
           >
             <stop offset={'0.0666667'} stopColor={'#d4d4d4'} />
             <stop offset={'0.243243'} stopColor={'#d4d4d4'} />
