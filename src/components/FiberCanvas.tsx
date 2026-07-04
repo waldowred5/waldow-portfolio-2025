@@ -26,10 +26,10 @@ export const FiberCanvas = () => {
     'Settings',
     () => ({
       'Reset Settings': button(() =>
-        set({ fov: defaultCameraValues.fov, statsDebugPanelEnabled: false }),
+        set({ fov: defaultCameraValues.fov, statsDebugPanelEnabled: import.meta.env.DEV }),
       ),
       statsDebugPanelEnabled: {
-        value: false,
+        value: import.meta.env.DEV,
       },
       camera: folder(
         {
@@ -54,6 +54,7 @@ export const FiberCanvas = () => {
           <Canvas
             legacy={true}
             className={'touch-none'}
+            dpr={[1, 2]}
             camera={{
               fov,
               near: 0.01,
@@ -61,7 +62,9 @@ export const FiberCanvas = () => {
             }}
             onCreated={handleCanvasCreated}
           >
-            {statsDebugPanelEnabled && <Perf position={'bottom-right'} />}
+            {statsDebugPanelEnabled && (
+              <Perf position={'top-left'} style={{ zIndex: 9999 }} />
+            )}
             <SceneManager />
           </Canvas>
         </KeyboardInputManager>

@@ -4,11 +4,14 @@ import { useEffect } from 'react';
 
 import { Coding } from '@/components/scenes/Coding.tsx';
 import { Hero } from '@/components/scenes/Hero/Hero.tsx';
+import { useAdaptiveQuality } from '@/hooks/useAdaptiveQuality.ts';
 import { useCanvasLoaded } from '@/store/useCanvasLoaded.ts';
 import { useCodingSceneReady } from '@/store/useCodingSceneReady.ts';
 import { SCENE, useScene } from '@/store/useScene.ts';
 
 export const SceneManager = () => {
+  useAdaptiveQuality();
+
   const { currentScene, updateScene } = useScene((state) => ({
     currentScene: state.currentScene,
     updateScene: state.updateScene,

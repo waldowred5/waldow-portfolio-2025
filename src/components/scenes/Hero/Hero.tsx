@@ -18,6 +18,7 @@ import {
   THEME_TRANSITION_DURATION,
 } from '@/lib/constants.ts';
 import { useMousePosition } from '@/store/useMousePosition.ts';
+import { usePerformanceTier } from '@/store/usePerformanceTier.ts';
 import type { ITheme } from '@/store/useTheme.ts';
 import { THEME_COLORS, useTheme } from '@/store/useTheme.ts';
 import { useViewMode, VIEW_MODE } from '@/store/useViewMode.ts';
@@ -99,6 +100,8 @@ export const Hero = ({ opacity = 1, isActive = true }: Props) => {
       theme: state.theme,
     };
   });
+
+  const isLowPerf = usePerformanceTier((s) => s.isLowPerf);
 
   const { innerWidth } = useWindowSize((state) => {
     return {
@@ -231,7 +234,8 @@ export const Hero = ({ opacity = 1, isActive = true }: Props) => {
   );
 
   const waveGeometry = useMemo(() => {
-    const geo = new PlaneGeometry(5, 12, 512, 512).toNonIndexed();
+    const segments = isLowPerf ? 128 : 512;
+    const geo = new PlaneGeometry(5, 12, segments, segments).toNonIndexed();
     const count = geo.attributes.position.count;
     const barycentric = new Float32Array(count * 3);
     for (let i = 0; i < count; i += 3) {
@@ -242,10 +246,11 @@ export const Hero = ({ opacity = 1, isActive = true }: Props) => {
     geo.setAttribute('aBarycentric', new BufferAttribute(barycentric, 3));
 
     return geo;
-  }, []);
+  }, [isLowPerf]);
 
   const sunGeometry = useMemo(() => {
-    const geo = new SphereGeometry(1, 64, 64).toNonIndexed();
+    const segments = isLowPerf ? 16 : 64;
+    const geo = new SphereGeometry(1, segments, segments).toNonIndexed();
     const count = geo.attributes.position.count;
     const barycentric = new Float32Array(count * 3);
     for (let i = 0; i < count; i += 3) {
@@ -256,7 +261,7 @@ export const Hero = ({ opacity = 1, isActive = true }: Props) => {
     geo.setAttribute('aBarycentric', new BufferAttribute(barycentric, 3));
 
     return geo;
-  }, []);
+  }, [isLowPerf]);
 
   const waterMaterial = useMemo(
     () =>
@@ -350,28 +355,38 @@ export const Hero = ({ opacity = 1, isActive = true }: Props) => {
 
     if (currentTheme !== prevThemeRef.current) {
       prevThemeRef.current = currentTheme;
-      // Capture current colors as old before swapping to new theme
-      waterMaterial.uniforms.uOldDepthColor.value.copy(
-        waterMaterial.uniforms.uDepthColor.value,
-      );
-      waterMaterial.uniforms.uOldSurfaceColor.value.copy(
-        waterMaterial.uniforms.uSurfaceColor.value,
-      );
-      sunMaterial.uniforms.uOldColor.value.copy(
-        sunMaterial.uniforms.uColor.value,
-      );
       const newColors = THEME_COLORS[currentTheme];
-      waterMaterial.uniforms.uDepthColor.value.set(newColors.secondary);
-      waterMaterial.uniforms.uSurfaceColor.value.set(...newColors.primary);
-      waterMaterial.uniforms.uEdgeColor.value.set(...newColors.tertiary);
-      sunMaterial.uniforms.uColor.value.set(...newColors.tertiary);
-      sunMaterial.uniforms.uThemeEdgeColor.value.set(...newColors.tertiary);
-      waterMaterial.uniforms.uThemeDissolveProgress.value = 0;
-      sunMaterial.uniforms.uThemeDissolveProgress.value = 0;
-      const themeSeed = Math.random() * 100;
-      waterMaterial.uniforms.uNoiseSeed.value = themeSeed;
-      sunMaterial.uniforms.uNoiseSeed.value = themeSeed;
-      themeTransitionStartRef.current = elapsed;
+
+      if (usePerformanceTier.getState().isLowPerf) {
+        waterMaterial.uniforms.uDepthColor.value.set(newColors.secondary);
+        waterMaterial.uniforms.uSurfaceColor.value.set(...newColors.primary);
+        waterMaterial.uniforms.uEdgeColor.value.set(...newColors.tertiary);
+        sunMaterial.uniforms.uColor.value.set(...newColors.tertiary);
+        sunMaterial.uniforms.uThemeEdgeColor.value.set(...newColors.tertiary);
+        waterMaterial.uniforms.uThemeDissolveProgress.value = 1;
+        sunMaterial.uniforms.uThemeDissolveProgress.value = 1;
+      } else {
+        waterMaterial.uniforms.uOldDepthColor.value.copy(
+          waterMaterial.uniforms.uDepthColor.value,
+        );
+        waterMaterial.uniforms.uOldSurfaceColor.value.copy(
+          waterMaterial.uniforms.uSurfaceColor.value,
+        );
+        sunMaterial.uniforms.uOldColor.value.copy(
+          sunMaterial.uniforms.uColor.value,
+        );
+        waterMaterial.uniforms.uDepthColor.value.set(newColors.secondary);
+        waterMaterial.uniforms.uSurfaceColor.value.set(...newColors.primary);
+        waterMaterial.uniforms.uEdgeColor.value.set(...newColors.tertiary);
+        sunMaterial.uniforms.uColor.value.set(...newColors.tertiary);
+        sunMaterial.uniforms.uThemeEdgeColor.value.set(...newColors.tertiary);
+        waterMaterial.uniforms.uThemeDissolveProgress.value = 0;
+        sunMaterial.uniforms.uThemeDissolveProgress.value = 0;
+        const themeSeed = Math.random() * 100;
+        waterMaterial.uniforms.uNoiseSeed.value = themeSeed;
+        sunMaterial.uniforms.uNoiseSeed.value = themeSeed;
+        themeTransitionStartRef.current = elapsed;
+      }
     }
 
     const toWireframe = currentViewMode === VIEW_MODE.WIREFRAME;
@@ -421,7 +436,7 @@ export const Hero = ({ opacity = 1, isActive = true }: Props) => {
       />
 
       {/* FX */}
-      {isActive && (
+      {isActive && !isLowPerf && (
         <EffectComposer>
           <Bloom
             intensity={bloomDefaultValues.intensity}

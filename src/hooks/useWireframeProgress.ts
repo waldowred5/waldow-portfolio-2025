@@ -3,6 +3,7 @@ import { useRef } from 'react';
 
 import { THEME_TRANSITION_DURATION } from '@/lib/constants.ts';
 import type { WireframeUniforms } from '@/lib/wireframeShader.ts';
+import { usePerformanceTier } from '@/store/usePerformanceTier.ts';
 import { useViewMode, VIEW_MODE, type ViewMode } from '@/store/useViewMode.ts';
 
 export const useWireframeProgress = (uniforms: WireframeUniforms) => {
@@ -10,6 +11,11 @@ export const useWireframeProgress = (uniforms: WireframeUniforms) => {
   const transitionStartRef = useRef<number | null>(null);
 
   useFrame(({ clock }) => {
+    if (usePerformanceTier.getState().isLowPerf) {
+      uniforms.uWireframeProgress.value = 0;
+      return;
+    }
+
     const currentViewMode = useViewMode.getState().viewMode;
     const elapsed = clock.getElapsedTime();
 
