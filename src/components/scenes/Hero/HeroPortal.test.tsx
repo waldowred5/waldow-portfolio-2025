@@ -51,4 +51,17 @@ describe('HeroPortal', () => {
     expect(event.clientX).toBe(window.innerWidth / 2 + 100);
     expect(event.clientY).toBe(window.innerHeight / 2 - 50);
   });
+
+  it('applies a forwarded cartoon toggle', async () => {
+    const { useToonMode } = await import('@/store/useToonMode.ts');
+    render(<HeroPortal />);
+    fireEvent(
+      window,
+      new MessageEvent('message', {
+        data: { type: 'TOON_CHANGE', isToon: true },
+      }),
+    );
+    expect(useToonMode.getState().isToon).toBe(true);
+    useToonMode.setState({ isToon: false });
+  });
 });

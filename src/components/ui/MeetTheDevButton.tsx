@@ -21,7 +21,7 @@ export const MeetTheDevButton = ({ isVisible = true }: Props) => {
       aria-busy={!isReady}
       aria-label={isReady ? 'Meet the Dev' : 'Loading Meet the Dev scene'}
       onClick={() => requestScene(SCENE.CODING)}
-      className={`group relative flex items-center justify-center w-[260px] h-12 md:h-14 rounded-md border-1 border-white overflow-hidden transition-colors duration-700 active:scale-[98%] ${isReady ? 'backdrop-blur-[10px] backdrop-saturate-[15] bg-black/50 cursor-pointer' : 'bg-transparent cursor-wait'}`}
+      className={`group relative flex items-center justify-center w-[292px] h-12 md:h-14 rounded-md border-1 border-white overflow-hidden transition-colors duration-700 active:scale-[98%] ${isReady ? 'backdrop-blur-[10px] backdrop-saturate-[15] bg-black/50 cursor-pointer' : 'bg-transparent cursor-wait'}`}
     >
       <AnimatePresence>
         {!isReady && (

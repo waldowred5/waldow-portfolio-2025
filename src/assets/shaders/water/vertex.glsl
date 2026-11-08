@@ -11,9 +11,11 @@ uniform float uSmallWavesSpeed;
 uniform float uSmallWavesIterations;
 
 uniform float uNoiseSeed;
+uniform float uToonNoiseSeed;
 
 varying float vElevation;
 varying float vDissolveNoise;
+varying float vToonNoise;
 varying vec3 vBarycentric;
 
 // Classic Perlin 3D Noise
@@ -130,5 +132,6 @@ void main() {
     // Varyings
     vElevation = elevation;
     vDissolveNoise = clamp(cnoise(vec3(uv * 5.0, uNoiseSeed)) * 0.5 + 0.5, 0.0, 1.0);
+    vToonNoise = clamp(cnoise(vec3(uv * 5.0, uToonNoiseSeed)) * 0.5 + 0.5, 0.0, 1.0);
     vBarycentric = aBarycentric;
 }

@@ -1,6 +1,8 @@
 import type { BufferGeometry } from 'three';
 import { BufferAttribute, type Material } from 'three';
 
+import { registerShaderPatch } from '@/lib/shaderPatches.ts';
+
 export const addBarycentricCoords = (geo: BufferGeometry): BufferGeometry => {
   const nonIndexed = geo.toNonIndexed();
   const count = nonIndexed.attributes.position.count;
@@ -104,5 +106,6 @@ export const applyWireframeShader = (
         `#include <clipping_planes_fragment>\n${FRAGMENT_DISCARD}`,
       );
   };
+  registerShaderPatch(mat, 'wireframe');
   mat.needsUpdate = true;
 };

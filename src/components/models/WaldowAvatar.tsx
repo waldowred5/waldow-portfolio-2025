@@ -19,6 +19,8 @@ import type { GLTF } from 'three-stdlib';
 
 import { useWireframeProgress } from '@/hooks/useWireframeProgress.ts';
 import { THEME_TRANSITION_DURATION } from '@/lib/constants.ts';
+import { registerShaderPatch } from '@/lib/shaderPatches.ts';
+import type { ToonStyle } from '@/lib/toonShader.ts';
 import {
   addBarycentricCoords,
   applyWireframeShader,
@@ -155,6 +157,7 @@ const applyDissolveShader = (
         totalEmissiveRadiance += uDissolveEdgeColor * dissolveEdgeFactor;`,
       );
   };
+  registerShaderPatch(mat, 'dissolve');
   mat.needsUpdate = true;
 };
 
@@ -338,6 +341,8 @@ export const WaldowAvatar = ({
     prevMaterialsRef.current = prevMats;
 
     Object.entries(materials).forEach(([key, mat]) => {
+      // Flat colours so the avatar reads as a cartoon in the dim scene lighting
+      mat.userData.toonStyle = 'flat' satisfies ToonStyle;
       applyDissolveShader(mat, dissolveUniforms);
       if (WIREFRAME_MESHES.has(key)) {
         applyWireframeShader(mat, wireframeUniformsRef.current);

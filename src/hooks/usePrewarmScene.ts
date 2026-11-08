@@ -67,6 +67,14 @@ export const usePrewarmScene = ({
       const previousToneMapping = gl.toneMapping;
       target.visible = true;
       hidden.visible = false;
+      // Objects flagged for prewarm (e.g. outlines shown only in some modes) are compiled even though they start hidden
+      const prewarmOnly: Object3D[] = [];
+      target.traverse((object) => {
+        if (object.userData.prewarm && !object.visible) {
+          object.visible = true;
+          prewarmOnly.push(object);
+        }
+      });
       gl.toneMapping = toneMapping;
       // Programs are created synchronously here and linked in parallel off the main thread.
       // The second pass covers the linear, non-tone-mapped variants used by offscreen passes (e.g. transmission).
@@ -79,6 +87,9 @@ export const usePrewarmScene = ({
       offscreenTarget.dispose();
       const compiled = Promise.all([onscreen, offscreen]);
       gl.toneMapping = previousToneMapping;
+      prewarmOnly.forEach((object) => {
+        object.visible = false;
+      });
       target.visible = targetWasVisible;
       hidden.visible = hiddenWasVisible;
       texturesRef.current = collectTextures(target);
