@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react';
-import { BsHouseDoor, BsLayersHalf, BsPerson } from 'react-icons/bs';
+import {
+  BsEmojiSunglasses,
+  BsHouseDoor,
+  BsLayersHalf,
+  BsPerson,
+} from 'react-icons/bs';
 import { FaGithub, FaLinkedin } from 'react-icons/fa';
 import { PiPaintBucketFill } from 'react-icons/pi';
 import { RiFullscreenExitLine, RiFullscreenFill } from 'react-icons/ri';
@@ -9,6 +14,7 @@ import { useCodingSceneReady } from '@/store/useCodingSceneReady.ts';
 import { SCENE, useScene } from '@/store/useScene.ts';
 import { useTheme } from '@/store/useTheme.ts';
 import { useToggleFullscreen } from '@/store/useToggleFullscreen.ts';
+import { useToonMode } from '@/store/useToonMode.ts';
 import { useViewMode, VIEW_MODE } from '@/store/useViewMode.ts';
 
 import { Icon } from './Icon.tsx';
@@ -38,6 +44,10 @@ export const ActionBar = () => {
   const { viewMode, toggleViewMode } = useViewMode((state) => ({
     viewMode: state.viewMode,
     toggleViewMode: state.toggleViewMode,
+  }));
+  const { isToon, toggleToon } = useToonMode((state) => ({
+    isToon: state.isToon,
+    toggleToon: state.toggleToon,
   }));
 
   return (
@@ -101,6 +111,26 @@ export const ActionBar = () => {
                 }
               >
                 <BsLayersHalf />
+              </Icon>
+            </div>
+
+            <div
+              className={`${isLoaded ? 'cursor-pointer' : 'cursor-not-allowed opacity-30'}`}
+              onMouseEnter={() =>
+                isLoaded && setText(isToon ? 'EXIT CARTOONIFY' : 'CARTOONIFY')
+              }
+            >
+              <Icon
+                onClick={
+                  isLoaded
+                    ? () => {
+                        toggleToon();
+                        setText(isToon ? 'CARTOONIFY' : 'EXIT CARTOONIFY');
+                      }
+                    : undefined
+                }
+              >
+                <BsEmojiSunglasses />
               </Icon>
             </div>
 

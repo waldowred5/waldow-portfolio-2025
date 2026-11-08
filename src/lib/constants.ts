@@ -1,2 +1,3 @@
 export const TABLET_BREAKPOINT = 768;
 export const THEME_TRANSITION_DURATION = 0.9;
+export const SCENE_FADE_DURATION_MS = 200;

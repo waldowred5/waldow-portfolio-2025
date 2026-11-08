@@ -4,9 +4,9 @@ Command: npx gltfjsx@6.5.3 ./public/waldow.glb
 */
 
 import { useAnimations, useFBX, useGLTF } from '@react-three/drei';
-import { useFrame, useLoader, useThree } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import { button, folder, useControls } from 'leva';
-import { Suspense, useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import type { JSX } from 'react/jsx-runtime';
 import {
   Color,
@@ -16,10 +16,11 @@ import {
   Vector3,
 } from 'three';
 import type { GLTF } from 'three-stdlib';
-import { FBXLoader } from 'three-stdlib';
 
 import { useWireframeProgress } from '@/hooks/useWireframeProgress.ts';
 import { THEME_TRANSITION_DURATION } from '@/lib/constants.ts';
+import { registerShaderPatch } from '@/lib/shaderPatches.ts';
+import type { ToonStyle } from '@/lib/toonShader.ts';
 import {
   addBarycentricCoords,
   applyWireframeShader,
@@ -156,6 +157,7 @@ const applyDissolveShader = (
         totalEmissiveRadiance += uDissolveEdgeColor * dissolveEdgeFactor;`,
       );
   };
+  registerShaderPatch(mat, 'dissolve');
   mat.needsUpdate = true;
 };
 
@@ -326,49 +328,45 @@ export const WaldowAvatar = ({
     });
   }, [materials, isLowPerf, enableThemeCrossDissolve]);
 
-  // Stagger shader compilation. On high-perf also create prev material set for cross-dissolve.
+  // Applies shaders up front so the scene prewarm compiles the final program variants. On high-perf also creates the prev material set for cross-dissolve.
   useEffect(() => {
     if (shadersAppliedRef.current) {
       return;
     }
     shadersAppliedRef.current = true;
     const dissolveUniforms = dissolveUniformsRef.current;
-    const numMats = Object.keys(materials).length;
     const prevMats: Partial<
       Record<keyof typeof materials, MeshStandardMaterial>
     > = {};
     prevMaterialsRef.current = prevMats;
 
-    Object.entries(materials).forEach(([key, mat], i) => {
-      setTimeout(() => {
-        applyDissolveShader(mat, dissolveUniforms);
-        if (WIREFRAME_MESHES.has(key)) {
-          applyWireframeShader(mat, wireframeUniformsRef.current);
-        }
-        mat.needsUpdate = true;
-      }, i * 50);
-
-      if (!isLowPerf) {
-        setTimeout(
-          () => {
-            const clone = mat.clone();
-            applyDissolveShader(clone, prevDissolveUniformsRef.current);
-            if (WIREFRAME_MESHES.has(key)) {
-              applyWireframeShader(clone, wireframeUniformsRef.current);
-            }
-            clone.needsUpdate = true;
-            prevMats[key as keyof typeof materials] = clone;
-
-            const meshNames = MATERIAL_TO_PREV_MESH_NAMES[key] ?? [];
-            prevMeshGroupRef.current?.traverse((obj) => {
-              if (meshNames.includes(obj.name) && 'material' in obj) {
-                (obj as SkinnedMesh).material = clone;
-              }
-            });
-          },
-          (numMats + i) * 50,
-        );
+    Object.entries(materials).forEach(([key, mat]) => {
+      // Flat colours so the avatar reads as a cartoon in the dim scene lighting
+      mat.userData.toonStyle = 'flat' satisfies ToonStyle;
+      applyDissolveShader(mat, dissolveUniforms);
+      if (WIREFRAME_MESHES.has(key)) {
+        applyWireframeShader(mat, wireframeUniformsRef.current);
       }
+      mat.needsUpdate = true;
+
+      if (isLowPerf) {
+        return;
+      }
+
+      const clone = mat.clone();
+      applyDissolveShader(clone, prevDissolveUniformsRef.current);
+      if (WIREFRAME_MESHES.has(key)) {
+        applyWireframeShader(clone, wireframeUniformsRef.current);
+      }
+      clone.needsUpdate = true;
+      prevMats[key as keyof typeof materials] = clone;
+
+      const meshNames = MATERIAL_TO_PREV_MESH_NAMES[key] ?? [];
+      prevMeshGroupRef.current?.traverse((obj) => {
+        if (meshNames.includes(obj.name) && 'material' in obj) {
+          (obj as SkinnedMesh).material = clone;
+        }
+      });
     });
 
     materials.Wolf3D_Outfit_Top.color.set('cyan');
@@ -440,44 +438,109 @@ export const WaldowAvatar = ({
   });
 
   return (
-    <Suspense fallback={'Loading...'}>
-      <group ref={group} {...props} dispose={null}>
-        <Mouse hips={nodes.Hips} />
-        <group
-          scale={scale}
-          rotation={[rotation.x, rotation.y, rotation.z]}
-          position={[position.x, position.y, position.z]}
-        >
-          <primitive object={nodes.Hips} />
+    <group ref={group} {...props} dispose={null}>
+      <Mouse hips={nodes.Hips} />
+      <group
+        scale={scale}
+        rotation={[rotation.x, rotation.y, rotation.z]}
+        position={[position.x, position.y, position.z]}
+      >
+        <primitive object={nodes.Hips} />
 
-          {/* Main meshes — current theme, camera-distance dissolve */}
+        {/* Main meshes — current theme, camera-distance dissolve */}
+        <skinnedMesh
+          geometry={convertedGeometries.Wolf3D_Hair}
+          material={materials.Wolf3D_Hair}
+          skeleton={nodes.Wolf3D_Hair.skeleton}
+        />
+        <skinnedMesh
+          geometry={convertedGeometries.Wolf3D_Outfit_Top}
+          material={materials.Wolf3D_Outfit_Top}
+          skeleton={nodes.Wolf3D_Outfit_Top.skeleton}
+        />
+        <skinnedMesh
+          geometry={convertedGeometries.Wolf3D_Outfit_Bottom}
+          material={materials.Wolf3D_Outfit_Bottom}
+          skeleton={nodes.Wolf3D_Outfit_Bottom.skeleton}
+        />
+        <skinnedMesh
+          geometry={convertedGeometries.Wolf3D_Outfit_Footwear}
+          material={materials.Wolf3D_Outfit_Footwear}
+          skeleton={nodes.Wolf3D_Outfit_Footwear.skeleton}
+        />
+        <skinnedMesh
+          geometry={convertedGeometries.Wolf3D_Body}
+          material={materials.Wolf3D_Body}
+          skeleton={nodes.Wolf3D_Body.skeleton}
+        />
+        <skinnedMesh
+          name={'EyeLeft'}
+          geometry={convertedGeometries.EyeLeft}
+          material={materials.Wolf3D_Eye}
+          skeleton={nodes.EyeLeft.skeleton}
+          morphTargetDictionary={nodes.EyeLeft.morphTargetDictionary}
+          morphTargetInfluences={nodes.EyeLeft.morphTargetInfluences}
+        />
+        <skinnedMesh
+          name={'EyeRight'}
+          geometry={convertedGeometries.EyeRight}
+          material={materials.Wolf3D_Eye}
+          skeleton={nodes.EyeRight.skeleton}
+          morphTargetDictionary={nodes.EyeRight.morphTargetDictionary}
+          morphTargetInfluences={nodes.EyeRight.morphTargetInfluences}
+        />
+        <skinnedMesh
+          name={'Wolf3D_Head'}
+          geometry={convertedGeometries.Wolf3D_Head}
+          material={materials.Wolf3D_Skin}
+          skeleton={nodes.Wolf3D_Head.skeleton}
+          morphTargetDictionary={nodes.Wolf3D_Head.morphTargetDictionary}
+          morphTargetInfluences={nodes.Wolf3D_Head.morphTargetInfluences}
+        />
+        <skinnedMesh
+          name={'Wolf3D_Teeth'}
+          geometry={convertedGeometries.Wolf3D_Teeth}
+          material={materials.Wolf3D_Teeth}
+          skeleton={nodes.Wolf3D_Teeth.skeleton}
+          morphTargetDictionary={nodes.Wolf3D_Teeth.morphTargetDictionary}
+          morphTargetInfluences={nodes.Wolf3D_Teeth.morphTargetInfluences}
+        />
+
+        {/* Old-theme overlay — dissolves out on theme change (desktop only).
+              Starts invisible; materials swapped imperatively when prev mats are ready. */}
+        <group ref={prevMeshGroupRef} visible={false}>
           <skinnedMesh
+            name={'prev_Wolf3D_Hair'}
             geometry={convertedGeometries.Wolf3D_Hair}
             material={materials.Wolf3D_Hair}
             skeleton={nodes.Wolf3D_Hair.skeleton}
           />
           <skinnedMesh
+            name={'prev_Wolf3D_Outfit_Top'}
             geometry={convertedGeometries.Wolf3D_Outfit_Top}
             material={materials.Wolf3D_Outfit_Top}
             skeleton={nodes.Wolf3D_Outfit_Top.skeleton}
           />
           <skinnedMesh
+            name={'prev_Wolf3D_Outfit_Bottom'}
             geometry={convertedGeometries.Wolf3D_Outfit_Bottom}
             material={materials.Wolf3D_Outfit_Bottom}
             skeleton={nodes.Wolf3D_Outfit_Bottom.skeleton}
           />
           <skinnedMesh
+            name={'prev_Wolf3D_Outfit_Footwear'}
             geometry={convertedGeometries.Wolf3D_Outfit_Footwear}
             material={materials.Wolf3D_Outfit_Footwear}
             skeleton={nodes.Wolf3D_Outfit_Footwear.skeleton}
           />
           <skinnedMesh
+            name={'prev_Wolf3D_Body'}
             geometry={convertedGeometries.Wolf3D_Body}
             material={materials.Wolf3D_Body}
             skeleton={nodes.Wolf3D_Body.skeleton}
           />
           <skinnedMesh
-            name={'EyeLeft'}
+            name={'prev_EyeLeft'}
             geometry={convertedGeometries.EyeLeft}
             material={materials.Wolf3D_Eye}
             skeleton={nodes.EyeLeft.skeleton}
@@ -485,7 +548,7 @@ export const WaldowAvatar = ({
             morphTargetInfluences={nodes.EyeLeft.morphTargetInfluences}
           />
           <skinnedMesh
-            name={'EyeRight'}
+            name={'prev_EyeRight'}
             geometry={convertedGeometries.EyeRight}
             material={materials.Wolf3D_Eye}
             skeleton={nodes.EyeRight.skeleton}
@@ -493,7 +556,7 @@ export const WaldowAvatar = ({
             morphTargetInfluences={nodes.EyeRight.morphTargetInfluences}
           />
           <skinnedMesh
-            name={'Wolf3D_Head'}
+            name={'prev_Wolf3D_Head'}
             geometry={convertedGeometries.Wolf3D_Head}
             material={materials.Wolf3D_Skin}
             skeleton={nodes.Wolf3D_Head.skeleton}
@@ -501,85 +564,15 @@ export const WaldowAvatar = ({
             morphTargetInfluences={nodes.Wolf3D_Head.morphTargetInfluences}
           />
           <skinnedMesh
-            name={'Wolf3D_Teeth'}
+            name={'prev_Wolf3D_Teeth'}
             geometry={convertedGeometries.Wolf3D_Teeth}
             material={materials.Wolf3D_Teeth}
             skeleton={nodes.Wolf3D_Teeth.skeleton}
             morphTargetDictionary={nodes.Wolf3D_Teeth.morphTargetDictionary}
             morphTargetInfluences={nodes.Wolf3D_Teeth.morphTargetInfluences}
           />
-
-          {/* Old-theme overlay — dissolves out on theme change (desktop only).
-              Starts invisible; materials swapped imperatively when prev mats are ready. */}
-          <group ref={prevMeshGroupRef} visible={false}>
-            <skinnedMesh
-              name={'prev_Wolf3D_Hair'}
-              geometry={convertedGeometries.Wolf3D_Hair}
-              material={materials.Wolf3D_Hair}
-              skeleton={nodes.Wolf3D_Hair.skeleton}
-            />
-            <skinnedMesh
-              name={'prev_Wolf3D_Outfit_Top'}
-              geometry={convertedGeometries.Wolf3D_Outfit_Top}
-              material={materials.Wolf3D_Outfit_Top}
-              skeleton={nodes.Wolf3D_Outfit_Top.skeleton}
-            />
-            <skinnedMesh
-              name={'prev_Wolf3D_Outfit_Bottom'}
-              geometry={convertedGeometries.Wolf3D_Outfit_Bottom}
-              material={materials.Wolf3D_Outfit_Bottom}
-              skeleton={nodes.Wolf3D_Outfit_Bottom.skeleton}
-            />
-            <skinnedMesh
-              name={'prev_Wolf3D_Outfit_Footwear'}
-              geometry={convertedGeometries.Wolf3D_Outfit_Footwear}
-              material={materials.Wolf3D_Outfit_Footwear}
-              skeleton={nodes.Wolf3D_Outfit_Footwear.skeleton}
-            />
-            <skinnedMesh
-              name={'prev_Wolf3D_Body'}
-              geometry={convertedGeometries.Wolf3D_Body}
-              material={materials.Wolf3D_Body}
-              skeleton={nodes.Wolf3D_Body.skeleton}
-            />
-            <skinnedMesh
-              name={'prev_EyeLeft'}
-              geometry={convertedGeometries.EyeLeft}
-              material={materials.Wolf3D_Eye}
-              skeleton={nodes.EyeLeft.skeleton}
-              morphTargetDictionary={nodes.EyeLeft.morphTargetDictionary}
-              morphTargetInfluences={nodes.EyeLeft.morphTargetInfluences}
-            />
-            <skinnedMesh
-              name={'prev_EyeRight'}
-              geometry={convertedGeometries.EyeRight}
-              material={materials.Wolf3D_Eye}
-              skeleton={nodes.EyeRight.skeleton}
-              morphTargetDictionary={nodes.EyeRight.morphTargetDictionary}
-              morphTargetInfluences={nodes.EyeRight.morphTargetInfluences}
-            />
-            <skinnedMesh
-              name={'prev_Wolf3D_Head'}
-              geometry={convertedGeometries.Wolf3D_Head}
-              material={materials.Wolf3D_Skin}
-              skeleton={nodes.Wolf3D_Head.skeleton}
-              morphTargetDictionary={nodes.Wolf3D_Head.morphTargetDictionary}
-              morphTargetInfluences={nodes.Wolf3D_Head.morphTargetInfluences}
-            />
-            <skinnedMesh
-              name={'prev_Wolf3D_Teeth'}
-              geometry={convertedGeometries.Wolf3D_Teeth}
-              material={materials.Wolf3D_Teeth}
-              skeleton={nodes.Wolf3D_Teeth.skeleton}
-              morphTargetDictionary={nodes.Wolf3D_Teeth.morphTargetDictionary}
-              morphTargetInfluences={nodes.Wolf3D_Teeth.morphTargetInfluences}
-            />
-          </group>
         </group>
       </group>
-    </Suspense>
+    </group>
   );
 };
-
-useGLTF.preload('/models/waldow.glb');
-useLoader.preload(FBXLoader, '/animations/typing.fbx');

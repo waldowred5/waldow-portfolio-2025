@@ -13,10 +13,13 @@ import {
 } from 'three';
 
 import { HeroText } from '@/components/ui/HeroText.tsx';
+import { useToonAmount } from '@/hooks/useToonAmount.ts';
+import { useToonControls } from '@/hooks/useToonControls.ts';
 import {
   TABLET_BREAKPOINT,
   THEME_TRANSITION_DURATION,
 } from '@/lib/constants.ts';
+import { toonUniforms } from '@/lib/toonShader.ts';
 import { useMousePosition } from '@/store/useMousePosition.ts';
 import { usePerformanceTier } from '@/store/usePerformanceTier.ts';
 import { THEME_COLORS, useTheme } from '@/store/useTheme.ts';
@@ -91,10 +94,20 @@ const sunFragmentShader = /* glsl */ `
 interface Props {
   opacity?: number;
   isActive?: boolean;
+  showCta?: boolean;
+  isRevealed?: boolean;
 }
 
-export const Hero = ({ opacity = 1, isActive = true }: Props) => {
+export const Hero = ({
+  opacity = 1,
+  isActive = true,
+  showCta = true,
+  isRevealed = true,
+}: Props) => {
   const isLowPerf = usePerformanceTier((s) => s.isLowPerf);
+  // Hero stays mounted in every canvas (including the portal), so it owns the cartoon blend for all scenes
+  useToonAmount();
+  useToonControls();
 
   const { innerWidth } = useWindowSize((state) => {
     return {
@@ -276,6 +289,7 @@ export const Hero = ({ opacity = 1, isActive = true }: Props) => {
         uWireframeProgress: { value: 0 },
         uThemeDissolveProgress: { value: 0 },
         uNoiseSeed: { value: 42.0 },
+        ...toonUniforms,
         uEdge: { value: 0.08 },
         uEdgeColor: {
           value: new Color(...THEME_COLORS[initialTheme].tertiary),
@@ -467,7 +481,7 @@ export const Hero = ({ opacity = 1, isActive = true }: Props) => {
             htmlPosition.z,
           ]}
         >
-          <HeroText />
+          <HeroText showCta={showCta} isRevealed={isRevealed} />
         </Html>
       )}
     </>

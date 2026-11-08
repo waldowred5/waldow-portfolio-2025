@@ -1,10 +1,21 @@
 import { act, renderHook } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { SCENE_FADE_DURATION_MS } from '@/lib/constants.ts';
 
 import { SCENE, useScene } from './useScene';
 
+beforeEach(() => {
+  vi.useFakeTimers();
+});
+
 afterEach(() => {
-  useScene.setState({ currentScene: SCENE.HERO });
+  vi.useRealTimers();
+  useScene.setState({
+    currentScene: SCENE.HERO,
+    pendingScene: null,
+    isFadedOut: false,
+  });
 });
 
 describe('useScene', () => {
@@ -23,5 +34,58 @@ describe('useScene', () => {
     const { result } = renderHook(() => useScene());
     act(() => result.current.updateScene('CUSTOM_SCENE'));
     expect(result.current.currentScene).toBe('CUSTOM_SCENE');
+  });
+
+  it('requestScene switches from the hero immediately without fading', () => {
+    useScene.getState().requestScene(SCENE.CODING);
+    expect(useScene.getState()).toMatchObject({
+      currentScene: SCENE.CODING,
+      isFadedOut: false,
+    });
+  });
+
+  it('leaving the coding scene waits for commitScene', () => {
+    useScene.setState({ currentScene: SCENE.CODING });
+    useScene.getState().requestScene(SCENE.HERO);
+    expect(useScene.getState()).toMatchObject({
+      currentScene: SCENE.CODING,
+      pendingScene: SCENE.HERO,
+      isFadedOut: false,
+    });
+  });
+
+  it('commitScene fades to black, swaps, then fades back in', () => {
+    useScene.setState({ currentScene: SCENE.CODING, pendingScene: SCENE.HERO });
+    useScene.getState().commitScene();
+    expect(useScene.getState()).toMatchObject({
+      currentScene: SCENE.CODING,
+      isFadedOut: true,
+    });
+
+    vi.advanceTimersByTime(SCENE_FADE_DURATION_MS);
+    expect(useScene.getState()).toMatchObject({
+      currentScene: SCENE.HERO,
+      pendingScene: null,
+      isFadedOut: false,
+    });
+  });
+
+  it('commitScene ignores repeat calls while faded out', () => {
+    useScene.setState({ currentScene: SCENE.CODING, pendingScene: SCENE.HERO });
+    useScene.getState().commitScene();
+    useScene.setState({ pendingScene: 'OTHER' });
+    useScene.getState().commitScene();
+    vi.advanceTimersByTime(SCENE_FADE_DURATION_MS);
+    expect(useScene.getState().currentScene).toBe(SCENE.HERO);
+  });
+
+  it('commitScene does nothing without a pending scene', () => {
+    useScene.getState().commitScene();
+    expect(useScene.getState().isFadedOut).toBe(false);
+  });
+
+  it('requestScene does nothing for the current scene', () => {
+    useScene.getState().requestScene(SCENE.HERO);
+    expect(useScene.getState().currentScene).toBe(SCENE.HERO);
   });
 });

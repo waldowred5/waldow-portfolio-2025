@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { useCanvasLoaded } from '@/store/useCanvasLoaded.ts';
 import { THEME, useTheme } from '@/store/useTheme.ts';
+import { useToonMode } from '@/store/useToonMode.ts';
 import { useViewMode, VIEW_MODE } from '@/store/useViewMode.ts';
 
 import { ActionBar } from './ActionBar';
@@ -16,6 +17,7 @@ afterEach(() => {
   });
   useTheme.setState({ theme: THEME.ELECTRIC_BLUE });
   useViewMode.setState({ viewMode: VIEW_MODE.FULL });
+  useToonMode.setState({ isToon: false });
 });
 
 describe('ActionBar', () => {
@@ -77,10 +79,27 @@ describe('ActionBar', () => {
     });
     const { container } = render(<ActionBar />);
     const themeIcon = container
-      .querySelectorAll('.cursor-pointer')[2]
+      .querySelectorAll('.cursor-pointer')[3]
       .querySelector('div');
     fireEvent.click(themeIcon!);
     expect(useTheme.getState().theme).toBe(THEME.FIRE);
+  });
+
+  it('cartoonify icon toggles toon mode and its hover label', () => {
+    useCanvasLoaded.setState({
+      isLoaded: true,
+      isCanvasReady: true,
+      isFontsReady: true,
+      isGlowFading: false,
+    });
+    const { container, getByText } = render(<ActionBar />);
+    const toonDiv = container.querySelectorAll('.cursor-pointer')[2];
+    fireEvent.mouseEnter(toonDiv);
+    expect(getByText('CARTOONIFY')).toBeInTheDocument();
+
+    fireEvent.click(toonDiv.querySelector('div')!);
+    expect(useToonMode.getState().isToon).toBe(true);
+    expect(getByText('EXIT CARTOONIFY')).toBeInTheDocument();
   });
 
   it('shows fullscreen hover label', () => {
@@ -98,7 +117,7 @@ describe('ActionBar', () => {
       isGlowFading: false,
     });
     const { container, getByText } = render(<ActionBar />);
-    const themeDiv = container.querySelectorAll('.cursor-pointer')[2];
+    const themeDiv = container.querySelectorAll('.cursor-pointer')[3];
     fireEvent.mouseEnter(themeDiv);
     expect(getByText('CHANGE SITE THEME')).toBeInTheDocument();
   });

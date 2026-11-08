@@ -3,7 +3,9 @@ import { useEffect } from 'react';
 
 import { Hero } from '@/components/scenes/Hero/Hero.tsx';
 import { Background } from '@/components/ui/Background.tsx';
+import { POINTER_OFFSET_MESSAGE } from '@/hooks/useForwardPointerToIframe.ts';
 import { useTheme } from '@/store/useTheme.ts';
+import { useToonMode } from '@/store/useToonMode.ts';
 import { useViewMode } from '@/store/useViewMode.ts';
 
 export const HeroPortal = () => {
@@ -14,6 +16,18 @@ export const HeroPortal = () => {
       }
       if (event.data?.type === 'VIEW_MODE_CHANGE') {
         useViewMode.setState({ viewMode: event.data.viewMode });
+      }
+      if (event.data?.type === 'TOON_CHANGE') {
+        useToonMode.setState({ isToon: event.data.isToon });
+      }
+      // Replays the parent's pointer offset as a local mousemove so the parallax matches the full-size hero
+      if (event.data?.type === POINTER_OFFSET_MESSAGE) {
+        window.dispatchEvent(
+          new MouseEvent('mousemove', {
+            clientX: window.innerWidth / 2 + event.data.x,
+            clientY: window.innerHeight / 2 + event.data.y,
+          }),
+        );
       }
     };
 
@@ -35,7 +49,7 @@ export const HeroPortal = () => {
         }}
         legacy={true}
       >
-        <Hero />
+        <Hero showCta={false} />
       </Canvas>
     </div>
   );
