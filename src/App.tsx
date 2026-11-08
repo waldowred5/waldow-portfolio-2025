@@ -7,6 +7,7 @@ import { AboutMePanel } from '@/components/ui/AboutMePanel.tsx';
 import { ActionBar } from '@/components/ui/ActionBar.tsx';
 import { Background } from '@/components/ui/Background.tsx';
 import { Hero2DFallback } from '@/components/ui/Hero2DFallback.tsx';
+import { SceneFade } from '@/components/ui/SceneFade.tsx';
 import { useCanvasLoaded } from '@/store/useCanvasLoaded.ts';
 
 // FEATURES TODO:
@@ -32,6 +33,7 @@ export const App = () => {
         <Background />
         <Hero2DFallback />
         <FiberCanvas />
+        <SceneFade />
         <ActionBar />
         <AboutMePanel />
       </div>

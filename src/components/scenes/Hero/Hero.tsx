@@ -91,9 +91,16 @@ const sunFragmentShader = /* glsl */ `
 interface Props {
   opacity?: number;
   isActive?: boolean;
+  showCta?: boolean;
+  isRevealed?: boolean;
 }
 
-export const Hero = ({ opacity = 1, isActive = true }: Props) => {
+export const Hero = ({
+  opacity = 1,
+  isActive = true,
+  showCta = true,
+  isRevealed = true,
+}: Props) => {
   const isLowPerf = usePerformanceTier((s) => s.isLowPerf);
 
   const { innerWidth } = useWindowSize((state) => {
@@ -467,7 +474,7 @@ export const Hero = ({ opacity = 1, isActive = true }: Props) => {
             htmlPosition.z,
           ]}
         >
-          <HeroText />
+          <HeroText showCta={showCta} isRevealed={isRevealed} />
         </Html>
       )}
     </>

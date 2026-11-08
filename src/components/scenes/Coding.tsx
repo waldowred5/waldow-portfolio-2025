@@ -12,10 +12,13 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 import type { Group } from 'three';
 import { Color, Quaternion, type RectAreaLight, Vector3 } from 'three';
 
+import { SuspenseResolved } from '@/components/helpers/SuspenseResolved.tsx';
 import { CodingChair } from '@/components/models/CodingChair.tsx';
 import { CodingDesk } from '@/components/models/CodingDesk.tsx';
 import { Macbook } from '@/components/models/Macbook.tsx';
 import { WaldowAvatar } from '@/components/models/WaldowAvatar.tsx';
+import { useCameraRoll } from '@/hooks/useCameraRoll.ts';
+import { useForwardPointerToIframe } from '@/hooks/useForwardPointerToIframe.ts';
 import {
   TABLET_BREAKPOINT,
   THEME_TRANSITION_DURATION,
@@ -26,6 +29,8 @@ import { usePerformanceTier } from '@/store/usePerformanceTier.ts';
 import { useScene } from '@/store/useScene.ts';
 import { THEME_COLORS, useTheme } from '@/store/useTheme.ts';
 import { useViewMode } from '@/store/useViewMode.ts';
+
+const WORLD_UP = new Vector3(0, 1, 0);
 
 interface Props {
   isActive?: boolean;
@@ -47,7 +52,10 @@ export const Coding = ({ isActive = true }: Props) => {
     elapsed: THEME_TRANSITION_DURATION,
   });
   const { camera } = useThree();
-  const setPortalReady = useCodingSceneReady((s) => s.setPortalReady);
+  const { setAssetsReady, setPortalReady } = useCodingSceneReady((s) => ({
+    setAssetsReady: s.setAssetsReady,
+    setPortalReady: s.setPortalReady,
+  }));
   const isLowPerf = usePerformanceTier((s) => s.isLowPerf);
   const { showPanel, hidePanel } = useAboutMePanel((s) => ({
     showPanel: s.showPanel,
@@ -62,6 +70,8 @@ export const Coding = ({ isActive = true }: Props) => {
   const prevIsActiveRef = useRef(false);
   const isActiveRef = useRef(isActive);
   const positionCameraRef = useRef<(isResize?: boolean) => void>(() => {});
+  const rollCameraTo = useCameraRoll(cameraControls);
+  useForwardPointerToIframe(iframeRef);
 
   const defaultMacbookValues = {
     scenePosition: { x: 0, y: -0.8, z: 1 },
@@ -304,7 +314,8 @@ export const Coding = ({ isActive = true }: Props) => {
         worldPos.z,
         false,
       );
-      cameraControls.current.camera.up.set(0, 1, 0);
+      // Starts square to the portal, then levels out during the pull-back
+      rollCameraTo(WORLD_UP);
     }
     const offset = isDesktop
       ? {
@@ -412,10 +423,6 @@ export const Coding = ({ isActive = true }: Props) => {
     const normal = new Vector3(0, 0, 1).applyQuaternion(worldQuat);
     const camPos = worldPos.clone().addScaledVector(normal, cameraDistance);
 
-    cameraControls.current.camera.up
-      .set(0, 1, 0)
-      .applyQuaternion(worldQuat)
-      .normalize();
     cameraControls.current.setLookAt(
       camPos.x,
       camPos.y,
@@ -425,12 +432,20 @@ export const Coding = ({ isActive = true }: Props) => {
       worldPos.z,
       true,
     );
-    cameraControls.current.camera.up.set(0, 1, 0);
+    // Rolls to sit square to the portal by the end of the zoom-in
+    rollCameraTo(new Vector3(0, 1, 0).applyQuaternion(worldQuat));
 
     const exitTimer = setTimeout(() => commitScene(), 2000);
 
     return () => clearTimeout(exitTimer);
-  }, [pendingScene, isActive, commitScene, hidePanel, cameraDistance]);
+  }, [
+    pendingScene,
+    isActive,
+    commitScene,
+    hidePanel,
+    cameraDistance,
+    rollCameraTo,
+  ]);
 
   const {
     transmission: meshTransmission,
@@ -475,6 +490,7 @@ export const Coding = ({ isActive = true }: Props) => {
 
   return (
     <Suspense>
+      <SuspenseResolved onResolved={setAssetsReady} />
       <PerspectiveCamera makeDefault={isActive} />
       <CameraControls
         makeDefault={isActive}

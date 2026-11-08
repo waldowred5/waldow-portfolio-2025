@@ -1,6 +1,7 @@
 import ReactThreeTestRenderer from '@react-three/test-renderer';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { useCanvasLoaded } from '@/store/useCanvasLoaded.ts';
 import { SCENE, useScene } from '@/store/useScene.ts';
 
 vi.mock('leva', () => ({
@@ -23,6 +24,7 @@ const { useControls } = await import('leva');
 
 afterEach(() => {
   useScene.setState({ currentScene: SCENE.HERO });
+  useCanvasLoaded.setState({ isGlowFading: false });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (vi.mocked(useControls) as any).mockReturnValue([
     { scene: SCENE.HERO, opacity: 1 },
@@ -37,16 +39,21 @@ describe('SceneManager', () => {
     expect(mesh).toBeTruthy();
   });
 
-  it('renders coding scene when leva scene is CODING', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (vi.mocked(useControls) as any).mockReturnValue([
-      { scene: SCENE.CODING, opacity: 1 },
-      vi.fn(),
-    ]);
-
+  it('does not mount the coding scene before the hero has loaded', async () => {
     const renderer = await ReactThreeTestRenderer.create(<SceneManager />);
-    const mesh = renderer.scene.findByProps({ name: 'coding' });
-    expect(mesh).toBeTruthy();
+    expect(() => renderer.scene.findByProps({ name: 'coding' })).toThrow();
+  });
+
+  it('mounts the coding scene once the hero has loaded', async () => {
+    useCanvasLoaded.setState({ isGlowFading: true });
+    const renderer = await ReactThreeTestRenderer.create(<SceneManager />);
+    expect(renderer.scene.findByProps({ name: 'coding' })).toBeTruthy();
+  });
+
+  it('mounts the coding scene when it is the current scene', async () => {
+    useScene.setState({ currentScene: SCENE.CODING });
+    const renderer = await ReactThreeTestRenderer.create(<SceneManager />);
+    expect(renderer.scene.findByProps({ name: 'coding' })).toBeTruthy();
   });
 
   it('falls back to hero scene for unknown scene value', async () => {

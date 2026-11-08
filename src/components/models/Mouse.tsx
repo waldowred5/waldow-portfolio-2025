@@ -166,5 +166,3 @@ export const Mouse = ({ hips, ...props }: MouseProps) => {
     </group>
   );
 };
-
-useGLTF.preload('/models/computer_mouse.glb');

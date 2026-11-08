@@ -164,5 +164,3 @@ export const Macbook = (props: JSX.IntrinsicElements['group']) => {
     </group>
   );
 };
-
-useGLTF.preload('/models/macbook.glb');
